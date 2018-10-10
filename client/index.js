@@ -1,3 +1,5 @@
+'use strict'
+
 const { IpfsIdentity, start, checkForAccount } = require('../src/index')
 
 const html = require('yo-yo')
@@ -407,7 +409,7 @@ function logMessage (message) {
     return
   }
 
-  msgNode = html`
+  const msgNode = html`
     <div
       class="f7 bg-black-90 green code"
       style="word-break: break-word">
