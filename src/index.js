@@ -254,7 +254,19 @@ class IpfsIdentity {
     })
   }
 
-  async saveProof (hash, content) {
+  async saveProof (content) {
+    try {
+      var results = await this.saveProofToIpfs(content)
+    } catch (ex) {
+      throw new Error(ex)
+    }
+
+    let hash = results[0].hash
+    const success = await this.saveProofToDb(hash, content)
+    return success
+  }
+
+  async saveProofToDb (hash, content) {
     content.ipfsHash = hash
     await this.proofDB.put(hash, JSON.stringify(content))
     this._proofData[hash] = content
@@ -262,13 +274,13 @@ class IpfsIdentity {
     return content
   }
 
-  saveProofToIpfs (content, callback) {
-    this.store(proof, (err, results) => {
-      if (err) {
-        console.error(err)
-        return callback(err, null)
-      }
-    })
+  async saveProofToIpfs (content) {
+    try {
+      let result = await this.store(JSON.stringify(content))
+      return result
+    } catch (ex) {
+      throw new Error(ex)
+    }
   }
 
   verifyProof (proof, callback) {
@@ -524,24 +536,19 @@ class IpfsIdentity {
     }
   }
 
-  store (data, callback) {
+  async store (data) {
     // store data in IPFS
-    this._node.files.add(Buffer.from(data), (err, res) => {
-      if (err || !res) {
-        return callback(err, res)
+    let res = await this._node.files.add(Buffer.from(data))
+    let results = []
+
+    res.forEach((file) => {
+      if (file && file.hash) {
+        console.log('successfully stored', file)
+        results.push(file)
+        return file
       }
-
-      let results = []
-
-      res.forEach((file) => {
-        if (file && file.hash) {
-          console.log('successfully stored', file)
-          results.push(file)
-          return file
-        }
-      })
-      return callback(null, results)
     })
+    return results
   }
 
   getFile (hash, callback) {
