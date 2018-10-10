@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <title> </title>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1">
+  <link id="favicon"
+        rel="shortcut icon"
+        type="image/jpg"
+        href="img/autonomica.jpg">
+  <link rel="stylesheet"
+        href="./tachyons.min.css">
+  <style>
+    #main {
+        margin-top: 4rem;
+    }
+    #notifications {
+        position: absolute;
+        top: 4rem;
+        right: 1rem;
+        z-index: 100;
+    }
+    ._notification_ {
+        min-width: inherit;
+    }
+    #splash-wrapper img {
+      transition: all 1.5s; /* <-- adjust fade time */
+    }
+    .splash-img {
+      opacity: 0; /* <-- initally set for 0 opacity */
+    }
+    .splash-visible {
+      opacity: 1; /* <-- set opacity to 1 to fade in */
+    }
+    #modal {
+        position: absolute;
+        top: 4rem;
+        right: 2rem;
+        z-index: 80;
+    }
+  </style>
+  <body class="w-100 sans-serif bg-near-white">
+    <div id="nav-parent" class="fl w-100">
+      <div id="nav"></div>
+    </div>
+    <div id="modal" class="w-80"></div>
+    <div id="notifications" class="w-60"></div>
+    <div id="main" class="fl w-100 pt3">
+      <article id="splash" class="_view_"></article>
+      <article id="identity-app"
+               class="_view_"
+               style="display:none;"></article>
+      <article id="proof"
+               class="_view_"
+               style="display:none;"></article>
+      <article id="listen"
+               class="_view_"
+               style="display:none;"></article>
+      <article id="log-ui"
+               class="_view_"
+               style="display:none;"></article>
+    </div>
+  </body>
+  <script src="bundle.js"></script>
+</html>

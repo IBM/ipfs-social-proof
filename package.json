@@ -1,0 +1,52 @@
+{
+  "name": "ipfs-social-proof",
+  "version": "0.0.1",
+  "description": "IPFS-based Identity & Social Proof",
+  "leadMaintainer": "David Dahl <ddahl@nulltxt.se>",
+  "main": "src/index.js",
+  "scripts": {
+    "bundle": "browserify src/index.js > bundle.js",
+    "serve_test": "http-server test -a 127.0.0.1 -p 8899",
+    "start": "npm run bundle && echo 'Bundle complete at ./bundle.js'",
+    "test_bundle": "browserify test/index.js > test/bundle.js",
+    "test": "npm run test_bundle && npm run serve_test"
+  },
+  "keywords": ["ipfs", "js-ipfs", "identity", "social proof"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IBM/ipfs-social-proof"
+  },
+  "engines": {
+    "node": ">6.0.0",
+    "npm": ">3.0.0"
+  },
+  "bugs": {
+    "url": "https://github.com/IBM/ipfs-social-proof/issues"
+  },
+  "homepage": "https://github.com/IBM/ipfs-social-proof",
+  "devDependencies": {
+    "browserify": "^14.0.0",
+    "chai": "^4.2.0",
+    "concat-stream": "^1.6.0",
+    "http-server": "~0.9.0",
+    "karma": "^3.0.0",
+    "mocha": "^5.2.0"
+  },
+  "dependencies": {
+    "armor-gpg-key": "^1.0.0",
+    "base64-arraybuffer": "^0.1.5",
+    "btoa": "^1.2.1",
+    "buffer": "^5.2.1",
+    "eslint": "^5.6.0",
+    "ipfs": "^0.32.2",
+    "ipfs-pubsub-room": "^1.4.0",
+    "level-browserify": "^2.0.0",
+    "libp2p-crypto": "^0.14.0",
+    "multihashing-async": "^0.5.1",
+    "text-encoding": "^0.6.4"
+  },
+  "contributors": [
+    "David Dahl <ddahl@nulltxt.se>"
+  ]
+}

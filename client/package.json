@@ -1,0 +1,25 @@
+{
+  "name": "autonomica",
+  "version": "0.0.1",
+  "description": "Autonomica is a p2p UI for ipfs-social-proof",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "bundle": "browserify index.js > bundle.js",
+    "serve": "http-server ./ -a 127.0.0.1 -p 8889",
+    "start": "npm run bundle && npm run serve"
+  },
+  "author": "Doctor Zhivago",
+  "license": "MIT",
+  "dependencies": {
+    "blockies-npm": "0.0.1",
+    "clipboard": "^1.7.1",
+    "qrcode-generator": "^1.4.1",
+    "yo-yo": "^1.4.1"
+  },
+  "devDependencies": {
+    "browserify": "^16.2.3",
+    "http-server": "^0.11.1",
+    "tachyons": "^4.11.1"
+  }
+}
