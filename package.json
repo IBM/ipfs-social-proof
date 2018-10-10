@@ -11,7 +11,12 @@
     "test_bundle": "browserify test/index.js > test/bundle.js",
     "test": "npm run test_bundle && npm run serve_test"
   },
-  "keywords": ["ipfs", "js-ipfs", "identity", "social proof"],
+  "keywords": [
+    "ipfs",
+    "js-ipfs",
+    "identity",
+    "social proof"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
