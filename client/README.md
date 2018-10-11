@@ -4,6 +4,12 @@ Autonomica is a front-end app written with `yo-yo` & `Tachyons` in order to stay
 
 ![Alt Identity](screenshots/identity.png?raw=true "Identity")
 
+![Alt Proof](screenshots/proof.png?raw=true "Proof")
+
+![Alt Peers](screenshots/peers.png?raw=true "Peers")
+
+![Alt Log](screenshots/log.png?raw=true "Event Log")
+
 ## Goals
 
 * Ui to help establish IPFS-driven identity

@@ -2,7 +2,7 @@
 
 Identity and social proof serverlessly via IPFS
 
-Create an online identity peer 2 peer, generate proof(s) that can be validated by peers to verify your identity. No walled garden neccesary. 
+Create an online identity peer 2 peer, generate proof(s) that can be validated by peers to verify your identity. No walled garden neccesary.
 
 ## Warning: `alpha` software with `alpha` dependencies
 
@@ -25,6 +25,10 @@ THIS IS VERY MUCH A Work In Progress
 * This will produce a bundle one can consume in a web/electron app at `bundle.js`
 
 ## Example app
+
+### Identity management & peer discovery
+
+![Alt Identity](screenshots/identity.png?raw=true "Identity")
 
 * see `client/README.md` for instructions
 * `cd ./client && npm install && npm start`
