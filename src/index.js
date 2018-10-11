@@ -221,9 +221,22 @@ class IpfsIdentity {
   }
 
   getProof (hash) {
-    let proof = this._proofData[hash]
+    let proof = JSON.parse(a2t(this._proofData[hash]))
     proof._hash = hash
-    return JSON.parse(proof)
+    return proof
+  }
+
+  getAllProofs () {
+    var that = this
+    let hashes = Object.keys(this._proofData)
+    let results = []
+    hashes.forEach((hash, idx) => {
+      results.push({ hash: hash,
+                     proof: JSON.parse(a2t(that._proofData[hash]))
+                   })
+    })
+
+    return results
   }
 
   initProofDb () {
@@ -231,7 +244,7 @@ class IpfsIdentity {
     this.proofDB.createReadStream()
       .on('data', function (data) {
         console.log(data.key, '=', data.value)
-        that._proofData[data.key] = JSON.parse(data.value)
+        that._proofData[data.key] = data.value
       })
       .on('error', function (err) {
         console.error('Cannot read proofDB stream: ', err)
@@ -245,7 +258,7 @@ class IpfsIdentity {
     // this populates the in-memory _proofData property
     this.proofDB.on('put', function (key, value) {
       console.log('inserted into proof DB', { key, value })
-      that._proofData[key] = JSON.parse(value)
+      that._proofData[key] = value
     })
     this.proofDB.on('del', function (key, value) {
       console.log('deleted from proof DB', key)
@@ -256,6 +269,7 @@ class IpfsIdentity {
   async saveProof (content) {
     try {
       var results = await this.saveProofToIpfs(content)
+      console.log('results', results)
     } catch (ex) {
       throw new Error(ex)
     }
@@ -266,13 +280,12 @@ class IpfsIdentity {
   }
 
   async saveProofToDb (hash, content) {
-    let proof = JSON.parse(content)
+    let proof = Buffer.from(content)
     proof.ipfsHash = hash
-    await this.proofDB.put(hash, proof)
-    let json = JSON.parse(content)
-    this._proofData[hash] = json
+    let result = await this.proofDB.put(hash, proof)
+    this._proofData[hash] = proof
     // get the in-memory proof content
-    return json
+    return proof
   }
 
   async saveProofToIpfs (content) {

@@ -26,7 +26,7 @@ function view (id) {
   switch (id) {
   case VIEW_PROOF:
     let nodeId = 'username'
-    focusNode(nodeId, 2000)
+    focusNode(nodeId, 100)
     break
   default:
     return
@@ -206,6 +206,7 @@ function proof (proofData) {
         notify.success('Proof stored successfully')
       }).
       catch((err) => {
+        console.error(err)
         notify.error(err)
       })
   }
@@ -234,7 +235,7 @@ function proof (proofData) {
           <a class="ttu dib link dim pa3 black"
              href="#" id="proof-help" onclick=${evtProofHelp}>Help</a>
         </div>
-        <div id="proof-form" class="w-90 pv2 center pa3 bg-near-white">
+        <div id="proof-form" class="w-90 center pa4 bg-near-white">
           <fieldset class="cf bn ma0 pa0">
             <div class="cf">
               <label class="clip" for="username">Username</label>
@@ -260,8 +261,7 @@ function proof (proofData) {
 
       <div id="proof-preview" class="w-90 center pa3">
         <textarea id="proof-preview-display"
-             class="f7 bg-white br2">
-        </textarea>
+             class="f7 bg-white br2"></textarea>
         <div class="lh-copy mt3 ph3">
           <a href="#"
              title="Copy proof to clipboard"
@@ -533,9 +533,7 @@ function publicKeyCard (profile) {
       <p class="code lh-copy measure center f7 pa2 black-70 h3 overflow-auto ba b--black-20">
         ${profile.bio || 'No bio available'}
       </p>
-      <textarea disabled class="code lh-copy measure center f7 pa2 black-70 h5 overflow-auto ba b--black-20">
-        ${profile.publicKey || 'No shared public key available'}
-      </textarea>
+      <textarea disabled class="code lh-copy measure center f7 pa2 black-70 h5 overflow-auto ba b--black-20">${profile.publicKey || 'No shared public key available'}</textarea>
     </article>`
 }
 
