@@ -234,9 +234,6 @@ function proof (proofData) {
         </div>
         <div id="proof-form" class="w-90 pv2 center pa3 bg-near-white">
           <fieldset class="cf bn ma0 pa0">
-            <legend class="pa0 f5 f4-ns mb3 black-80">
-              Create Identity Proof
-            </legend>
             <div class="cf">
               <label class="clip" for="username">Username</label>
               <input class="f6 f5-l input-reset ba b--black-10 fl black-80 bg-white pa3 lh-solid w-100 w-75-m w-80-l br2-ns br--left-ns"
@@ -259,23 +256,24 @@ function proof (proofData) {
         </div>
       </div>
 
-      <div id="proof-preview" class="w-90 center">
-        <a href="#"
-           title="Copy proof to clipboard"
-           class="link dim br3 ph3 pv2 mb2 dib white"
-           data-clipboard-target="#proof-preview-display"
-           id="proof-copy">
-          <img class="h2" src="./img/clippy.svg"/>
-        </a>
+      <div id="proof-preview" class="w-90 center pa3">
         <textarea id="proof-preview-display"
-             class="f7 ma3 bg-white br3 ph3 pv2 mb2 overflow-auto">
+             class="f7 bg-white br2">
         </textarea>
         <div class="lh-copy mt3 ph3">
-          <a class="f6 link dim br3 ph3 pv2 mb2 dib white bg-black"
+          <a href="#"
+             title="Copy proof to clipboard"
+             class="link dim"
+             data-clipboard-target="#proof-preview-display"
+             id="proof-copy">
+            <img class="h1 pr2" src="./img/clippy.svg"/>
+          </a>
+
+          <a class="no-underline f6 ph3 pv3 bn bg-animate bg-black-70 hover-bg-black white pointer w-100 w-25-m w-20-l br2-ns br--all-ns f5-l"
              href="https://gist.github.com/"
              title="Create Proof, then copy to clipboard, then click here to publish"
              target="_new">Post proof to Gist</a>
-          <a class="f6 link dim br3 ph3 pv2 mb2 dib white bg-black"
+          <a class="no-underline f6 ph3 pv3 bn bg-animate bg-black-70 hover-bg-black white pointer w-100 w-25-m w-20-l br2-ns br--all-ns f5-l"
              href="#"
              onclick=${evtProofSave}>Save proof to IPFS</a>
         </div>
