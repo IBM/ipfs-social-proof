@@ -343,8 +343,16 @@ function proof (proofData) {
         <div id="proof-help"
              style="display: none;"
              class="_proof_tab_ w-90 center pa4 bg-near-white">
-          <h1>Proof help</h1>
-          <h2>What is a 'Proof'?</h2>
+          <h2 class="f7">What is a 'Proof'?</h2>
+          <p class="code f7">
+            A 'Proof' is a cryptographic signature that verifies a statement like <i>'I am foo@twitter.com' - which links your Twitter identity to your IPFS node / identity. The proof document contains the statement, the cryptographic signature and the public key of the attestor of the staement.</i>
+          </p>
+          <p class="code f7">
+            The proof document is then published online with a service that requires authentication. A good place to publish proofs is via a github "gist". This document can be linked to from a twitter or Facebook post - the more proofs published or linked to the better an identity in IPFS can be proven.
+          </p>
+          <p class="code f7">
+            When IPFS peers engage with you, your proof list can be checked out, remote proofs downloaded and all signtaures verified to ensure you are the holder of the corresponding IPFS private key.
+          </p>
         </div>
 
         <div id="proof-create" class="_proof_tab_ w-90 center pa4 bg-near-white">
