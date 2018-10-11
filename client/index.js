@@ -370,7 +370,7 @@ function proof (proofData) {
           </fieldset>
           <div id="proof-preview" class="w-100 center pa0">
             <textarea id="proof-preview-display"
-                      class="f7 bg-white br2 w-100"></textarea>
+                      class="code lh-copy f7 bg-white br2 w-100"></textarea>
             <div class="lh-copy mt3 ph3">
               <a href="#"
                  title="Copy proof to clipboard"
