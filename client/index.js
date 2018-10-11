@@ -98,49 +98,51 @@ function idUI (ipfsID, handle) {
 
   return html`
     <article id="identity-app" class="_view_ center mw7 br3 ba b--black-10 mv4">
-      <div class="w-100 pt4 pl4">
+      <div class="mh4 mt4 w-100 flex">
         <span id="identity-blocky"
+              class="flex"
               title="IPFS Peer ID as Blocky Avatar">${icon}</span>
-        <span id="qr-code" class="fr pr4"
+        <span id="identity-peer-id"
+             class="flex code f5 mt3"
+             onclick=${broadcastId}
+             title="IPFS Peer ID">
+          <div class="mh4">${ipfsID.peerId}</div>
+        </span>
+        <span id="qr-code" class="flex"
               title="IPFS Peer ID as QR Code"></span>
-      </div>
-      <div id="identity-peer-id"
-           class="code w-100 pt4 pl4 f5"
-           onclick=${broadcastId}
-           title="IPFS Peer ID">${ipfsID.peerId}
       </div>
       <div title="Account Handle"
            class="w-100 f3 bg-near-white br3 br--top black-80 mv0 pa4">
         <input disabled
-               class="code pv1 pa2 input-reset ba bg-transparent w-60 mr2"
+               class="f6 f5-l input-reset ba b--black-10 fl black-80 bg-white pa3 lh-solid w-100 w-50-m w-60-l br2-ns br--left-ns code"
                name="handle-edit-input"
                id="handle-edit"
                value="${handle}" />
         <span id="edit-save-btns">
           <a href="#"
              id="handle-edit-btn"
-             class="f6 link dim br3 ph3 pv2 mb2 dib white bg-black"
+             class="no-underline f6 f5-l fl pv3 tc bn bg-animate bg-black-70 hover-bg-black white pointer w-100 w-25-m w-20-l br2-ns br--right-ns"
              onclick=${evtEditHandle}>
             Edit Handle
           </a>
           <a href="#"
              id="handle-save-btn"
-             class="f6 link dim br3 ph3 pv2 mb2 dib white bg-black"
+             class="no-underline f6 f5-l fl pv3 tc bn bg-animate bg-black-70 hover-bg-black white pointer w-100 w-25-m w-20-l br2-ns br--right-ns"
              style="display: none;"
              onclick=${evtSaveHandle}>
             Save Handle
           </a>
         </span>
       </div>
-      <div class="pa3 bt b--black-10 bg-near-white center">
-        <h3>IPFS RSA Public Key (dehydrated) [signing only]</h3>
+      <div class="w-100 pa3 center">
         <p class="f6 f5-ns lh-copy">
-        <textarea disabled
-                  class="f7 ma3 bg-white br3 ph3 pv2 mb2 overflow-auto"
-                  title="IPFS Public Key [Signing Only]">${ipfsID.pubKeyDehydrated}</textarea>
-      </p>
-    </div>
-  </article>`
+          <div class="w-100 mr3 ml3 f6 code">IPFS RSA Public Key (dehydrated) [signing only]</div>
+          <textarea disabled
+                    class="lh-copy code f7 ma3 bg-white br3 ph3 pv2 mb2 overflow-auto"
+                    title="IPFS Public Key [Signing Only]">${ipfsID.pubKeyDehydrated}</textarea>
+        </p>
+      </div>
+    </article>`
 }
 
 function splash () {
@@ -299,8 +301,8 @@ function nav () {
 
   function evtLogLink (event) {
     view(VIEW_LOG)
-  }
 
+}
   return html`
     <div id="nav" data-name="component">
       <header class="bg-black-90 fixed w-100 ph3 pv3 pv4-ns ph4-m ph5-l">
@@ -380,7 +382,7 @@ function logUi () {
              style=""
              class="hidden _view_ bg-black-90 w-90 center mw7 mw7-ns br3 ba b--black-10 mv4">
       <div id="log-output"
-           class="f7 green code overflow-auto lh-copy overflow-scroll"
+           class="f7 pa3 green code overflow-auto lh-copy overflow-scroll"
            style="word-break: break-word; min-height: 300px; max-height: 500px;">
       </div>
     </article>`
