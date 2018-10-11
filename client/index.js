@@ -250,10 +250,10 @@ function proofList (state) {
     list = window.IpfsID.getAllProofs()
     return html`
       <div id="proof-list"
-           class="_proof_tab_ w-90 center pa4 bg-near-white">
-      <ul>
+           class="_proof_tab_ w-90 center pv4 bg-near-white">
+      <ul class="list pl4 mt0">
         ${list.map(function (item) {
-          return html`<li>${item.hash}: ${item.proof.proof.message.service}</li>`
+          return html`<li class="pv2"><span class="fw6">${item.proof.proof.message.username}@${item.proof.proof.message.service}</span> <span class="fw1 f7 code"> <a target="_new" href="https://ipfs.io/ipfs/${item.hash}">/ipfs/${item.hash}</a></span></li>`
         })}
       </ul></div>`
   }
