@@ -244,7 +244,6 @@ class IpfsIdentity {
       })
     // this populates the in-memory _proofData property
     this.proofDB.on('put', function (key, value) {
-      debugger;
       console.log('inserted into proof DB', { key, value })
       that._proofData[key] = JSON.parse(value)
     })
@@ -267,8 +266,9 @@ class IpfsIdentity {
   }
 
   async saveProofToDb (hash, content) {
-    content.ipfsHash = hash
-    await this.proofDB.put(hash, JSON.stringify(content))
+    let proof = JSON.parse(content)
+    proof.ipfsHash = hash
+    await this.proofDB.put(hash, proof)
     this._proofData[hash] = content
     // get the in-memory proof content
     return content

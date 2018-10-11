@@ -135,11 +135,9 @@ function idUI (ipfsID, handle) {
       <div class="pa3 bt b--black-10 bg-near-white center">
         <h3>IPFS RSA Public Key (dehydrated) [signing only]</h3>
         <p class="f6 f5-ns lh-copy">
-        <div style="word-break: break-word;"
-             class="f7 code"
-             title="IPFS Public Key [Signing Only]">
-          ${ipfsID.pubKeyDehydrated}
-        </div>
+        <textarea disabled
+                  class="f7 ma3 bg-white br3 ph3 pv2 mb2 overflow-auto"
+                  title="IPFS Public Key [Signing Only]">${ipfsID.pubKeyDehydrated}</textarea>
       </p>
     </div>
   </article>`
@@ -196,21 +194,18 @@ function proof (proofData) {
 
   function evtProofSave () {
     // Save to local indexDB: save { 'proof:username:service': { ipfsUrl: <url>, ipnsUrl: <url>, timestamp: <ts> }
-    let proof = document.querySelector('#proof-preview-display')
-        .innerText.trim()
+    let proof = document.querySelector('#proof-preview-display').value.trim()
     if (!proof) {
       return notify.error('Error', 'Cannot save non-existent proof')
     }
     // Save to IPFS, pin & create IPNS URL
-    window.IpfsID.saveProof(proof, (err, result) => {
-      if (err) {
-        console.error(err)
-        return notify.error(err)
-      }
-      // Stored in IPFS, alert user
-      console.info('Proof stored successfully')
-      notify.success('Proof stored successfully')
-    })
+    IpfsID.saveProof(proof).
+      then((res) => {
+        notify.success('Proof stored successfully')
+      }).
+      catch((err) => {
+        notify.error(err)
+      })
   }
 
   function evtShowProofs () {
@@ -272,9 +267,9 @@ function proof (proofData) {
            id="proof-copy">
           <img class="h2" src="./img/clippy.svg"/>
         </a>
-        <pre id="proof-preview-display"
+        <textarea disabled id="proof-preview-display"
              class="f7 ma3 bg-white br3 ph3 pv2 mb2 overflow-auto">
-        </pre>
+        </textarea>
         <div class="lh-copy mt3 ph3">
           <a class="f6 link dim br3 ph3 pv2 mb2 dib white bg-black"
              href="https://gist.github.com/"
@@ -533,15 +528,14 @@ function publicKeyCard (profile) {
         <h1 class="f5 code">
           ${profile.handle || profile.peerId}
         </h1>
-        <hr class="mw3 bb bw1 b--black-10" />
+        <hr class="mw5 bb bw1 b--black-10" />
       </div>
       <p class="code lh-copy measure center f7 pa2 black-70 h3 overflow-auto ba b--black-20">
         ${profile.bio || 'No bio available'}
       </p>
-      <p class="code lh-copy measure center f7 pa2 black-70 h5 overflow-auto ba b--black-20"
-         style="word-break: break-word;">
+      <textarea disabled class="code lh-copy measure center f7 pa2 black-70 h5 overflow-auto ba b--black-20">
         ${profile.publicKey || 'No shared public key available'}
-      </p>
+      </textarea>
     </article>`
 }
 
