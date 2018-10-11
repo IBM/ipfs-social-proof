@@ -380,7 +380,7 @@ function logUi () {
              style=""
              class="hidden _view_ bg-black-90 w-90 center mw7 mw7-ns br3 ba b--black-10 mv4">
       <div id="log-output"
-           class="f7 bg-black-90 green code overflow-auto lh-copy overflow-scroll"
+           class="f7 green code overflow-auto lh-copy overflow-scroll"
            style="word-break: break-word; min-height: 300px; max-height: 500px;">
       </div>
     </article>`
@@ -404,7 +404,7 @@ function logMessage (message) {
 
   const msgNode = html`
     <div
-      class="f7 bg-black-90 green code"
+      class="f7 green code"
       style="word-break: break-word">
       ${_msg}
     </div>`
