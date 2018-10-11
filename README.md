@@ -28,7 +28,7 @@ THIS IS VERY MUCH A Work In Progress
 
 ### Identity management & peer discovery
 
-![Alt Identity](screenshots/identity.png?raw=true "Identity")
+![Alt Identity](client/screenshots/identity.png?raw=true "Identity")
 
 * see `client/README.md` for instructions
 * `cd ./client && npm install && npm start`
