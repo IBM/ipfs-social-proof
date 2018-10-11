@@ -2,7 +2,7 @@
 
 Identity and social proof serverlessly via IPFS
 
-Create an online identity peer 2 peer, generate proof(s) that can be valdated by peers to verify your identity. No walled garden neccesary. 
+Create an online identity peer 2 peer, generate proof(s) that can be validated by peers to verify your identity. No walled garden neccesary. 
 
 ## Warning: `alpha` software with `alpha` dependencies
 
@@ -35,4 +35,4 @@ THIS IS VERY MUCH A Work In Progress
 
 ## Contributing
 
-* see CONTRINUTING.md
+* see CONTRIBUTING.md
