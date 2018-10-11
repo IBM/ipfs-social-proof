@@ -267,7 +267,7 @@ function proof (proofData) {
            id="proof-copy">
           <img class="h2" src="./img/clippy.svg"/>
         </a>
-        <textarea disabled id="proof-preview-display"
+        <textarea id="proof-preview-display"
              class="f7 ma3 bg-white br3 ph3 pv2 mb2 overflow-auto">
         </textarea>
         <div class="lh-copy mt3 ph3">

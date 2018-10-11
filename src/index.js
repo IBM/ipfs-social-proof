@@ -269,9 +269,10 @@ class IpfsIdentity {
     let proof = JSON.parse(content)
     proof.ipfsHash = hash
     await this.proofDB.put(hash, proof)
-    this._proofData[hash] = content
+    let json = JSON.parse(content)
+    this._proofData[hash] = json
     // get the in-memory proof content
-    return content
+    return json
   }
 
   async saveProofToIpfs (content) {
