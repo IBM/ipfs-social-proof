@@ -14,8 +14,70 @@ const VIEW_PROOF = 'proof'
 const VIEW_LISTEN = 'listen'
 const VIEW_LOG = 'log-ui'
 
-function view (id) {
-  const views = document.querySelectorAll(`._view_`)
+const STRING = 'string'
+const OBJECT = 'object'
+const FUNCTION = 'function'
+
+class AppState {
+  constructor (state, events) {
+    this._state = state || {}
+    this._events = events || {}
+  }
+
+  update (key, value) {
+    this._state[key] = value
+    if (this._events[key]) {
+      this._events[key](value)
+    }
+  }
+
+  get events () {
+    return this._events
+  }
+
+  set events (events) {
+    const that = this;
+    if (typeof events === OBJECT) {
+      let props = Object.keys(events)
+      props.forEach((prop, idx) => {
+        if (typeof events[prop] === FUNCTION) {
+          that._events[prop] = events[prop]
+        }
+      })
+    }
+  }
+}
+
+const appState = new AppState()
+appState.events = {
+  proofTabList: (state) => {
+    let nodeId = 'proof-list'
+    let existing = document.querySelector(`#${nodeId}`)
+    let newUi = proofList(state)
+    html.update(existing, newUi)
+    view(nodeId, '_proof_tab_')
+  },
+
+  proofTabCreate: (state) => {
+    let nodeId = 'proof-create'
+    // Dont need to call update on this one...
+    view(nodeId, '_proof_tab_')
+  },
+
+  proofTabHelp: (state) => {
+    let nodeId = 'proof-help'
+    // Dont need to call update on this one...
+    view(nodeId, '_proof_tab_')
+  }
+}
+
+function view (id, baseClass) {
+  if (!baseClass) {
+    baseClass = '_view_'
+  }
+
+  const views = document.querySelectorAll(`.${baseClass}`)
+
   for (let i = 0; i < views.length; i++) {
     if (views[i].id === id) {
       continue
@@ -180,6 +242,23 @@ function splash () {
     </div>`
 }
 
+function proofList (state) {
+  let list = []
+  if (!state) {
+    // default view
+    // get all proofs in db
+    list = window.IpfsID.getAllProofs()
+    return html`
+      <div id="proof-list"
+           class="_proof_tab_ w-90 center pa4 bg-near-white">
+      <ul>
+        ${list.map(function (item) {
+          return html`<li>${item.hash}: ${item.proof.proof.message.service}</li>`
+        })}
+      </ul></div>`
+  }
+}
+
 function proof (proofData) {
   function evtProofCreateLink (event) {
     let username = document.querySelector('#username').value
@@ -212,15 +291,35 @@ function proof (proofData) {
   }
 
   function evtShowProofs () {
-    notify.info('Not implemented')
+    appState.update('proofTabList', null)
+    highlightTab('proof-tabs', '_tab_', 'show-proofs')
   }
 
   function evtProofHelp () {
-    notify.info('Not implemented')
+    appState.update('proofTabHelp', null)
+    highlightTab('proof-tabs', '_tab_', 'help-proof-tab')
   }
 
   function evtCreateProof () {
-    notify.info('Not implemented')
+    appState.update('proofTabCreate', null)
+    highlightTab('proof-tabs', '_tab_', 'create-proof')
+  }
+
+  function highlightTab (compId, tabClass, tabId) {
+    let classes = 'b--blue b bb bw2'.split(' ')
+    let tabs = document.querySelector(`#${compId}`).
+        querySelectorAll(`.${tabClass}`)
+    tabs.forEach((tab) => {
+      if (tab.id !== tabId) {
+        classes.forEach((klass) => {
+          tab.classList.remove(klass)
+        })
+      } else {
+        classes.forEach((klass) => {
+          tab.classList.add(klass)
+        })
+      }
+    })
   }
 
   return html`
@@ -228,14 +327,27 @@ function proof (proofData) {
       <div class="mw7 mw7-ns overflow-hidden">
         <div id="proof-tabs" data-current="create-proof"
              class="f6 bb bw1 b--black-10 flex">
-          <a class="ttu dib link dim pa3 black"
+          <a class="_tab_ ttu dib link dim pa3 black"
              href="#" id="show-proofs" onclick=${evtShowProofs}>Proofs</a>
-          <a class="ttu dib link dim pa3 black b--blue b bb bw2"
+          <a class="_tab_ ttu dib link dim pa3 black b--blue b bb bw2"
              href="#" id="create-proof" onclick=${evtCreateProof}>Create</a>
-          <a class="ttu dib link dim pa3 black"
-             href="#" id="proof-help" onclick=${evtProofHelp}>Help</a>
+          <a class="_tab_ ttu dib link dim pa3 black"
+             href="#" id="help-proof-tab" onclick=${evtProofHelp}>Help</a>
         </div>
-        <div id="proof-form" class="w-90 center pa4 bg-near-white">
+
+        <div id="proof-list"
+             style="display: none;"
+             class="_proof_tab_ w-90 center pa4 bg-near-white">
+        </div>
+
+        <div id="proof-help"
+             style="display: none;"
+             class="_proof_tab_ w-90 center pa4 bg-near-white">
+          <h1>Proof help</h1>
+          <h2>What is a 'Proof'?</h2>
+        </div>
+
+        <div id="proof-create" class="_proof_tab_ w-90 center pa4 bg-near-white">
           <fieldset class="cf bn ma0 pa0">
             <div class="cf">
               <label class="clip" for="username">Username</label>
@@ -256,53 +368,54 @@ function proof (proofData) {
                  onclick=${evtProofCreateLink}>Create Proof</a>
             </div>
           </fieldset>
+          <div id="proof-preview" class="w-100 center pa0">
+            <textarea id="proof-preview-display"
+                      class="f7 bg-white br2 w-100"></textarea>
+            <div class="lh-copy mt3 ph3">
+              <a href="#"
+                 title="Copy proof to clipboard"
+                 class="link dim"
+                 data-clipboard-target="#proof-preview-display"
+                 id="proof-copy">
+                <img class="h1 pr2" src="./img/clippy.svg"/>
+              </a>
+
+              <a class="no-underline f6 ph3 pv3 bn bg-animate bg-black-70 hover-bg-black white pointer w-100 w-25-m w-20-l br2-ns br--all-ns f5-l"
+                 href="https://gist.github.com/"
+                 title="Create Proof, then copy to clipboard, then click here to publish"
+                 target="_new">Post proof to Gist</a>
+              <a class="no-underline f6 ph3 pv3 bn bg-animate bg-black-70 hover-bg-black white pointer w-100 w-25-m w-20-l br2-ns br--all-ns f5-l"
+                 href="#"
+                 onclick=${evtProofSave}>Save proof to IPFS</a>
+          </div>
         </div>
       </div>
 
-      <div id="proof-preview" class="w-90 center pa3">
-        <textarea id="proof-preview-display"
-             class="f7 bg-white br2"></textarea>
-        <div class="lh-copy mt3 ph3">
-          <a href="#"
-             title="Copy proof to clipboard"
-             class="link dim"
-             data-clipboard-target="#proof-preview-display"
-             id="proof-copy">
-            <img class="h1 pr2" src="./img/clippy.svg"/>
-          </a>
-
-          <a class="no-underline f6 ph3 pv3 bn bg-animate bg-black-70 hover-bg-black white pointer w-100 w-25-m w-20-l br2-ns br--all-ns f5-l"
-             href="https://gist.github.com/"
-             title="Create Proof, then copy to clipboard, then click here to publish"
-             target="_new">Post proof to Gist</a>
-          <a class="no-underline f6 ph3 pv3 bn bg-animate bg-black-70 hover-bg-black white pointer w-100 w-25-m w-20-l br2-ns br--all-ns f5-l"
-             href="#"
-             onclick=${evtProofSave}>Save proof to IPFS</a>
-        </div>
     </article>`
 }
 
 function nav () {
+  let baseClass = `_view_`
   function evtAutoLink (event) {
-    view(VIEW_SPLASH)
+    view(VIEW_SPLASH, baseClass)
   }
 
   function evtIDLink (event) {
-    view(VIEW_IDENT)
+    view(VIEW_IDENT, baseClass)
   }
 
   function evtProofLink (event) {
-    view(VIEW_PROOF)
+    view(VIEW_PROOF, baseClass)
   }
 
   function evtListenLink (event) {
-    view(VIEW_LISTEN)
+    view(VIEW_LISTEN, baseClass)
   }
 
   function evtLogLink (event) {
-    view(VIEW_LOG)
+    view(VIEW_LOG, baseClass)
+  }
 
-}
   return html`
     <div id="nav" data-name="component">
       <header class="bg-black-90 fixed w-100 ph3 pv3 pv4-ns ph4-m ph5-l">
@@ -387,9 +500,6 @@ function logUi () {
       </div>
     </article>`
 }
-
-const STRING = 'string'
-const OBJECT = 'object'
 
 function logMessage (message) {
   let msg = stripNode(message)
