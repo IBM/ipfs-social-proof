@@ -334,7 +334,8 @@ class IpfsIdentity {
         callback()
       }
     })
-    if (typeof process === UNDEFINED) {
+
+    if (typeof window === OBJECT) {
       window.IpfsID = this
     }
   }

@@ -9,7 +9,7 @@
     "serve_test": "http-server test -a 127.0.0.1 -p 8899",
     "start": "npm run bundle && echo 'Bundle complete at ./bundle.js'",
     "test_bundle": "browserify test/index.js > test/bundle.js",
-    "test": "npm run test_bundle && npm run serve_test"
+    "test": "./node_modules/karma/bin/karma start karma.conf.js"
   },
   "keywords": [
     "ipfs",
@@ -31,12 +31,20 @@
   },
   "homepage": "https://github.com/IBM/ipfs-social-proof",
   "devDependencies": {
-    "browserify": "^14.0.0",
+    "brfs": "^2.0.1",
+    "browserify": "^14.5.0",
     "chai": "^4.2.0",
     "concat-stream": "^1.6.0",
+    "dirty-chai": "^2.0.1",
+    "hat": "0.0.3",
     "http-server": "~0.9.0",
     "karma": "^3.0.0",
-    "mocha": "^5.2.0"
+    "karma-browserify": "^5.3.0",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-mocha": "^1.3.0",
+    "karma-sinon": "^1.0.5",
+    "mocha": "^5.2.0",
+    "watchify": "^3.11.0"
   },
   "dependencies": {
     "armor-gpg-key": "^1.0.0",
