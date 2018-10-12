@@ -31,6 +31,7 @@ const BROADCAST_INTERVAL_MS = 5000;
 
 const STRING = 'string'
 const OBJECT = 'object'
+const UNDEFINED = 'undefined'
 
 const SHA_256 = 'sha2-256'
 
@@ -98,20 +99,6 @@ class IpfsIdentity {
     console.log('Broadcast: ', idData)
   }
 
-  // NOTE: need an eventHandler for when a peer asks for 'credentials'
-  reqCredentials (peerId) {
-    // ask a peer for their credentials
-    this.roomApi.sendTo(peerId, { command: 'request:credentials' })
-  }
-
-  resCredentials (peerId) {
-    // send a peer your credentials
-    this.roomApi.sendTo(peerId,
-                        { command: 'response:credentials',
-                          credentials: this.idData
-                        })
-  }
-
   constructor (handle=null, repoName, eventHandlers=null) {
     const that = this
     let accountHandle = null
@@ -129,9 +116,7 @@ class IpfsIdentity {
     // set the put and del events on the proof db
     this.initProofDb()
 
-    if (typeof eventHandlers === OBJECT) {
-      this._uiEventHandlers = eventHandlers
-    }
+    this._uiEventHandlers = eventHandlers || {}
 
     if (!handle) { throw new Error(ERR.ARG_REQ_HANDLE) }
 
@@ -168,7 +153,7 @@ class IpfsIdentity {
     const that = this
     this._roomApi = {
       broadcast: (message) => {
-        if (typeof message === 'object') {
+        if (typeof message === OBJECT) {
           return room.broadcast(JSON.stringify(message))
         }
         room.broadcast(message)
@@ -198,6 +183,19 @@ class IpfsIdentity {
 
       hasPeer: (peerId) => {
         return that._room.hasPeer(peerId)
+      },
+      // NOTE: need an eventHandler for when a peer asks for 'credentials'
+      reqCredentials: (peerId) => {
+        // ask a peer for their credentials
+        that._roomAPI.sendTo(peerId, { command: 'request:credentials' })
+      },
+
+      resCredentials: (peerId) => {
+        // send a peer your credentials
+        that._roomAPI(peerId, {
+          command: 'response:credentials',
+          credentials: that.idData
+        })
       }
     }
 
@@ -328,22 +326,15 @@ class IpfsIdentity {
           console.warn('First run - no account')
           that._firstRun = true
           that.saveIdData()
-          that.saveInitialProofData()
-          if (that._uiEventHandlers['accountCreated']) {
-            // that._uiEventHandlers['accountCreated'](that)
-          }
         }
       }
       console.log('Account found', value)
-      if (this._uiEventHandlers['accountRestarted']) {
-        // this._uiEventHandlers['accountRestarted'](this)
-      }
       if (callback) {
         // Account will be written now on first run
         callback()
       }
     })
-    if (window) {
+    if (typeof process === UNDEFINED) {
       window.IpfsID = this
     }
   }
@@ -445,14 +436,14 @@ class IpfsIdentity {
 
   get pubKeyBase64 () {
     // get a base64 encoded marshaled pub key
-    const pub = IpfsID._node._peerInfo.id._privKey.public
+    const pub = this._node._peerInfo.id._privKey.public
     const mk = this.utils.crypto.keys.marshalPublicKey(pub)
     return JSON.stringify(mk) // TEMP stringified array for now
   }
 
   get pubKeyDehydrated () {
     // get a base64 encoded marshaled pub key
-    const pub = IpfsID._node._peerInfo.id._privKey.public
+    const pub = this._node._peerInfo.id._privKey.public
     const mk = this.utils.crypto.keys.marshalPublicKey(pub)
     return this.dehydrate(mk)
   }
@@ -462,7 +453,7 @@ class IpfsIdentity {
     // Get the Uint8Array version of the stringified key
     const bufferKey = this.utils.Buffer.from(obj.data)
     // unmarshal pub key (any pub key)
-    const umpk = IpfsID.utils.crypto.keys.unmarshalPublicKey(bufferKey)
+    const umpk = this.utils.crypto.keys.unmarshalPublicKey(bufferKey)
     return umpk // now, one can use this pub key to verify signatures
   }
 
@@ -596,6 +587,9 @@ class IpfsIdentity {
   }
 
   triggerRoomEvent (event, message) {
+    if (!this._uiEventHandlers) {
+      return
+    }
     if (this._uiEventHandlers[event]) {
       return this._uiEventHandlers[event](message)
     }
@@ -617,7 +611,7 @@ class IpfsIdentity {
     }
 
     if (event === 'peer joined') {
-      return this.roomApi.reqCredentials(message.peerId)
+      // return this.roomApi.reqCredentials(message.peerId)
     }
   }
 
@@ -774,7 +768,7 @@ function checkForAccount (callback, eventHandlers=null) {
 }
 
 // tmp / testing in browser
-if (window) {
+if (typeof process === 'undefined') {
   window._iidStart = {
     start: start,
     checkForAccount: checkForAccount
