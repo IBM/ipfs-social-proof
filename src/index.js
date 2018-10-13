@@ -10,6 +10,7 @@ const level = require('level-browserify')
 const { encode, decode } = require('base64-arraybuffer')
 const { Buffer } = require('buffer')
 const multihashing = require('multihashing-async')
+const base64 = require('@protobufjs/base64')
 
 const DEFAULT_HANDLE = 'InterPlanetaryPsuedoAnonymite'
 
@@ -458,13 +459,6 @@ class IpfsIdentity {
     return this._node._peerInfo.id._pubKey
   }
 
-  get pubKeyBase64 () {
-    // get a base64 encoded marshaled pub key
-    const pub = this._node._peerInfo.id._privKey.public
-    const mk = this.utils.crypto.keys.marshalPublicKey(pub)
-    return JSON.stringify(mk) // TEMP stringified array for now
-  }
-
   get pubKeyDehydrated () {
     // get a base64 encoded marshaled pub key
     const pub = this._node._peerInfo.id._privKey.public
@@ -498,59 +492,80 @@ class IpfsIdentity {
     return buff
   }
 
-  get pubKeyArmored () {
-    let raw = this.pubKeyBase64
-    let key = ''
-    const head = '-----BEGIN PUBLIC KEY-----\n'
-    const tail = '\n-----END PUBLIC KEY-----'
+  // See: https://github.com/IBM/ipfs-social-proof/issues/10
+  // get pubKeyBase64 () {
+  //   // get a base64 encoded marshaled pub key
+  //   const pub = this._node._peerInfo.id._privKey.public
+  //   const arr = this.utils.crypto.keys.marshalPublicKey(pub)
 
-    for (var i = 0; i < raw.length; i++) {
-      if ((i % 64) === 0) {
-        key += '\n';
-      }
-      key += raw.charAt(i);
-    }
+  //   const decoder = new TextDecoder('utf8');
+  //   const b64encoded = btoa(decoder.decode(arr));
 
-    if (!/\\n$/.test(key)) {
-      key += '\n';
-    }
+  //   return b64encoded
+  // }
 
-    return `${head}${key}${tail}`.trim();
-  }
+  // base64KeyToRsaKey (b64PubKey) {
+  //   const arr = base64.decode(b64PubKey)
 
-  armor (base64Str, format='pk') {
-    // pk = public key
-    // sig = signature
-    if (!base64Str || !format) {
-      throw new Error(ERR.ARG_REQ_BASE64_STR)
-    }
+  //   const umpk = this.utils.crypto.keys.unmarshalPublicKey(arr)
 
-    const formats = {
-      pk: {
-        head: '-----BEGIN PUBLIC KEY-----\n',
-        tail: '\n-----END PUBLIC KEY-----'
-      },
-      sig: {
-        head: '-----BEGIN PGP MESSAGE-----\n',
-        tail: '\n-----END PGP MESSAGE-----'
-      }
-    }
+  //   return umpk
+  // }
 
-    let key = ''
 
-    for (var i = 0; i < base64Str.length; i++) {
-      if ((i % 64) === 0) {
-        key += '\n';
-      }
-      key += base64Str.charAt(i);
-    }
+  // get pubKeyArmored () {
+  //   let raw = this.pubKeyBase64
+  //   let key = ''
+  //   const head = '-----BEGIN PUBLIC KEY-----\n'
+  //   const tail = '\n-----END PUBLIC KEY-----'
 
-    if (!/\\n$/.test(key)) {
-      key += '\n';
-    }
+  //   for (var i = 0; i < raw.length; i++) {
+  //     if ((i % 64) === 0) {
+  //       key += '\n';
+  //     }
+  //     key += raw.charAt(i);
+  //   }
 
-    return `${formats[format].head}${key}${formats[format].tail}`.trim();
-  }
+  //   if (!/\\n$/.test(key)) {
+  //     key += '\n';
+  //   }
+
+  //   return `${head}${key}${tail}`.trim();
+  // }
+
+  // armor (base64Str, format='pk') {
+  //   // pk = public key
+  //   // sig = signature
+  //   if (!base64Str || !format) {
+  //     throw new Error(ERR.ARG_REQ_BASE64_STR)
+  //   }
+
+  //   const formats = {
+  //     pk: {
+  //       head: '-----BEGIN PUBLIC KEY-----\n',
+  //       tail: '\n-----END PUBLIC KEY-----'
+  //     },
+  //     sig: {
+  //       head: '-----BEGIN PGP MESSAGE-----\n',
+  //       tail: '\n-----END PGP MESSAGE-----'
+  //     }
+  //   }
+
+  //   let key = ''
+
+  //   for (var i = 0; i < base64Str.length; i++) {
+  //     if ((i % 64) === 0) {
+  //       key += '\n';
+  //     }
+  //     key += base64Str.charAt(i);
+  //   }
+
+  //   if (!/\\n$/.test(key)) {
+  //     key += '\n';
+  //   }
+
+  //   return `${formats[format].head}${key}${formats[format].tail}`.trim();
+  // }
 
   get peerId () {
     return this._node._peerInfo.id._idB58String

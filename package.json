@@ -48,8 +48,10 @@
     "watchify": "^3.11.0"
   },
   "dependencies": {
+    "@protobufjs/base64": "^1.1.2",
     "armor-gpg-key": "^1.0.0",
     "base64-arraybuffer": "^0.1.5",
+    "base64-to-uint8array": "^1.0.0",
     "btoa": "^1.2.1",
     "buffer": "^5.2.1",
     "eslint": "^5.6.0",

@@ -12,6 +12,7 @@
   "author": "Doctor Zhivago",
   "license": "MIT",
   "dependencies": {
+    "base64-to-uint8array": "^1.0.0",
     "blockies-npm": "0.0.1",
     "clipboard": "^1.7.1",
     "qrcode-generator": "^1.4.1",
