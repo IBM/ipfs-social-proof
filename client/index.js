@@ -242,7 +242,47 @@ function splash () {
     </div>`
 }
 
+function proofDetail (proofHash) {
+  function close (event) {
+    let origNode = document.querySelector('#modal')
+    let modal = html`<div id="modal" class="w-80"></div>`
+    html.update(origNode, modal)
+  }
+
+  function remove (event) {
+    alert('remove unimplimented')
+  }
+
+  // get the proof detail:
+  let proof = IpfsID.proofData[proofHash]
+
+  return html
+    `<div id="modal" class="w-80"><article id="proof-card"
+          class="center bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
+       <div><img class="h1" onclick=${close} src="./img/close.svg" /></div>
+       <div class="tc">
+         <div><img class="h1" title="Delete this Proof"
+                   onclick=${remove}
+                   src="./img/trash.svg" /></div>
+           <h1 class="f5 code">
+             ${proofHash}
+           </h1>
+         </div>
+         <textarea disabled
+                   class="code lh-copy measure center f7 pa2 black-70 h5 overflow-auto ba b--black-20">${JSON.stringify(IpfsID.getProof(proofHash), null, 2)}</textarea>
+          </article></div>`
+}
+
 function proofList (state) {
+  function viewProof (event) {
+    let hash = event.target.dataset.hash
+    let detailUI = proofDetail(hash)
+    // XXX: use update on modal via a new modal node created here on the fly
+    // document.querySelector('#modal').appendChild(detailUI)
+    let origNode = document.querySelector('#modal')
+    html.update(origNode, detailUI)
+  }
+
   let list = []
   if (!state) {
     // default view
@@ -251,11 +291,18 @@ function proofList (state) {
     return html`
       <div id="proof-list"
            class="_proof_tab_ w-90 center pv4 bg-near-white">
-      <ul class="list pl4 mt0">
-        ${list.map(function (item) {
-          return html`<li class="pv2"><span class="fw6">${item.proof.proof.message.username}@${item.proof.proof.message.service}</span> <span class="fw1 f7 code"> <a target="_new" href="https://ipfs.io/ipfs/${item.hash}">/ipfs/${item.hash}</a></span></li>`
-        })}
-      </ul></div>`
+        <table class="w-100 collapse pl4 mt0 ba b--black-10">
+          ${list.map(function (item) {
+            return html`
+              <tr class="pv2 striped--light-gray">
+                <td><img src="img/eye.svg"
+                         onclick=${viewProof}
+                         data-hash="${item.hash}" class="h1 ph2" /></td>
+                <td class="f6">${item.proof.proof.message.username}@${item.proof.proof.message.service}</td><td class="ipfs-url fw1 f7 code"><a target="_new" href="https://ipfs.io/ipfs/${item.hash}" title="${item.hash}">/ipfs/${item.hash}</a></td>
+              </tr>`
+            })}
+          </table>
+       </div>`
   }
 }
 
