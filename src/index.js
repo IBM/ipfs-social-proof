@@ -625,17 +625,20 @@ class IpfsIdentity {
       }
     }
 
-    if (message.command) {
-      if (message.command === 'response:credentials') {
-        // a peer has sent their public key and handle to us
-        if (this._uiEventHandlers['updatePeerProfile']) {
-          this._uiEventHandlers['updatePeerProfile'](message.credentials)
-        }
+    if (message.command === 'response:credentials') {
+      // a peer has sent their public key and handle to us
+      if (this._uiEventHandlers['updatePeerProfile']) {
+        this._uiEventHandlers['updatePeerProfile'](message.credentials)
       }
     }
 
     if (event === 'peer joined') {
       // return this.roomApi.reqCredentials(message.peerId)
+    }
+
+    if (event === 'subscribed') {
+      // lets broadcast our idData to the room to update all peers with more than just an IPPS hash
+      this.broadcastProfile()
     }
   }
 
