@@ -934,7 +934,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('UI peer left', message)
         message.event = 'Peer Left'
         logMessage(message)
-        IpfsID._knownPeers[message.peerId].connected = false
         // TODO: update the UI to reflect disconnection
       },
 

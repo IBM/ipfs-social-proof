@@ -661,6 +661,7 @@ class IpfsIdentity {
       this._room.on('peer joined', (peer) => {
         console.log('Peer joined the room', peer)
         that.triggerRoomEvent('peer joined', { peerId: peer, ipfsId: that })
+        this.broadcastProfile()
       })
 
       this._room.on('peer left', (peer) => {
@@ -671,7 +672,8 @@ class IpfsIdentity {
       // now started to listen to room
       this._room.on('subscribed', () => {
         console.log('Now connected!')
-        that.triggerRoomEvent('subscribed', { ipfsId: that })
+        this.broadcastProfile()
+        // that.triggerRoomEvent('subscribed', { ipfsId: that })
       })
 
       this._room.on('message', (message) => {
