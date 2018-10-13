@@ -233,12 +233,31 @@ class IpfsIdentity {
     let hashes = Object.keys(this._proofData)
     let results = []
     hashes.forEach((hash, idx) => {
-      results.push({ hash: hash,
-                     proof: JSON.parse(a2t(that._proofData[hash]))
-                   })
+      results.push(
+        { hash: hash,
+          proof: JSON.parse(a2t(that._proofData[hash]))
+        })
     })
 
     return results
+  }
+
+  deleteProof (hash, callback) {
+    const that = this
+    // delete from db
+    this.proofDB.del(hash, (err, res) => {
+      if (err) {
+        return callback(err, res)
+      }
+      // delete from cache:
+      try {
+        delete that._proofData[hash]
+        that._uiEventHandlers['proof-deleted']()
+      } catch (ex) {
+        console.error(ex)
+      }
+      return callback(err, res)
+    })
   }
 
   initProofDb () {

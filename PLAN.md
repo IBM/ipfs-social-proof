@@ -33,3 +33,13 @@
 * Public, verifiable, web home page
 * Secure storage of private key material / IDENTITY json data in hardware wallet?
 
+### Plugins
+
+## Registry of topics: "subreddits", need name here
+
+### Subscribe to multiple "subs"
+
+#### devise a posting auth / ident mechanism
+
+* posts are merely JSON docs stored in IPFS, pinned and ipns name issued
+* use CRDT to sync post hashes

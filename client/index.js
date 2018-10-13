@@ -242,15 +242,68 @@ function splash () {
     </div>`
 }
 
-function proofDetail (proofHash) {
-  function close (event) {
-    let origNode = document.querySelector('#modal')
-    let modal = html`<div id="modal" class="w-80"></div>`
-    html.update(origNode, modal)
+function confirmProceed (detailsConf, proceedFunc) {
+  // detailsConf: { headline: 'are you sure?',
+  //                details: 'if you confirm...'
+  //                proceedLabel: 'Delete and stuff' }
+  // proceedFunc: operational function to proceed
+
+  //
+  function proceedAndClose () {
+    proceedFunc(closeConfModal)
   }
 
-  function remove (event) {
-    alert('remove unimplimented')
+  const newNode = html
+    `<div id="confirmation-modal" class="w-60">
+       <article class="shadow-1 center bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
+         <div>
+           <img title="Close" class="h1" onclick=${closeConfModal} src="./img/close.svg" />
+         </div>
+         <div class="tc">
+            <h1 class="f5 code">${detailsConf.headline}</h1>
+            <div>
+             <p class="mv4">${detailsConf.details || ''}</p>
+              <a title="Close"
+                 class="no-underline f6 ph3 pv3 bn bg-animate bg-dark-red hover-bg-light-red white pointer w-100 w-25-m w-20-l br2-ns br--all-ns f5-l"
+                 onclick=${proceedAndClose}>${detailsConf.proceedLabel}</a>
+              </div>
+         </div>
+       </article>
+     </div>`
+  html.update(document.querySelector('#confirmation-modal'), newNode)
+}
+
+function closeModal (event) {
+  let origNode = document.querySelector('#modal')
+  let modal = html`<div id="modal" class="w-80"></div>`
+  html.update(origNode, modal)
+}
+// XXX: genericize this close modal function
+function closeConfModal (err, result) {
+  if (err) {
+    return notify.error(err)
+  }
+
+  let origNode = document.querySelector('#confirmation-modal')
+  let modal = html`<div id="confirmation-modal" class="w-60"></div>`
+  html.update(origNode, modal)
+  origNode = document.querySelector('#modal')
+  modal = html`<div id="modal" class="w-80"></div>`
+  html.update(origNode, modal)
+}
+
+function proofDetail (proofHash) {
+
+  function deleteProof(callback) {
+    window.IpfsID.deleteProof(proofHash, callback)
+  }
+
+  function remove () {
+    // debugger;
+    confirmProceed({ headline: 'Are you sure you want to delete this proof?',
+                     details: 'You can easily create this proof again later',
+                     proceedLabel: 'Delete'
+                   }, deleteProof)
   }
 
   // get the proof detail:
@@ -259,12 +312,13 @@ function proofDetail (proofHash) {
   return html
     `<div id="modal" class="w-80"><article id="proof-card"
           class="center bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
-       <div><img class="h1" onclick=${close} src="./img/close.svg" /></div>
+       <div><img title="Close" class="h1" onclick=${closeModal} src="./img/close.svg" /></div>
        <div class="tc">
            <h1 class="f5 code">
-             <span class="mr2"><img class="h1" title="Delete this Proof"
-                        onclick=${remove}
-                        src="./img/trash.svg" /></span>
+             <span class="mr2">
+               <img class="h1" title="Delete this Proof"
+                    onclick=${remove}
+                    src="./img/trash.svg" /></span>
              ${proofHash}
            </h1>
          </div>
@@ -836,6 +890,14 @@ document.addEventListener('DOMContentLoaded', () => {
         })
 
         updateFavicon(ipfsId.peerId)
+      },
+
+      'proof-deleted': () => {
+        // reload the proofUI
+        let nodeId = 'proof-list'
+        let existing = document.querySelector(`#${nodeId}`)
+        let newUi = proofList()
+        html.update(existing, newUi)
       },
 
       'peer joined': (message) => {
