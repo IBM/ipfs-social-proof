@@ -261,10 +261,10 @@ function proofDetail (proofHash) {
           class="center bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
        <div><img class="h1" onclick=${close} src="./img/close.svg" /></div>
        <div class="tc">
-         <div><img class="h1" title="Delete this Proof"
-                   onclick=${remove}
-                   src="./img/trash.svg" /></div>
            <h1 class="f5 code">
+             <span class="mr2"><img class="h1" title="Delete this Proof"
+                        onclick=${remove}
+                        src="./img/trash.svg" /></span>
              ${proofHash}
            </h1>
          </div>
@@ -298,7 +298,7 @@ function proofList (state) {
                 <td><img src="img/eye.svg"
                          onclick=${viewProof}
                          data-hash="${item.hash}" class="h1 ph2" /></td>
-                <td class="f6">${item.proof.proof.message.username}@${item.proof.proof.message.service}</td><td class="ipfs-url fw1 f7 code"><a target="_new" href="https://ipfs.io/ipfs/${item.hash}" title="${item.hash}">/ipfs/${item.hash}</a></td>
+                <td class="f6">${item.proof.proof.message.username}@${item.proof.proof.message.service}</td><td class="w-50 ipfs-url fw1 f7 code"><a target="_new" href="https://ipfs.io/ipfs/${item.hash}" title="${item.hash}">/ipfs/${item.hash}</a></td>
               </tr>`
             })}
           </table>
