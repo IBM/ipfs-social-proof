@@ -641,6 +641,8 @@ function updatePeerProfile (profileObj) {
     return
   }
 
+  profileObj.updated = Date.now()
+
   const id = `#peer-profile-${profileObj.peerId}`
   const existingNode = document.querySelector(id)
   if (!existingNode) {
@@ -653,12 +655,13 @@ function updatePeerProfile (profileObj) {
   // in order to perform an `update`
   // has the profile changed?
   let handle = existingNode.querySelector('#profile-handle').textContent
-  if (handle != profileObj.handle) {
 
+  if (handle != profileObj.handle) {
     // update peer info by removal and prepend as the peer could be sending new metadata
-    existingNode.parentNode.removeChild(existingNode)
+    // existingNode.parentNode.removeChild(existingNode)
     // re-display updated peer profile
-    peerProfile(profileObj)
+    let newNode = peerProfile(profileObj)
+    html.update(existingNode, newNode)
   }
 }
 
@@ -726,8 +729,11 @@ function peerProfile (profile) {
         </div>
       </div>
     </article>`
-
-  document.querySelector('#listen').prepend(profileHtml)
+  if (!profile.updated) {
+    document.querySelector('#listen').prepend(profileHtml)
+  } else {
+    return profileHtml
+  }
 }
 
 function publicKeyCard (profile) {
@@ -907,19 +913,26 @@ document.addEventListener('DOMContentLoaded', () => {
         // Display peer profile card
         // We want to replace the peers on `peer join`
         // TODO: remove peers on `peer left`
-        updatePeerProfile({
+        let profile = {
           peerId: message.peerId,
           clientPeerId: message.ipfsId.peerId,
           name: message.name || null,
           handle: message.handle || null,
-          canFollow: true
-        })
+          canFollow: true,
+          connected: true
+        }
+
+        updatePeerProfile(profile)
+
+        IpfsID._knownPeers[message.peerId] = profile
       },
 
       'peer left': (message) => {
         console.log('UI peer left', message)
         message.event = 'Peer Left'
         logMessage(message)
+        IpfsID._knownPeers[message.peerId].connected = false
+        // TODO: update the UI to reflect disconnection
       },
 
       'subscribed': (message) => {
@@ -933,7 +946,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('UI message', message)
         message.event = 'Message Rcvd'
         let _msg = JSON.parse(message.data)
-        if (_msg.profileUpdated) {
+        if (_msg.updated) {
           updatePeerProfile(_msg)
         }
         if (_msg.messageTtype) {

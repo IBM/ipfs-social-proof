@@ -98,7 +98,7 @@ class IpfsIdentity {
   broadcastProfile () {
     const roomApi = this.roomApi
     let idData = this.idData
-    idData.profileUpdated = Date.now()
+    idData.updated = Date.now()
     roomApi.broadcast(idData)
     console.log('Broadcast: ', idData)
   }
@@ -107,7 +107,7 @@ class IpfsIdentity {
     const that = this
     let accountHandle = null
     this._firstRun = false
-
+    this._knownPeers = {}
     // get handle to proof data, populate local in-memory
     //     _proofsData via EventEmitter
     this._proofData = {}
