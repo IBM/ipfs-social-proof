@@ -666,6 +666,7 @@ function updatePeerProfile (profileObj) {
 }
 
 function peerProfile (profile) {
+
   const icon = avatar(profile.peerId)
   var name, handle, canFollow = true
   const DEFAULT_PROFILE_NAME = 'Another Noob'
@@ -729,8 +730,10 @@ function peerProfile (profile) {
         </div>
       </div>
     </article>`
-  if (!profile.updated) {
+  let existingNode = document.querySelector(`#peer-profile-${profile.peerId}`)
+  if (!existingNode) {
     document.querySelector('#listen').prepend(profileHtml)
+    return
   } else {
     return profileHtml
   }
@@ -949,8 +952,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (_msg.updated) {
           updatePeerProfile(_msg)
         }
-        if (_msg.messageTtype) {
-          if (_msg.messageTtype === DIRECT) {
+        if (_msg.messageType) {
+          if (_msg.messageType === DIRECT) {
             handleDirectMessage(_msg)
           }
         }
