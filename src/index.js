@@ -84,6 +84,10 @@ class IpfsIdentity {
     this._idData = idData
   }
 
+  get defaultTopic () {
+    return DEFAULT_REPO_NAME
+  }
+
   get idData () {
     let profile = this._idData
     profile.peerId = this.peerId

@@ -9,7 +9,8 @@
     "serve_test": "http-server test -a 127.0.0.1 -p 8899",
     "start": "npm run bundle && echo 'Bundle complete at ./bundle.js'",
     "test_bundle": "browserify test/index.js > test/bundle.js",
-    "test": "./node_modules/karma/bin/karma start karma.conf.js"
+    "test:browser": "./node_modules/karma/bin/karma start karma.conf.js",
+    "test": "mocha"
   },
   "keywords": [
     "ipfs",
