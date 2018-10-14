@@ -159,7 +159,7 @@ function idUI (ipfsID, handle) {
   }
 
   return html`
-    <article id="identity-app" class="_view_ center mw7 br3 ba b--black-10 mv4">
+    <article id="identity-app" class="_view_ w-80 center mw7 br3 ba b--black-10 mv4">
       <div class="mh4 mt4 w-100 flex">
         <span id="identity-blocky"
               class="flex"
@@ -200,7 +200,7 @@ function idUI (ipfsID, handle) {
         <p class="f6 f5-ns lh-copy">
           <div class="w-100 mr3 ml3 f6 code">IPFS RSA Public Key (dehydrated) [signing only]</div>
           <textarea disabled
-                    class="lh-copy code f7 ma3 bg-white br3 ph3 pv2 mb2 overflow-auto"
+                    class="h5 flex w-80 lh-copy code f7 ma3 bg-white br3 ph3 pv2 mb2 overflow-auto"
                     title="IPFS Public Key [Signing Only]">${ipfsID.pubKeyDehydrated}</textarea>
         </p>
       </div>
@@ -280,7 +280,7 @@ function closeModal (event) {
 }
 // XXX: genericize this close modal function
 function closeConfModal (err, result) {
-  if (err) {
+  if (err && !err.target) {
     return notify.error(err)
   }
 
@@ -311,10 +311,10 @@ function proofDetail (proofHash) {
 
   return html
     `<div id="modal" class="w-80"><article id="proof-card"
-          class="center bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
+          class="w-60 shadow-1 center bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
        <div><img title="Close" class="h1" onclick=${closeModal} src="./img/close.svg" /></div>
        <div class="tc">
-           <h1 class="f5 code">
+           <h1 class="f5 code mv4">
              <span class="mr2">
                <img class="h1" title="Delete this Proof"
                     onclick=${remove}
@@ -323,7 +323,7 @@ function proofDetail (proofHash) {
            </h1>
          </div>
          <textarea disabled
-                   class="code lh-copy measure center f7 pa2 black-70 h5 overflow-auto ba b--black-20">${JSON.stringify(IpfsID.getProof(proofHash), null, 2)}</textarea>
+                   class="flex w-100 h4 code lh-copy center f7 pa2 black-70 h5 overflow-auto ba b--black-20">${JSON.stringify(IpfsID.getProof(proofHash), null, 2)}</textarea>
           </article></div>`
 }
 
@@ -424,7 +424,7 @@ function proof (proofData) {
   }
 
   return html`
-    <article id="proof" class="_view_ center mw7 mw7-ns br3 ba b--black-10 mv4">
+    <article id="proof" class="w-80 _view_ center mw7 mw7-ns br3 ba b--black-10 mv4">
       <div class="mw7 mw7-ns overflow-hidden">
         <div id="proof-tabs" data-current="create-proof"
              class="f6 bb bw1 b--black-10 flex">
@@ -479,7 +479,7 @@ function proof (proofData) {
           </fieldset>
           <div id="proof-preview" class="w-100 center pa0">
             <textarea id="proof-preview-display"
-                      class="code lh-copy f7 bg-white br2 w-100"></textarea>
+                      class="flex h5 w-80 code lh-copy f7 bg-white br2 w-100"></textarea>
             <div class="lh-copy mt3 ph3">
               <a href="#"
                  title="Copy proof to clipboard"
@@ -593,7 +593,7 @@ function listen () {
 
   return html`
     <article id="listen"
-             class="_view_ center mw7 mw7-ns br3 ba b--black-10 mv4">
+             class="w-80 _view_ center mw7 mw7-ns br3 ba b--black-10 mv4">
     </article>`
 }
 
@@ -602,7 +602,7 @@ function logUi () {
   return html`
     <article id="log-ui"
              style=""
-             class="hidden _view_ bg-black-90 w-90 center mw7 mw7-ns br3 ba b--black-10 mv4">
+             class="hidden _view_ bg-black-90 w-80 center mw7 mw7-ns br3 ba b--black-10 mv4">
       <div id="log-output"
            class="f7 pa3 green code overflow-auto lh-copy overflow-scroll"
            style="word-break: break-word; min-height: 300px; max-height: 500px;">
@@ -749,7 +749,7 @@ function publicKeyCard (profile) {
 
   return html`
     <article id="public-key-card"
-             class="center bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
+             class="center w-60 shadow-1 bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
       <div><img class="h1" onclick=${close} src="./img/close.svg" /></div>
       <div class="tc">
         <div>${icon}</div>
@@ -761,7 +761,7 @@ function publicKeyCard (profile) {
       <p class="code lh-copy measure center f7 pa2 black-70 h3 overflow-auto ba b--black-20">
         ${profile.bio || 'No bio available'}
       </p>
-      <textarea disabled class="code lh-copy measure center f7 pa2 black-70 h5 overflow-auto ba b--black-20">${profile.publicKey || 'No shared public key available'}</textarea>
+      <textarea disabled class="flex h4 w-80 code lh-copy measure center f7 pa2 black-70 h5 overflow-auto ba b--black-20">${profile.publicKey || 'No shared public key available'}</textarea>
     </article>`
 }
 

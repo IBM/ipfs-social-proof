@@ -19,64 +19,60 @@
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-    textarea {
-       min-width: 40rem;
-       min-height: 12rem;
-   }
-   #main {
-       margin-top: 4rem;
-   }
-   #notifications {
-       position: absolute;
-       top: 4rem;
-       right: 1rem;
-       z-index: 100;
-   }
-   ._notification_ {
-       min-width: inherit;
-   }
-   #splash-wrapper img {
-       transition: all 1.5s; /* <-- adjust fade time */
-   }
-   .splash-img {
-       opacity: 0; /* <-- initally set for 0 opacity */
-   }
-   .splash-visible {
-       opacity: 1; /* <-- set opacity to 1 to fade in */
-   }
-   #modal {
-       position: absolute;
-       top: 4rem;
-       right: 3rem;
-       z-index: 80;
-   }
-   #confirmation-modal {
-       position: absolute;
-       top: 6rem;
-       right: 7rem;
-       z-index: 90;
-   }
+    #main {
+        margin-top: 4rem;
+    }
+    #notifications {
+        position: absolute;
+        top: 4rem;
+        right: 1rem;
+        z-index: 100;
+    }
+    ._notification_ {
+        min-width: inherit;
+    }
+    #splash-wrapper img {
+        transition: all 1.5s; /* <-- adjust fade time */
+    }
+    .splash-img {
+        opacity: 0; /* <-- initally set for 0 opacity */
+    }
+    .splash-visible {
+        opacity: 1; /* <-- set opacity to 1 to fade in */
+    }
+    #modal {
+        position: absolute;
+        top: 4rem;
+        right: 3rem;
+        z-index: 80;
+    }
+    #confirmation-modal {
+        position: absolute;
+        top: 6rem;
+        right: 7rem;
+        z-index: 90;
+    }
   </style>
   <body class="w-100 sans-serif bg-near-white">
     <div id="nav-parent" class="fl w-100">
       <div id="nav"></div>
     </div>
-    <div id="modal" class="w-80"></div>
-    <div id="confirmation-modal" class="w-60"></div>
+    <div id="modal" class="w-50"></div>
+    <div id="confirmation-modal" class="w-40"></div>
     <div id="notifications" class="w-60"></div>
     <div id="main" class="fl w-100 pt3">
       <article id="splash" class="_view_"></article>
       <article id="identity-app"
-               class="_view_"
+               class="_view_ w-80"
                style="display:none;"></article>
       <article id="proof"
-               class="_view_"
+               class="_view_ w-80"
                style="display:none;"></article>
       <article id="listen"
-               class="_view_"
+               class="_view_ w-80"
                style="display:none;"></article>
       <article id="log-ui"
-               class="_view_"
+               class="_view_ w-80"
                style="display:none;"></article>
     </div>
   </body>
