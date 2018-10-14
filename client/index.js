@@ -380,12 +380,17 @@ function proofList (state) {
            class="_proof_tab_ w-90 center pv4 bg-near-white">
         <table class="w-100 collapse pl4 mt0 ba b--black-10">
           ${list.map(function (item) {
+             let proofUrl = ''
+             let proofUrlObj = window.IpfsID.getProofUrl(item.hash) || null
+             if (proofUrlObj) {
+               proofUrl = proofUrlObj.proof.url
+             }
             return html`
               <tr class="pv2 striped--light-gray">
                 <td><img src="img/eye.svg"
                          onclick=${viewProof}
                          data-hash="${item.hash}" class="h1 ph2" /></td>
-                <td class="f6">${item.proof.proof.message.username}@${item.proof.proof.message.service}</td><td class="w-50 ipfs-url fw1 f7 code"><a target="_new" href="https://ipfs.io/ipfs/${item.hash}" title="${item.hash}">/ipfs/${item.hash}</a></td>
+      <td class="f6">${item.proof.proof.message.username}@${item.proof.proof.message.service}</td><td class="ipfs-url fw1 f7 code"><a href="${proofUrl}" target="_new">${proofUrl}</a></td><td class="ipfs-url fw1 f7 code"><a target="_new" href="https://ipfs.io/ipfs/${item.hash}" title="${item.hash}">/ipfs/${item.hash}</a></td>
               </tr>`
             })}
           </table>
