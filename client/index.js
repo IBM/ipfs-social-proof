@@ -1,11 +1,12 @@
 'use strict'
 
-const { IpfsIdentity, start, checkForAccount } = require('../src/index')
+const { IpfsIdentity, start, checkForAccount } = require('../src/')
 
 const html = require('yo-yo')
 const qrcode = require('qrcode-generator')
 const Clipboard = require('./node_modules/clipboard/dist/clipboard.min')
-const createIcon = require('blockies-npm');
+const createIcon = require('blockies-npm')
+const validUrl = require('valid-url')
 
 const APP_NAME = 'Autonomica'
 const VIEW_IDENT = 'identity-app'
@@ -209,11 +210,6 @@ function idUI (ipfsID, handle) {
 
 function splash () {
   return html`
-    <div>
-      <article id="splash-wrapper" style="text-align: center;"
-               class="_view_ center mw7-ns br3 ba b--black-10 mv4 mb20 pa4">
-        <img src="img/autonomica.jpg" class="splash-img" />
-      </article>
       <article id="splash" class="_view_ center mw7-ns br3 ba b--black-10 mv4">
         <h1 class="f4 bg-near-white br3 br--top black-60 mv0 pv2 ph3">
           ${APP_NAME} is an experiment
@@ -238,8 +234,7 @@ function splash () {
             Once an Identity is proven and tied to other systems, it becomes more familiar and trustworthy to use with IPFS, its APIs and systems that are being built upon it.
           </p>
         </div>
-      </article>
-    </div>`
+      </article>`
 }
 
 function confirmProceed (detailsConf, proceedFunc) {
@@ -255,12 +250,12 @@ function confirmProceed (detailsConf, proceedFunc) {
 
   const newNode = html
     `<div id="confirmation-modal" class="w-60">
-       <article class="shadow-1 center bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
+       <article class="w-80 shadow-1 center bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
          <div>
            <img title="Close" class="h1" onclick=${closeConfModal} src="./img/close.svg" />
          </div>
          <div class="tc">
-            <h1 class="f5 code">${detailsConf.headline}</h1>
+            <h1 class="f7 code">${detailsConf.headline}</h1>
             <div>
              <p class="mv4">${detailsConf.details || ''}</p>
               <a title="Close"
@@ -299,28 +294,66 @@ function proofDetail (proofHash) {
   }
 
   function remove () {
-    // debugger;
-    confirmProceed({ headline: 'Are you sure you want to delete this proof?',
-                     details: 'You can easily create this proof again later',
-                     proceedLabel: 'Delete'
-                   }, deleteProof)
+      confirmProceed({
+          headline: 'Are you sure you want to delete this proof?',
+          details: 'You can easily create this proof again later',
+          proceedLabel: 'Delete'
+      }, deleteProof)
   }
 
   // get the proof detail:
-  let proof = IpfsID.proofData[proofHash]
+  let proof = IpfsID.getProof(proofHash)
+  // get the published 'proof urls'
+  let proofUrl = null
+  let _proofUrl = IpfsID.getProofUrl(proofHash)
+  if (_proofUrl) {
+    proofUrl = _proofUrl.proof.url
+  }
+
+  function saveProofUrl () {
+    let url = document.querySelector('#save-proof-url').value
+    let hash = document.querySelector('#proof-hash').textContent
+    // npm install valid-url
+    if (!validUrl.isUri(url)) {
+      return notify.error('Please enter a URL')
+    }
+    if (!hash) {
+      return notify.error('IPFS Hash required')
+    }
+
+    window.IpfsID.saveProofUrl(hash, url).
+        then((res) => {
+          return notify.success('Url saved')
+        }).catch((ex) => {
+          console.error(ex)
+          return notify.error('Url save failed')
+        })
+  }
 
   return html
     `<div id="modal" class="w-80"><article id="proof-card"
           class="w-60 shadow-1 center bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
        <div><img title="Close" class="h1" onclick=${closeModal} src="./img/close.svg" /></div>
-       <div class="tc">
-           <h1 class="f5 code mv4">
+       <div class="tc mv3">
+           <div class="flex-justify-between f7 code mv2">
+             <span id="proof-hash">${proofHash}</span>
              <span class="mr2">
-               <img class="h1" title="Delete this Proof"
+               <img class="h1 ml4" title="Delete this Proof"
                     onclick=${remove}
-                    src="./img/trash.svg" /></span>
-             ${proofHash}
-           </h1>
+                    src="./img/trash.svg" />
+             </span>
+           </div>
+           <div class="flex-justify-between f7 code mv2">
+             <input class="f7 pa2 code w-70"
+                    title="Enter a published proof URL"
+                    id="save-proof-url"
+                    name="save-proof-url" value=${proofUrl || ''} />
+             <img title="Save published proof URL"
+                  class="h1 mh2"
+                  src="img/save.svg"
+                  onclick=${saveProofUrl} />
+           </div>
+
          </div>
          <textarea disabled
                    class="flex w-100 h4 code lh-copy center f7 pa2 black-70 h5 overflow-auto ba b--black-20">${JSON.stringify(IpfsID.getProof(proofHash), null, 2)}</textarea>
@@ -486,7 +519,7 @@ function proof (proofData) {
                  class="link dim"
                  data-clipboard-target="#proof-preview-display"
                  id="proof-copy">
-                <img class="h1 pr2" src="./img/clippy.svg"/>
+                <img class="h1 pr2" src="./img/copy.svg"/>
               </a>
 
               <a class="no-underline f6 ph3 pv3 bn bg-animate bg-black-70 hover-bg-black white pointer w-100 w-25-m w-20-l br2-ns br--all-ns f5-l"
@@ -725,7 +758,7 @@ function peerProfile (profile) {
         <div class="tr w-100 pr3">
           <img title="Examine Public Key"
                class="pt1 dim pointer h2"
-               src="./img/key.svg"
+               src="./img/key-alt.svg"
                onclick=${evtExaminePubKey} />
         </div>
       </div>
@@ -753,7 +786,7 @@ function publicKeyCard (profile) {
       <div><img class="h1" onclick=${close} src="./img/close.svg" /></div>
       <div class="tc">
         <div>${icon}</div>
-        <h1 class="f5 code">
+        <h1 class="f7 code">
           ${profile.handle || profile.peerId}
         </h1>
         <hr class="mw5 bb bw1 b--black-10" />
@@ -797,7 +830,7 @@ const notify = {
   },
   notifyUI: (headline, message, mode) => {
     return html`
-      <p class="_notification_ f7 w-90 ba br2 pa3 ma2 ${notify.modes[mode]} bg-washed-${notify.modes[mode]}"
+      <p class="_notification_ f7 w-50 ba br2 pa3 ma2 ${notify.modes[mode]} bg-washed-${notify.modes[mode]}"
          role="alert">
         <strong>${headline}</strong> ${message}
       </p>`
@@ -843,132 +876,131 @@ document.addEventListener('DOMContentLoaded', () => {
   const _nav = document.querySelector('#nav')
   html.update(_nav, nav())
 
-  const _proof = document.querySelector('#proof')
-  html.update(_proof, proof())
+  window.setTimeout(() => {
+    const _proof = document.querySelector('#proof')
+    html.update(_proof, proof())
 
-  const splashNode = document.querySelector('#splash')
-  html.update(splashNode, splash())
-  document.querySelector('#splash-wrapper img').classList.add('splash-visible')
-  document.querySelector('#splash-wrapper img').classList.remove('splash-img')
+    const splashNode = document.querySelector('#splash')
+    html.update(splashNode, splash())
 
+    const listenView = document.querySelector('#listen')
+    html.update(listenView, listen())
 
-  const listenView = document.querySelector('#listen')
-  html.update(listenView, listen())
+    const logView = document.querySelector('#log-ui')
+    html.update(logView, logUi())
 
-  const logView = document.querySelector('#log-ui')
-  html.update(logView, logUi())
+    //Default
+    let HANDLE = `DWeb Enthusiast`
 
-  //Default
-  let HANDLE = `DWeb Enthusiast`
-
-  checkForAccount((err, account) => {
-    if (err) {
-      // no account
-      console.log(err)
-    }
-    if (account) {
-      HANDLE = account.handle
-    }
-    start(HANDLE, {
-      startComplete: (ipfsId) => {
-        console.log(ipfsId.idData)
-        const ui = idUI(ipfsId, ipfsId.idData.handle)
-        html.update(document.querySelector(`#${VIEW_IDENT}`), ui)
-
-        var clip = new Clipboard('#proof-copy');
-
-        clip.on("success", () => {
-          // Notifications !
-          notify.info('Copied to clipboard')
-        });
-        clip.on("error", () => {
-          console.info('error copying to clipboard')
-        });
-
-        let qrCode = makeQrCode(ipfsId.peerId)
-        document.querySelector('#qr-code').innerHTML = qrCode
-        view(VIEW_IDENT)
-
-        peerProfile({
-          peerId: ipfsId.peerId,
-          clientPeerId: ipfsId.peerId,
-          name: ipfsId.idData.handle,
-          handle: ipfsId.idData.handle,
-          canFollow: true,
-          self: true
-        })
-
-        updateFavicon(ipfsId.peerId)
-      },
-
-      'proof-deleted': () => {
-        // reload the proofUI
-        let nodeId = 'proof-list'
-        let existing = document.querySelector(`#${nodeId}`)
-        let newUi = proofList()
-        html.update(existing, newUi)
-      },
-
-      'peer joined': (message) => {
-        console.log('UI peer joined', message)
-        message.event = 'Peer Joined'
-        logMessage(message)
-        // Display peer profile card
-        // We want to replace the peers on `peer join`
-        // TODO: remove peers on `peer left`
-        let profile = {
-          peerId: message.peerId,
-          clientPeerId: message.ipfsId.peerId,
-          name: message.name || null,
-          handle: message.handle || null,
-          canFollow: true,
-          connected: true
-        }
-
-        updatePeerProfile(profile)
-
-        IpfsID._knownPeers[message.peerId] = profile
-      },
-
-      'peer left': (message) => {
-        console.log('UI peer left', message)
-        message.event = 'Peer Left'
-        logMessage(message)
-        // TODO: update the UI to reflect disconnection
-      },
-
-      'subscribed': (message) => {
-        console.log('UI subscribed', message)
-        message.event = 'Subscribed to Room'
-        logMessage(message)
-      },
-
-      'message': (message) => {
-        const DIRECT = 'direct-message'
-        console.log('UI message', message)
-        message.event = 'Message Rcvd'
-        let _msg = JSON.parse(message.data)
-        if (_msg.updated) {
-          updatePeerProfile(_msg)
-        }
-        if (_msg.messageType) {
-          if (_msg.messageType === DIRECT) {
-            handleDirectMessage(_msg)
-          }
-        }
-        logMessage(_msg)
-      },
-      'updatePeerProfile': (profile) => {
-        let _profile = {
-          peerId: profile.peerId,
-          clientPeerId: null, // need this in this closure
-          name: null,
-          handle: profile.handle,
-          bio: profile.bio,
-          canFollow: true
-        }
-        updatePeerProfile(_profile)
+    checkForAccount((err, account) => {
+      if (err) {
+        // no account
+        console.log(err)
       }
+      if (account) {
+        HANDLE = account.handle
+      }
+      start(HANDLE, {
+        startComplete: (ipfsId) => {
+          console.log(ipfsId.idData)
+          const ui = idUI(ipfsId, ipfsId.idData.handle)
+          html.update(document.querySelector(`#${VIEW_IDENT}`), ui)
+
+          var clip = new Clipboard('#proof-copy');
+
+          clip.on("success", () => {
+            // Notifications !
+            notify.info('Copied to clipboard')
+          });
+          clip.on("error", () => {
+            console.info('error copying to clipboard')
+          });
+
+          let qrCode = makeQrCode(ipfsId.peerId)
+          document.querySelector('#qr-code').innerHTML = qrCode
+          view(VIEW_IDENT)
+
+          peerProfile({
+            peerId: ipfsId.peerId,
+            clientPeerId: ipfsId.peerId,
+            name: ipfsId.idData.handle,
+            handle: ipfsId.idData.handle,
+            canFollow: true,
+            self: true
+          })
+
+          updateFavicon(ipfsId.peerId)
+        },
+
+        'proof-deleted': () => {
+          // reload the proofUI
+          let nodeId = 'proof-list'
+          let existing = document.querySelector(`#${nodeId}`)
+          let newUi = proofList()
+          html.update(existing, newUi)
+        },
+
+        'peer joined': (message) => {
+          console.log('UI peer joined', message)
+          message.event = 'Peer Joined'
+          logMessage(message)
+          // Display peer profile card
+          // We want to replace the peers on `peer join`
+          // TODO: remove peers on `peer left`
+          let profile = {
+            peerId: message.peerId,
+            clientPeerId: message.ipfsId.peerId,
+            name: message.name || null,
+            handle: message.handle || null,
+            canFollow: true,
+            connected: true
+          }
+
+          updatePeerProfile(profile)
+
+          IpfsID._knownPeers[message.peerId] = profile
+        },
+
+        'peer left': (message) => {
+          console.log('UI peer left', message)
+          message.event = 'Peer Left'
+          logMessage(message)
+          // TODO: update the UI to reflect disconnection
+        },
+
+        'subscribed': (message) => {
+          console.log('UI subscribed', message)
+          message.event = 'Subscribed to Room'
+          logMessage(message)
+        },
+
+        'message': (message) => {
+          const DIRECT = 'direct-message'
+          console.log('UI message', message)
+          message.event = 'Message Rcvd'
+          let _msg = JSON.parse(message.data)
+          if (_msg.updated) {
+            updatePeerProfile(_msg)
+          }
+          if (_msg.messageType) {
+            if (_msg.messageType === DIRECT) {
+              handleDirectMessage(_msg)
+            }
+          }
+          logMessage(_msg)
+        },
+        'updatePeerProfile': (profile) => {
+          let _profile = {
+            peerId: profile.peerId,
+            clientPeerId: null, // need this in this closure
+            name: null,
+            handle: profile.handle,
+            bio: profile.bio,
+            canFollow: true
+          }
+          updatePeerProfile(_profile)
+        }
+      })
     })
-  })
-})
+  }, 4000) // setTimeout
+}) // DOMContentLoaded

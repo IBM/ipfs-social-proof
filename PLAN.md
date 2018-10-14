@@ -43,3 +43,7 @@
 
 * posts are merely JSON docs stored in IPFS, pinned and ipns name issued
 * use CRDT to sync post hashes
+
+### Embed Gists via <script> tage and Tweets via embed HTML for the Proofs to display inline on a user's profile
+
+## Manual validation UI to paste proof data that cnanot dynamically be fetched via a url / embed / script tag

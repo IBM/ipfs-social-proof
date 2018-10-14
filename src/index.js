@@ -26,6 +26,7 @@ const DEFAULT_REPO_NAME = 'IPFS_IDENTITY_SOCIAL_PROOF'
 const DEFAULT_ROOM_NAME = DEFAULT_REPO_NAME
 const DEFAULT_STORAGE_DB_NAME = 'SOCIAL_PROOF_DATA'
 const PROOFS_DB_NAME = 'SOCIAL_PROOF_DOCS'
+const PROOFS_URL_DB_NAME = 'SOCIAL_PROOF_URLS'
 const DB_ACCOUNT_KEY = 'ACCOUNT'
 const DB_PROOFS_KEY = 'PROOFS'
 const BROADCAST_INTERVAL_MS = 5000;
@@ -219,14 +220,47 @@ class IpfsIdentity {
     return level(`./${PROOFS_DB_NAME}`)
   }
 
+  get proofUrlDB () {
+    return level(`./${PROOFS_URL_DB_NAME}`)
+  }
+
+  get proofUrls () {
+    var that = this
+    let hashes = Object.keys(this._proofUrlData)
+    let results = []
+    hashes.forEach((hash, idx) => {
+      results.push(
+        { hash: hash,
+          proof: JSON.parse(a2t(that._proofUrlData[hash]))
+        })
+    })
+
+    return results
+  }
+
+  get proofUrlData () {
+    return this._proofUrlData
+  }
+
   get proofData () {
     return this._proofData
   }
 
   getProof (hash) {
+    // TODO: get the published URLs too
     let proof = JSON.parse(a2t(this._proofData[hash]))
     proof._hash = hash
     return proof
+  }
+
+  getProofUrl (hash) {
+    let url = null
+    this.proofUrls.forEach((item) => {
+      if (item.hash === hash) {
+        url = item
+      }
+    })
+    return url
   }
 
   getAllProofs () {
@@ -263,6 +297,22 @@ class IpfsIdentity {
 
   initProofDb () {
     const that = this
+    this._proofUrlData = {}
+    // get proof urls
+    this.proofUrlDB.createReadStream()
+      .on('data', function (data) {
+        console.log(data.key, '=', data.value)
+        that._proofUrlData[data.key] = data.value
+      }).on('error', function (err) {
+        console.error('Cannot read proofUrlDB stream: ', err)
+      })
+      .on('close', function () {
+        console.log('ProofUrlDB stream closed')
+      })
+      .on('end', function () {
+        console.log('ProofUrlDB stream ended')
+      })
+
     this.proofDB.createReadStream()
       .on('data', function (data) {
         console.log(data.key, '=', data.value)
@@ -308,6 +358,25 @@ class IpfsIdentity {
     this._proofData[hash] = proof
     // get the in-memory proof content
     return proof
+  }
+
+  async saveProofUrl (hash, url) {
+    let content = {
+      url: url,
+      hash: hash,
+      // ipns hash
+      ts: Date.now()
+    }
+
+    let urlRecord = Buffer.from(JSON.stringify(content))
+    let result = await this.proofUrlDB.put(hash, urlRecord)
+    this.proofUrlDB.get(hash, (err, res) => {
+      if (err) {
+        console.err(err)
+      } else {
+        this._proofUrlData[hash] = res
+      }
+    })
   }
 
   async saveProofToIpfs (content) {
