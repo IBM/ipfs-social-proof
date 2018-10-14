@@ -787,7 +787,7 @@ function publicKeyCard (profile) {
 
   return html`
     <article id="public-key-card"
-             class="center w-60 shadow-1 bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
+             class="center w-80 shadow-1 bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
       <div><img class="h1" onclick=${close} src="./img/close.svg" /></div>
       <div class="tc">
         <div>${icon}</div>
@@ -799,7 +799,7 @@ function publicKeyCard (profile) {
       <p class="code lh-copy measure center f7 pa2 black-70 h3 overflow-auto ba b--black-20">
         ${profile.bio || 'No bio available'}
       </p>
-      <textarea disabled class="flex h4 w-80 code lh-copy measure center f7 pa2 black-70 h5 overflow-auto ba b--black-20">${profile.publicKey || 'No shared public key available'}</textarea>
+      <textarea disabled class="flex h4 w-100 code lh-copy measure center f7 pa2 black-70 h5 overflow-auto ba b--black-20">${profile.publicKey || 'No shared public key available'}</textarea>
     </article>`
 }
 
