@@ -37,18 +37,22 @@ const UNDEFINED = 'undefined'
 
 const SHA_256 = 'sha2-256'
 
-function log () {}
-function err () {}
+var log = function log () {}
+var error = function error () {}
 
-const LOGGER_ENABLED = false
-if (LOGGER_ENABLED) {
-  function log () {
+const LOG_ENABLED = true
+
+const ERROR_ENABLED = true
+
+if (LOG_ENABLED) {
+  var log = function log () {
     for (let i=0; i < arguments.length; i++) {
       console.log(arguments[i])
     }
   }
-
-  function error () {
+}
+if (ERROR_ENABLED) {
+  var error = function error () {
     for (let i=0; i < arguments.length; i++) {
       console.error(arguments[i])
     }
