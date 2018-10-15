@@ -91,7 +91,8 @@ const ERR = {
   ARG_REQ_HANDLE: `handle ${this.ARG_REQ}`,
   ARG_REQ_USERNAME_SERVICE: `username & service ${this.ARG_REQ}`,
   ARG_REQ_BASE64_STR: `base64Str and format ${this.ARG_REQ}`,
-  ARG_REQ_PROOF: `peerId, publicKey and proof ${this.ARG_REQ}`
+  ARG_REQ_PROOF: `peerId, publicKey and proof ${this.ARG_REQ}`,
+  ARG_REQ_PROOFS: `Peer profile is missing proofs property`
 }
 
 class IpfsIdentity {
@@ -113,17 +114,23 @@ class IpfsIdentity {
   }
 
   get idData () {
+    try {
+      this.updateProofs()
+    } catch (ex) {}
+
     let profile = this._idData
     profile.peerId = this.peerId
     profile.publicKey = this.pubKeyDehydrated
+
     return profile
   }
 
   broadcastProfile () {
-    const roomApi = this.roomApi
+    this.updateProofs()
+
     let idData = this.idData
     idData.updated = Date.now()
-    roomApi.broadcast(idData)
+    this.roomApi.broadcast(idData)
     log('Broadcast: ', idData)
   }
 
@@ -320,20 +327,6 @@ class IpfsIdentity {
   initProofDb () {
     const that = this
     this._proofUrlData = {}
-    // get proof urls
-    this.proofUrlDB.createReadStream()
-      .on('data', function (data) {
-        log(data.key, '=', data.value)
-        that._proofUrlData[data.key] = data.value
-      }).on('error', function (err) {
-        error('Cannot read proofUrlDB stream: ', err)
-      })
-      .on('close', function () {
-        log('ProofUrlDB stream closed')
-      })
-      .on('end', function () {
-        log('ProofUrlDB stream ended')
-      })
 
     this.proofDB.createReadStream()
       .on('data', function (data) {
@@ -347,6 +340,21 @@ class IpfsIdentity {
         log('ProofDB stream closed')
       })
       .on('end', function () {
+        // get proof urls
+        that.proofUrlDB.createReadStream()
+          .on('data', function (data) {
+            log(data.key, '=', data.value)
+            that._proofUrlData[data.key] = data.value
+          }).on('error', function (err) {
+            error('Cannot read proofUrlDB stream: ', err)
+          })
+          .on('close', function () {
+            log('ProofUrlDB stream closed')
+          })
+          .on('end', function () {
+            that.updateProofs()
+            log('ProofUrlDB stream ended')
+          })
         log('ProofDB stream ended')
       })
     // this populates the in-memory _proofData property
@@ -358,6 +366,23 @@ class IpfsIdentity {
       log('deleted from proof DB', key)
       delete that._proofData[key]
     })
+  }
+
+  updateProofs () {
+    const that = this
+    // Need to collate all proofs + proofUrls here
+    let proofs = []
+    if (this.proofUrls.length) {
+      this.getAllProofs().forEach((proof, idx) => {
+        that.proofUrls.forEach((url, idx) => {
+          if (proof.hash === url.hash) {
+            proof.url = url.proof.url // TODO: fix this nested object
+            proofs.push(proof)
+          }
+        })
+      })
+    }
+    that._idData.proofs = proofs
   }
 
   async saveProof (content) {
@@ -429,6 +454,30 @@ class IpfsIdentity {
       }
       return callback(null, valid)
     })
+  }
+
+  verifyPeer (peerProfile, callback) {
+    if (!peerProfile.proofs) {
+      return callback(ERR.ARG_REQ_PROOFS, null)
+    }
+    if (!peerProfile.proofs.length) {
+      return callback(ERR.ARG_REQ_PROOFS, null)
+    }
+    const that = this
+    let proofsDoc = []
+    peerProfile.proofs.forEach((proof, idx) => {
+      that.verifyProof(proof.proof, (err, valid) => {
+        var valid = false
+        if (err) {
+          valid = false
+        } else {
+          valid = true
+        }
+        proofsDoc.push({ proof: proof, valid: valid })
+      })
+    })
+
+    return callback(null, proofsDoc)
   }
 
   initStorage (callback) {

@@ -706,11 +706,6 @@ function peerProfile (profile) {
   var name, handle, canFollow = true
   const DEFAULT_PROFILE_NAME = 'Another Noob'
 
-  if (profile.peerId === profile.clientPeerId) {
-    // This is your profile, pull in the pub key etc
-
-  }
-
   if (!profile.handle) {
     handle = profile.peerId
   } else {
@@ -721,6 +716,14 @@ function peerProfile (profile) {
   }
 
   name = handle //  temp hack
+
+  if (profile.peerId === profile.clientPeerId) {
+    // This is your profile, pull in the pub key etc
+    profile.handle = window.IpfsID.idData.handle
+    profile.bio = window.IpfsID.idData.bio
+    profile.publicKey = window.IpfsID.pubKeyDehydrated
+  }
+
 
   function cantFollow (event) {
     notify.info('You cannot follow yourself')
@@ -778,13 +781,36 @@ function peerProfile (profile) {
   }
 }
 
+function validatedProofsUi (profile) {
+  let _profile = profile;
+  if (profile.peerId === window.IpfsID.idData.peerId) {
+    // current user is the peer
+    _profile = window.IpfsID.idData
+  }
+
+  window.IpfsID.verifyPeer(_profile, (err, results) => {
+    if (err) {
+      console.error(err)
+      return notify.error(`Cannot validate ${_profile.handle}'s Identity Proofs`)
+    } else {
+      // we have some validated proofs
+      notify.success(`${_profile.handle}'s Identity Proofs are valid`)
+      console.log(results)
+    }
+  })
+}
+
 function publicKeyCard (profile) {
   const icon = avatar(profile.peerId)
+
+  window.IpfsID.updateProofs()
 
   function close (event) {
     let card = document.querySelector('#public-key-card')
     card.parentNode.removeChild(card)
   }
+
+  validatedProofsUi(profile)
 
   return html`
     <article id="public-key-card"
@@ -980,6 +1006,8 @@ document.addEventListener('DOMContentLoaded', () => {
           message.event = 'Message Rcvd'
           let _msg = JSON.parse(message.data)
           if (_msg.updated) {
+            // store the peer in IpfsID._knownPeers
+            IpfsID._knownPeers[_msg.peerId] = _msg
             updatePeerProfile(_msg)
           }
           if (_msg.messageType) {
