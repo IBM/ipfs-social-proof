@@ -126,14 +126,11 @@ function show (node, inline=false) {
 }
 
 function idUI (ipfsID, handle) {
-  console.log('idUI', handle)
-
   const icon = avatar(ipfsID.peerId)
 
   function evtEditHandle (event) {
     const input = document.querySelector('#handle-edit')
     // edit the handle name
-    console.log('edit handle')
     input.disabled = false;
     input.style = 'border-color: red;'
     input.focus()
@@ -650,7 +647,6 @@ function logUi () {
 
 function logMessage (message) {
   let msg = stripNode(message)
-  console.log('logMessage', msg)
   let _msg
   let ts = new Date().toISOString()
   if (typeof msg === STRING) {
@@ -710,6 +706,11 @@ function peerProfile (profile) {
   var name, handle, canFollow = true
   const DEFAULT_PROFILE_NAME = 'Another Noob'
 
+  if (profile.peerId === profile.clientPeerId) {
+    // This is your profile, pull in the pub key etc
+
+  }
+
   if (!profile.handle) {
     handle = profile.peerId
   } else {
@@ -726,7 +727,6 @@ function peerProfile (profile) {
   }
 
   function follow (event) {
-    console.log(`follow! ${profile.handle || profile.peerId}`)
     notify.info('Following...', `${profile.handle || profile.peerId}`)
   }
 
@@ -813,7 +813,6 @@ function updateFavicon (peerId) {
     blockyCanvas = canvasParentNode.querySelector('canvas')
     // set href of favicon
     let base64 = blockyCanvas.toDataURL('image/jpeg')
-    console.log(base64)
     document.querySelector('#favicon').href = base64
   }
 }
@@ -901,14 +900,13 @@ document.addEventListener('DOMContentLoaded', () => {
     checkForAccount((err, account) => {
       if (err) {
         // no account
-        console.log(err)
+        console.error(err)
       }
       if (account) {
         HANDLE = account.handle
       }
       start(HANDLE, {
         startComplete: (ipfsId) => {
-          console.log(ipfsId.idData)
           const ui = idUI(ipfsId, ipfsId.idData.handle)
           html.update(document.querySelector(`#${VIEW_IDENT}`), ui)
 
@@ -947,7 +945,6 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         'peer joined': (message) => {
-          console.log('UI peer joined', message)
           message.event = 'Peer Joined'
           logMessage(message)
           // Display peer profile card
@@ -968,21 +965,18 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         'peer left': (message) => {
-          console.log('UI peer left', message)
           message.event = 'Peer Left'
           logMessage(message)
           // TODO: update the UI to reflect disconnection
         },
 
         'subscribed': (message) => {
-          console.log('UI subscribed', message)
           message.event = 'Subscribed to Room'
           logMessage(message)
         },
 
         'message': (message) => {
           const DIRECT = 'direct-message'
-          console.log('UI message', message)
           message.event = 'Message Rcvd'
           let _msg = JSON.parse(message.data)
           if (_msg.updated) {

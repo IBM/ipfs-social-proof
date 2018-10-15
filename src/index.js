@@ -37,6 +37,24 @@ const UNDEFINED = 'undefined'
 
 const SHA_256 = 'sha2-256'
 
+function log () {}
+function err () {}
+
+const LOGGER_ENABLED = false
+if (LOGGER_ENABLED) {
+  function log () {
+    for (let i=0; i < arguments.length; i++) {
+      console.log(arguments[i])
+    }
+  }
+
+  function error () {
+    for (let i=0; i < arguments.length; i++) {
+      console.error(arguments[i])
+    }
+  }
+}
+
 var config = {
   EXPERIMENTAL: {
     pubsub: true
@@ -102,7 +120,7 @@ class IpfsIdentity {
     let idData = this.idData
     idData.updated = Date.now()
     roomApi.broadcast(idData)
-    console.log('Broadcast: ', idData)
+    log('Broadcast: ', idData)
   }
 
   constructor (handle=null, repoName, eventHandlers=null) {
@@ -168,9 +186,9 @@ class IpfsIdentity {
       processMessage: (from, data) => {
         // data is uInt8Array
         // from is peerId string
-        console.log("processMessage: ", from, data)
+        log("processMessage: ", from, data)
         let textData = a2c(data)
-        console.log("a2c: ", textData)
+        log("a2c: ", textData)
         if (that._uiEventHandlers['msgRcvd']) {
           that._uiEventHandlers['msgRcvd'](from, data)
         }
@@ -289,7 +307,7 @@ class IpfsIdentity {
         delete that._proofData[hash]
         that._uiEventHandlers['proof-deleted']()
       } catch (ex) {
-        console.error(ex)
+        error(ex)
       }
       return callback(err, res)
     })
@@ -301,39 +319,39 @@ class IpfsIdentity {
     // get proof urls
     this.proofUrlDB.createReadStream()
       .on('data', function (data) {
-        console.log(data.key, '=', data.value)
+        log(data.key, '=', data.value)
         that._proofUrlData[data.key] = data.value
       }).on('error', function (err) {
-        console.error('Cannot read proofUrlDB stream: ', err)
+        error('Cannot read proofUrlDB stream: ', err)
       })
       .on('close', function () {
-        console.log('ProofUrlDB stream closed')
+        log('ProofUrlDB stream closed')
       })
       .on('end', function () {
-        console.log('ProofUrlDB stream ended')
+        log('ProofUrlDB stream ended')
       })
 
     this.proofDB.createReadStream()
       .on('data', function (data) {
-        console.log(data.key, '=', data.value)
+        log(data.key, '=', data.value)
         that._proofData[data.key] = data.value
       })
       .on('error', function (err) {
-        console.error('Cannot read proofDB stream: ', err)
+        error('Cannot read proofDB stream: ', err)
       })
       .on('close', function () {
-        console.log('ProofDB stream closed')
+        log('ProofDB stream closed')
       })
       .on('end', function () {
-        console.log('ProofDB stream ended')
+        log('ProofDB stream ended')
       })
     // this populates the in-memory _proofData property
     this.proofDB.on('put', function (key, value) {
-      console.log('inserted into proof DB', { key, value })
+      log('inserted into proof DB', { key, value })
       that._proofData[key] = value
     })
     this.proofDB.on('del', function (key, value) {
-      console.log('deleted from proof DB', key)
+      log('deleted from proof DB', key)
       delete that._proofData[key]
     })
   }
@@ -341,7 +359,7 @@ class IpfsIdentity {
   async saveProof (content) {
     try {
       var results = await this.saveProofToIpfs(content)
-      console.log('results', results)
+      log('results', results)
     } catch (ex) {
       throw new Error(ex)
     }
@@ -372,7 +390,7 @@ class IpfsIdentity {
     let result = await this.proofUrlDB.put(hash, urlRecord)
     this.proofUrlDB.get(hash, (err, res) => {
       if (err) {
-        console.err(err)
+        error(err)
       } else {
         this._proofUrlData[hash] = res
       }
@@ -421,7 +439,7 @@ class IpfsIdentity {
           that.saveIdData()
         }
       }
-      console.log('Account found', value)
+      log('Account found', value)
       if (callback) {
         // Account will be written now on first run
         callback()
@@ -437,7 +455,7 @@ class IpfsIdentity {
     let array = t2a(stringToSign) // make an array buffer from string to sign the arrayBuffer
 
     this._node._peerInfo.id._privKey.sign(array, (err, signature) => {
-      console.log(err, signature)
+      log(err, signature)
       callback(err, signature)
     })
   }
@@ -446,7 +464,7 @@ class IpfsIdentity {
     let array = t2a(signedString) // signed string must be raw characters, not base64!
 
     this._node._peerInfo.id._pubKey.verify(array, signature, (err, verified) => {
-      console.log(err, verified)
+      log(err, verified)
       if (err) { throw new Error(err) }
       callback(err, verified)
     })
@@ -476,7 +494,7 @@ class IpfsIdentity {
       DB_ACCOUNT_KEY,
       JSON.stringify(this._idData), (err) => {
         if (err) {
-          console.error(err)
+          error(err)
         }
         console.info('Account Saved!')
       })
@@ -656,7 +674,7 @@ class IpfsIdentity {
 
     res.forEach((file) => {
       if (file && file.hash) {
-        console.log('successfully stored', file)
+        log('successfully stored', file)
         results.push(file)
         return file
       }
@@ -730,40 +748,40 @@ class IpfsIdentity {
   setEventHandlers () {
     const that = this
     this._node.on('ready', () => {
-      console.log('IPFS node is ready')
+      log('IPFS node is ready')
       this._room = Room(this._node, DEFAULT_ROOM_NAME)
 
       that.initStorage(() => {
-        console.log('...storage initialized...')
+        log('...storage initialized...')
       })
 
       try {
         that._uiEventHandlers['startComplete'](that)
       } catch (ex) {
-        console.error(ex)
+        error(ex)
       }
 
       this._room.on('peer joined', (peer) => {
-        console.log('Peer joined the room', peer)
+        log('Peer joined the room', peer)
         that.triggerRoomEvent('peer joined', { peerId: peer, ipfsId: that })
         this.broadcastProfile()
       })
 
       this._room.on('peer left', (peer) => {
-        console.log('Peer left...', peer)
+        log('Peer left...', peer)
         that.triggerRoomEvent('peer left', { peerId: peer, ipfsId: that })
       })
 
       // now started to listen to room
       this._room.on('subscribed', () => {
-        console.log('Now connected!')
+        log('Now connected!')
         this.broadcastProfile()
         // that.triggerRoomEvent('subscribed', { ipfsId: that })
       })
 
       this._room.on('message', (message) => {
-        console.log('_room.on...')
-        console.log(message.from, message.data)
+        log('_room.on...')
+        log(message.from, message.data)
         let data = a2c(message.data)
         that.triggerRoomEvent('message', { from: message.from,
                                            data: data,
@@ -795,13 +813,13 @@ class IpfsIdentity {
       },
       getProofs: (callback) => {
         this._storageDB.get(DB_PROOFS_KEY, (err, value) => {
-          if (err) { return console.error(err) }
+          if (err) { return error(err) }
           let result;
           try {
             result = JSON.parse(value)
-            console.log(result)
+            log(result)
           } catch (ex) {
-            console.error(ex)
+            error(ex)
           }
           if (callback) {
             callback(null, result)
@@ -848,7 +866,7 @@ function a2c (arrayBuffer) {
   arrayBuffer.forEach((el) => {
     text.push(String.fromCharCode(el))
   })
-  console.log('text array inside a2c', text)
+  log('text array inside a2c', text)
   return text.join('')
 }
 
@@ -872,7 +890,7 @@ function checkForAccount (callback, eventHandlers=null) {
         return callback(err, null)
       }
     } else {
-      console.log('Account found', value)
+      log('Account found', value)
     }
     if (callback) {
       let account = JSON.parse(value)
