@@ -718,6 +718,7 @@ class IpfsIdentity {
 
     if (event === 'peer joined') {
       // return this.roomApi.reqCredentials(message.peerId)
+      this.broadcastProfile()
     }
 
     if (event === 'subscribed') {

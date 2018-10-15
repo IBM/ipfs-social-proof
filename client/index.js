@@ -650,6 +650,7 @@ function logUi () {
 
 function logMessage (message) {
   let msg = stripNode(message)
+  console.log('logMessage', msg)
   let _msg
   let ts = new Date().toISOString()
   if (typeof msg === STRING) {
