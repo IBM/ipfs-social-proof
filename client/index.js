@@ -7,6 +7,7 @@ const qrcode = require('qrcode-generator')
 const Clipboard = require('./node_modules/clipboard/dist/clipboard.min')
 const createIcon = require('blockies-npm')
 const validUrl = require('valid-url')
+const animate = require('./animate')
 
 const APP_NAME = 'Autonomica'
 const VIEW_IDENT = 'identity-app'
@@ -376,7 +377,7 @@ function proofList (state) {
       <div id="proof-list"
            class="_proof_tab_ w-90 center pv4 bg-near-white">
         <table class="w-100 collapse pl4 mt0 ba b--black-10">
-          ${list.map(function (item) {
+          ${list.map((item) => {
              let proofUrl = ''
              let proofUrlObj = window.IpfsID.getProofUrl(item.hash) || null
              if (proofUrlObj) {
@@ -565,6 +566,7 @@ function nav () {
       <header class="bg-black-90 fixed w-100 ph3 pv3 pv4-ns ph4-m ph5-l">
         <nav class="f6 fw6 ttu tracked w-80 center">
           <div class="center" style="text-align: center;">
+            <span id="animation" class="link dim white dib mr3"></span>
             <a id="autonomica-link"
                class="link dim white dib mr3"
                href="#"
@@ -718,12 +720,9 @@ function peerProfile (profile) {
   name = handle //  temp hack
 
   if (profile.peerId === profile.clientPeerId) {
-    // This is your profile, pull in the pub key etc
-    profile.handle = window.IpfsID.idData.handle
-    profile.bio = window.IpfsID.idData.bio
-    profile.publicKey = window.IpfsID.pubKeyDehydrated
+    // This is your profile, pull in the pub key, latest proofs etc
+    profile = window.IpfsID.idData
   }
-
 
   function cantFollow (event) {
     notify.info('You cannot follow yourself')
@@ -736,7 +735,17 @@ function peerProfile (profile) {
   function evtExaminePubKey (event) {
     // display overlay that shows public key
     let keyCard = publicKeyCard(profile)
-    document.querySelector('#modal').appendChild(keyCard)
+    document.querySelector('#modal').appendChild(keyCard) // TODO: use `html.update()` here
+    verifyProofsUI(profile.peerId)
+
+    let _profile = profile;
+    if (profile.peerId === window.IpfsID.idData.peerId) {
+      // current user is the peer
+      _profile = window.IpfsID.idData
+    }
+
+    // animate.startAnimation('verify-animation')
+    // window.IpfsID.verifyPeer(_profile)
   }
 
   function btn (profile) {
@@ -781,36 +790,47 @@ function peerProfile (profile) {
   }
 }
 
-function validatedProofsUi (profile) {
-  let _profile = profile;
-  if (profile.peerId === window.IpfsID.idData.peerId) {
-    // current user is the peer
-    _profile = window.IpfsID.idData
+function validationUI (profile) {
+
+}
+
+function verifyProofsUI (peerId) {
+  let verifiedProofs = IpfsID.getValidityDocs(peerId)
+  var newNode
+  const defaultNode = html`
+    <p id="verify-ui" class="flex-justify-between">
+      <span id="verify-animation"></span>
+      <div id="verify-results" class="flex-justify-between">
+        <span><img class="h1" title="Peer proofs are un-verified" src="img/times-circle.svg" /></span>
+      </div>
+    </p>`
+  if (!verifiedProofs) {
+    newNode = defaultNode
+  } else if (!verifiedProofs.length) {
+    newNode = defaultNode
+  } else if (verifiedProofs.length) {
+    newNode = html`
+      <p id="verify-ui">
+        <span id="verify-animation"></span>
+        <div id="verify-results" class="flex-justify-between">
+          ${verifiedProofs.map((proof) => {
+            return html`<span><img class="h1" title="Peer proof is verified: ${proof.proof.url}" src="img/check-circle-green.svg" /></span>`
+          })}
+        </div>
+      </p>`
   }
 
-  window.IpfsID.verifyPeer(_profile, (err, results) => {
-    if (err) {
-      console.error(err)
-      return notify.error(`Cannot validate ${_profile.handle}'s Identity Proofs`)
-    } else {
-      // we have some validated proofs
-      notify.success(`${_profile.handle}'s Identity Proofs are valid`)
-      console.log(results)
-    }
-  })
+  let origNode = document.querySelector('#verify-ui')
+  html.update(origNode, newNode)
 }
 
 function publicKeyCard (profile) {
   const icon = avatar(profile.peerId)
 
-  window.IpfsID.updateProofs()
-
   function close (event) {
     let card = document.querySelector('#public-key-card')
     card.parentNode.removeChild(card)
   }
-
-  validatedProofsUi(profile)
 
   return html`
     <article id="public-key-card"
@@ -821,11 +841,15 @@ function publicKeyCard (profile) {
         <h1 class="f7 code">
           ${profile.handle || profile.peerId}
         </h1>
-        <hr class="mw5 bb bw1 b--black-10" />
+        <p id="verify-ui">
+          <span id="verify-animation"></span>
+          <div id="verify-results"></div>
+        </p>
       </div>
       <p class="code lh-copy measure center f7 pa2 black-70 h3 overflow-auto ba b--black-20">
         ${profile.bio || 'No bio available'}
       </p>
+      <p class="mv4"></p>
       <textarea disabled class="flex h4 w-100 code lh-copy measure center f7 pa2 black-70 h5 overflow-auto ba b--black-20">${profile.publicKey || 'No shared public key available'}</textarea>
     </article>`
 }
@@ -988,6 +1012,7 @@ document.addEventListener('DOMContentLoaded', () => {
           updatePeerProfile(profile)
 
           IpfsID._knownPeers[message.peerId] = profile
+          IpfsID.verifyPeer(profile)
         },
 
         'peer left': (message) => {
@@ -1009,6 +1034,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // store the peer in IpfsID._knownPeers
             IpfsID._knownPeers[_msg.peerId] = _msg
             updatePeerProfile(_msg)
+            IpfsID.verifyPeer(_msg)
           }
           if (_msg.messageType) {
             if (_msg.messageType === DIRECT) {

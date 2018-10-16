@@ -456,12 +456,12 @@ class IpfsIdentity {
     })
   }
 
-  verifyPeer (peerProfile, callback) {
+  verifyPeer (peerProfile) {
     if (!peerProfile.proofs) {
-      return callback(ERR.ARG_REQ_PROOFS, null)
+      return
     }
     if (!peerProfile.proofs.length) {
-      return callback(ERR.ARG_REQ_PROOFS, null)
+      return
     }
     const that = this
     let proofsDoc = []
@@ -473,11 +473,25 @@ class IpfsIdentity {
         } else {
           valid = true
         }
-        proofsDoc.push({ proof: proof, valid: valid })
+
+        if (!that._knownPeers[proof.proof.ipfsId].validityDocs) {
+          that._knownPeers[proof.proof.ipfsId].validityDocs = []
+        }
+        that._knownPeers[proof.proof.ipfsId].validityDocs.push({
+          proof: proof,
+          valid: valid
+        })
       })
     })
+  }
 
-    return callback(null, proofsDoc)
+  getValidityDocs (peerId) {
+    if (this._knownPeers[peerId]) {
+      if (this._knownPeers[peerId].validityDocs) {
+        return this._knownPeers[peerId].validityDocs
+      }
+    }
+    return []
   }
 
   initStorage (callback) {
