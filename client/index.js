@@ -798,10 +798,10 @@ function verifyProofsUI (peerId) {
   let verifiedProofs = IpfsID.getValidityDocs(peerId)
   var newNode
   const defaultNode = html`
-    <p id="verify-ui" class="flex-justify-between">
+    <p id="verify-ui" class="flex-justify-around">
       <span id="verify-animation"></span>
-      <div id="verify-results" class="flex-justify-between">
-        <span><img class="h1" title="Peer proofs are un-verified" src="img/times-circle.svg" /></span>
+      <div id="verify-results" class="flex-justify-around">
+        <span><img class="h2" title="Peer proofs are un-verified" src="img/times-circle.svg" /></span>
       </div>
     </p>`
   if (!verifiedProofs) {
@@ -812,9 +812,9 @@ function verifyProofsUI (peerId) {
     newNode = html`
       <p id="verify-ui">
         <span id="verify-animation"></span>
-        <div id="verify-results" class="flex-justify-between">
+        <div id="verify-results" class="flex-justify-around">
           ${verifiedProofs.map((proof) => {
-            return html`<span><img class="h1" title="Peer proof is verified: ${proof.proof.url}" src="img/check-circle-green.svg" /></span>`
+            return html`<a target="_blank" href="${proof.proof.url}" class="mr2 pointer"><img class="h1" title="Peer proof is verified: ${proof.proof.url}" src="img/check-circle-green.svg" /></a>`
           })}
         </div>
       </p>`
@@ -849,8 +849,7 @@ function publicKeyCard (profile) {
       <p class="code lh-copy measure center f7 pa2 black-70 h3 overflow-auto ba b--black-20">
         ${profile.bio || 'No bio available'}
       </p>
-      <p class="mv4"></p>
-      <textarea disabled class="flex h4 w-100 code lh-copy measure center f7 pa2 black-70 h5 overflow-auto ba b--black-20">${profile.publicKey || 'No shared public key available'}</textarea>
+      <textarea disabled class="flex w-100 code lh-copy measure center f7 pa2 black-70 h4 overflow-auto ba b--black-20">${profile.publicKey || 'No shared public key available'}</textarea>
     </article>`
 }
 
