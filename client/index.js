@@ -729,7 +729,8 @@ function peerProfile (profile) {
   }
 
   function follow (event) {
-    notify.info('Following...', `${profile.handle || profile.peerId}`)
+    // TODO add this peerId to follwing DB
+    notify.success('Following...', `${profile.handle || profile.peerId}`)
   }
 
   function evtExaminePubKey (event) {
@@ -775,7 +776,7 @@ function peerProfile (profile) {
         </div>
         <div class="tr w-100 pr3">
           <img title="Examine Public Key"
-               class="pt1 dim pointer h2"
+               class="pt1 dim pointer h1"
                src="./img/key-alt.svg"
                onclick=${evtExaminePubKey} />
         </div>
