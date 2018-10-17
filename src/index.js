@@ -12,7 +12,7 @@ const { Buffer } = require('buffer')
 const multihashing = require('multihashing-async')
 const { pem, pki } = require('node-forge')
 const peerId = require('peer-id')
-
+const Contacts = require('./contacts')
 const DEFAULT_HANDLE = 'InterPlanetaryPsuedoAnonymite'
 
 var DEFAULT_IDENTITY_DATA = {
@@ -112,6 +112,10 @@ class IpfsIdentity {
 
   get defaultTopic () {
     return DEFAULT_REPO_NAME
+  }
+
+  get contacts () {
+    return new Contacts()
   }
 
   get idData () {
@@ -955,5 +959,9 @@ if (typeof process === 'undefined') {
 module.exports = {
   IpfsIdentity: IpfsIdentity,
   start: start,
-  checkForAccount: checkForAccount
+  checkForAccount: checkForAccount,
+  utils: {
+    a2t: a2t,
+    t2a: t2a
+  }
 }
