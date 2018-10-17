@@ -200,7 +200,7 @@ function idUI (ipfsID, handle) {
           <div class="w-100 mr3 ml3 f6 code">IPFS RSA Public Key (dehydrated) [signing only]</div>
           <textarea disabled
                     class="h5 flex w-80 lh-copy code f7 ma3 bg-white br3 ph3 pv2 mb2 overflow-auto"
-                    title="IPFS Public Key [Signing Only]">${ipfsID.pubKeyDehydrated}</textarea>
+                    title="IPFS Public Key [Signing Only]">${ipfsID.pubKeyBase64}</textarea>
         </p>
       </div>
     </article>`
@@ -849,7 +849,7 @@ function publicKeyCard (profile) {
       <p class="code lh-copy measure center f7 pa2 black-70 h3 overflow-auto ba b--black-20">
         ${profile.bio || 'No bio available'}
       </p>
-      <textarea disabled class="flex w-100 code lh-copy measure center f7 pa2 black-70 h4 overflow-auto ba b--black-20">${profile.publicKey || 'No shared public key available'}</textarea>
+      <textarea disabled class="flex w-100 code lh-copy measure center f7 pa2 black-70 h4 overflow-auto ba b--black-20">${profile.pubKeyBase64 || 'No shared public key available'}</textarea>
     </article>`
 }
 

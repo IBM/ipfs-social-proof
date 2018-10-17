@@ -10,7 +10,8 @@ const level = require('level-browserify')
 const { encode, decode } = require('base64-arraybuffer')
 const { Buffer } = require('buffer')
 const multihashing = require('multihashing-async')
-const base64 = require('@protobufjs/base64')
+const { pem, pki } = require('node-forge')
+const peerId = require('peer-id')
 
 const DEFAULT_HANDLE = 'InterPlanetaryPsuedoAnonymite'
 
@@ -121,6 +122,7 @@ class IpfsIdentity {
     let profile = this._idData
     profile.peerId = this.peerId
     profile.publicKey = this.pubKeyDehydrated
+    profile.pubKeyBase64 = this.pubKeyBase64
 
     return profile
   }
@@ -540,6 +542,7 @@ class IpfsIdentity {
   saveIdData (updatedData=null) {
     // save the current state of the idData
     this._idData.publicKey = this.pubKeyDehydrated
+    this._idData.pubKeyBase64 = this.pubKeyArmored
     this._idData.ipfsId = this.peerId
 
     if (updatedData) {
@@ -608,11 +611,6 @@ class IpfsIdentity {
     })
   }
 
-  get pubKeyNative () {
-    // get the default public key as array
-    return this._node._peerInfo.id._pubKey
-  }
-
   get pubKeyDehydrated () {
     // get a base64 encoded marshaled pub key
     const pub = this._node._peerInfo.id._privKey.public
@@ -629,10 +627,6 @@ class IpfsIdentity {
     return umpk // now, one can use this pub key to verify signatures
   }
 
-  //
-  // NOTE: maybe wrap the buffer in ann outer object that can provide a label,
-  //       and other properties to the dehydrated item
-
   dehydrate (buff) {
     return JSON.stringify(buff)
   }
@@ -646,80 +640,62 @@ class IpfsIdentity {
     return buff
   }
 
-  // See: https://github.com/IBM/ipfs-social-proof/issues/10
-  // get pubKeyBase64 () {
-  //   // get a base64 encoded marshaled pub key
-  //   const pub = this._node._peerInfo.id._privKey.public
-  //   const arr = this.utils.crypto.keys.marshalPublicKey(pub)
+  get pubKeyBase64 () {
+    return this.pubKeyPem
+  }
 
-  //   const decoder = new TextDecoder('utf8');
-  //   const b64encoded = btoa(decoder.decode(arr));
+  get pubKeyPem () {
+    let pk = this._node._peerInfo.id._privKey.public._key
+    return pki.publicKeyToPem(pk)
+  }
 
-  //   return b64encoded
-  // }
+  convertRsaPubKeyToPem (rsaPubKey) {
+    let rpk
+    if (rsaPubKey._key) {
+      rpk = rsaPubKey._key
+    } else {
+      rpk = rsaPubKey
+    }
+    return pki.publicKeyToPem(rpk)
+  }
 
-  // base64KeyToRsaKey (b64PubKey) {
-  //   const arr = base64.decode(b64PubKey)
+  convertPemPubKeyToRsa (pemPubKey) {
+    return pki.publicKeyFromPem(pemPubKey);
+  }
 
-  //   const umpk = this.utils.crypto.keys.unmarshalPublicKey(arr)
+  armor (base64Str, format='pk') {
+    // pk = public key
+    // sig = signature
+    if (!base64Str || !format) {
+      throw new Error(ERR.ARG_REQ_BASE64_STR)
+    }
 
-  //   return umpk
-  // }
+    const formats = {
+      pk: {
+        head: '-----BEGIN PUBLIC KEY-----\r\n',
+        tail: '\r\n-----END PUBLIC KEY-----'
+      },
+      sig: {
+        head: '-----BEGIN PGP MESSAGE-----\r\n',
+        tail: '\r\n-----END PGP MESSAGE-----'
+      }
+    }
 
+    let key = ''
 
-  // get pubKeyArmored () {
-  //   let raw = this.pubKeyBase64
-  //   let key = ''
-  //   const head = '-----BEGIN PUBLIC KEY-----\n'
-  //   const tail = '\n-----END PUBLIC KEY-----'
+    for (var i = 0; i < base64Str.length; i++) {
+      if ((i % 64) === 0) {
+        key += '\n';
+      }
+      key += base64Str.charAt(i);
+    }
 
-  //   for (var i = 0; i < raw.length; i++) {
-  //     if ((i % 64) === 0) {
-  //       key += '\n';
-  //     }
-  //     key += raw.charAt(i);
-  //   }
+    if (!/\\n$/.test(key)) {
+      key += '\r\n';
+    }
 
-  //   if (!/\\n$/.test(key)) {
-  //     key += '\n';
-  //   }
-
-  //   return `${head}${key}${tail}`.trim();
-  // }
-
-  // armor (base64Str, format='pk') {
-  //   // pk = public key
-  //   // sig = signature
-  //   if (!base64Str || !format) {
-  //     throw new Error(ERR.ARG_REQ_BASE64_STR)
-  //   }
-
-  //   const formats = {
-  //     pk: {
-  //       head: '-----BEGIN PUBLIC KEY-----\n',
-  //       tail: '\n-----END PUBLIC KEY-----'
-  //     },
-  //     sig: {
-  //       head: '-----BEGIN PGP MESSAGE-----\n',
-  //       tail: '\n-----END PGP MESSAGE-----'
-  //     }
-  //   }
-
-  //   let key = ''
-
-  //   for (var i = 0; i < base64Str.length; i++) {
-  //     if ((i % 64) === 0) {
-  //       key += '\n';
-  //     }
-  //     key += base64Str.charAt(i);
-  //   }
-
-  //   if (!/\\n$/.test(key)) {
-  //     key += '\n';
-  //   }
-
-  //   return `${formats[format].head}${key}${formats[format].tail}`.trim();
-  // }
+    return `${formats[format].head}${key}${formats[format].tail}`.trim();
+  }
 
   get peerId () {
     return this._node._peerInfo.id._idB58String
@@ -900,7 +876,9 @@ class IpfsIdentity {
         a2t: a2t
       },
       crypto: libp2pCrypto,
-      Buffer: Buffer
+      Buffer: Buffer,
+      pem: pem,
+      pki: pki
     }
   }
 }

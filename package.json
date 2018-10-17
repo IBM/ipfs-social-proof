@@ -60,6 +60,8 @@
     "level-browserify": "^2.0.0",
     "libp2p-crypto": "^0.14.0",
     "multihashing-async": "^0.5.1",
+    "node-forge": "^0.7.6",
+    "peer-id": "^0.11.0",
     "text-encoding": "^0.6.4"
   },
   "contributors": [
