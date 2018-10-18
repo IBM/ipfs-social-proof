@@ -241,7 +241,7 @@ function confirmProceed (detailsConf, proceedFunc) {
   //                proceedLabel: 'Delete and stuff' }
   // proceedFunc: operational function to proceed
 
-  //
+
   function proceedAndClose () {
     proceedFunc(closeConfModal)
   }
@@ -698,7 +698,6 @@ function updatePeerProfile (profileObj) {
     // existingNode.parentNode.removeChild(existingNode)
     // re-display updated peer profile
     peerProfile(profileObj)
-    // html.update(existingNode, newNode)
   }
 }
 
@@ -787,7 +786,6 @@ function peerProfile (profile) {
   } else {
     html.update(existingNode, profileHtml)
   }
-  // btn(profile)
 }
 
 async function verifyProofsUI (peerId) {
