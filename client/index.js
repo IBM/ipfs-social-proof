@@ -729,8 +729,22 @@ function peerProfile (profile) {
   }
 
   function follow (event) {
-    // TODO add this peerId to follwing DB
-    notify.success('Following...', `${profile.handle || profile.peerId}`)
+    // TODO subclass DB to add a "contactsDB.follow()" method
+    let _profile = {
+      id: profile.peerId,
+      peerId: profile.peerId,
+      following: true,
+      followTs: Date.now()
+    }
+
+    Object.assign(_profile, profile)
+
+    window.IpfsID.contactsDB.getOrCreate(_profile).then((result) => {
+      notify.success('Following...', `${profile.handle || profile.peerId}`)
+    }).
+      catch((err) => {
+        error(err)
+      })
   }
 
   function evtExaminePubKey (event) {

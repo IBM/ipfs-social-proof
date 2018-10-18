@@ -119,23 +119,26 @@ class IpfsIdentity {
   }
 
   get contactsDB () {
-    // contactsDB will b elazily loaded on first access
+    // contactsDB will be lazily loaded on first access
     if (this._contactsDB) {
       return this._contactsDB
     } else {
       this._contactsDB = new DB(
       'contacts',
-      { id: STRING,
-        createdTs: INTEGER,
-        updatedTs: INTEGER
-      },
-      { handle: STRING,
-        publicKey: STRING,
-        surname: STRING,
-        givenName: STRING,
-        bio: STRING,
-        url: STRING
-      })
+        { id: STRING,
+          peerId: STRING,
+          createdTs: INTEGER,
+          updatedTs: INTEGER
+        },
+        { handle: STRING,
+          publicKey: STRING,
+          surname: STRING,
+          givenName: STRING,
+          bio: STRING,
+          url: STRING,
+          following: BOOL,
+          followTs: INTEGER
+        })
 
       return this._contactsDB
     }
