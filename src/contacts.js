@@ -1,6 +1,7 @@
-const level = require('level-browserify')
 const { t2a, a2t } = require('./utils')
 const { log, error } = require('./log')
+const { Buffer } = require('buffer')
+var PouchDB = require('pouchdb');
 
 const DEFAULT_DB_NAME = 'ISP_CONTACTS'
 
@@ -17,16 +18,16 @@ const ERR = {
 }
 
 class Contacts {
-  constructor (dbName=null) {
+  constructor (dbName=null, requiredFields={}, optionalFields={}) {
     this.dbName = dbName || DEFAULT_DB_NAME
 
-    this.contactRequiredFields = {
+    this.requiredFields = {
       peerId: STRING,
       createdTs: INTEGER,
       updatedTs: INTEGER
     }
 
-    this.contactOptionalFields = {
+    this.optionalFields = {
       handle: STRING,
       publicKey: STRING,
       surname: STRING,
@@ -38,75 +39,67 @@ class Contacts {
     this.init()
   }
 
-  async getContact (peerId) {
-    return await this.db.get(peerId)
+  async get (peerId) {
+    try {
+      return await this.db.get(peerId)
+    } catch (ex) {
+      error(ex)
+      return null
+    }
   }
 
-  get allContacts () {
-    var that = this
-    let ids = Object.keys(this._data)
-    let results = []
-    hashes.forEach((id, idx) => {
-      results.push(
-        { peerId: id,
-          contact: JSON.parse(a2t(that._data[id]))
-        })
-    })
+  async getall () {
+    try {
+      var result = await this.db.allDocs({
+        include_docs: true,
+        attachments: true
+      });
 
-    return results
+      return result
+    } catch (err) {
+      console.log(err);
+    }
+    return null
   }
 
   init () {
-    const that = this
-    this._data = {}
-    // update??
-    this.db.on('put', (k, v) => {
-      that._data[k] = v
-    })
-    this.db.on('del', (k) => {
-      delete that._data[k]
-    })
-
-    // get data into cache
-    that.db.createReadStream()
-      .on('data', function (data) {
-        log(data.key, '=', data.value)
-        that._data[data.key] = data.value
-      }).on('error', function (err) {
-        error('Cannot read db stream: ', err)
-      })
-      .on('close', function () {
-        log('db stream closed')
-      })
-      .on('end', function () {
-        log('db stream ended')
-      })
+    this.db // initialize the db
   }
 
-  async getContactByPeerId (peerId) {
-    let result
-    return await this.db.get(peerId)
+  async getById (peerId) {
+    try {
+      var doc = await this.db.get(peerId);
+    } catch (ex) {
+      console.log(ex);
+    }
+
+    return doc
   }
 
-  async getOrCreateContact (contactObj) {
-    let result
-    result = await this.db.get(contactObj.peerId)
+  async getOrCreate (contactObj) {
+    try {
+
+      var result = await this.db.get(contactObj.peerId)
+    } catch (ex) {
+      log(ex)
+    }
     if (!result) {
       // need to create this contact
-      result = await this.createContact(contactObj)
+      result = await this.create(contactObj)
     }
 
     return result
   }
 
-  async createContact (contactObj) {
+  async create (contactObj) {
     // TODO: validate peerId as a real IPFS b58 multihash
     if (!contactObj.peerId) {
       throw new Error(ERR.ARG_REQ_PEER_ID)
     }
-    let optional = Object.keys(this.contactOptionalFields)
+    let optional = Object.keys(this.optionalFields)
     let contact = {
       peerId: contactObj.peerId,
+      _id: contactObj.peerId,
       createdTs: Date.now(),
       updatedTs: Date.now()
     }
@@ -114,13 +107,17 @@ class Contacts {
     optional.forEach((prop) => {
       contact[prop] = contactObj[prop] || null
     })
-    let result = await this.db.put(contact.peerId,
-                                   t2a(JSON.stringify(contact)))
+
+    try {
+      var result = await this.db.put(contact);
+    } catch (ex) {
+      console.log(ex);
+    }
 
     return result
   }
 
-  async updateContact (contactObj) {
+  async update (contactObj) {
     if (!contactObj.peerId) {
       throw new Error(ERR.ARG_REQ_PEER_ID)
     }
@@ -130,18 +127,34 @@ class Contacts {
     optional.forEach((prop) => {
       contact[prop] = contactObj[prop] || null
     })
-    let bin = t2a(JSON.stringify(contact))
-    let result = await this.db.put(contact.peerId, bin)
+
+    contact._rev =  contactObj._rev
+
+    try {
+      var result = await this.db.put(contact);
+    } catch (ex) {
+      console.log(ex);
+    }
 
     return result
   }
 
-  async deleteContact (peerId) {
-    return await this.db.del(peerId)
+  async delete (peerId) {
+    try {
+      var doc = await this.db.get(peerId);
+      var response = await this.db.remove(doc);
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   get db () {
-    return level(`./${DEFAULT_DB_NAME}`)
+    if (this._db) {
+      return this._db
+    }
+    this._db = new PouchDB(DEFAULT_DB_NAME)
+
+    return this._db
   }
 }
 

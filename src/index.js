@@ -12,7 +12,8 @@ const { Buffer } = require('buffer')
 const multihashing = require('multihashing-async')
 const { pem, pki } = require('node-forge')
 const peerId = require('peer-id')
-const Contacts = require('./contacts')
+const { DB } = require('./db')
+
 const DEFAULT_HANDLE = 'InterPlanetaryPsuedoAnonymite'
 
 var DEFAULT_IDENTITY_DATA = {
@@ -35,6 +36,9 @@ const BROADCAST_INTERVAL_MS = 5000;
 const STRING = 'string'
 const OBJECT = 'object'
 const UNDEFINED = 'undefined'
+const INTEGER = 'integer'
+const ARRAY = 'array'
+const BOOL = 'boolean'
 
 const SHA_256 = 'sha2-256'
 
@@ -114,8 +118,27 @@ class IpfsIdentity {
     return DEFAULT_REPO_NAME
   }
 
-  get contacts () {
-    return new Contacts()
+  get contactsDB () {
+    // contactsDB will b elazily loaded on first access
+    if (this._contactsDB) {
+      return this._contactsDB
+    } else {
+      this._contactsDB = new DB(
+      'contacts',
+      { id: STRING,
+        createdTs: INTEGER,
+        updatedTs: INTEGER
+      },
+      { handle: STRING,
+        publicKey: STRING,
+        surname: STRING,
+        givenName: STRING,
+        bio: STRING,
+        url: STRING
+      })
+
+      return this._contactsDB
+    }
   }
 
   get idData () {
@@ -794,6 +817,8 @@ class IpfsIdentity {
 
   setEventHandlers () {
     const that = this
+    this._node.on('error', (e) => error(e))
+
     this._node.on('ready', () => {
       log('IPFS node is ready')
       this._room = Room(this._node, DEFAULT_ROOM_NAME)
