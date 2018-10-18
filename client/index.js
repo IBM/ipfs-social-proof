@@ -241,7 +241,7 @@ function confirmProceed (detailsConf, proceedFunc) {
   //                proceedLabel: 'Delete and stuff' }
   // proceedFunc: operational function to proceed
 
-  //
+
   function proceedAndClose () {
     proceedFunc(closeConfModal)
   }
@@ -697,8 +697,7 @@ function updatePeerProfile (profileObj) {
     // update peer info by removal and prepend as the peer could be sending new metadata
     // existingNode.parentNode.removeChild(existingNode)
     // re-display updated peer profile
-    let newNode = peerProfile(profileObj)
-    html.update(existingNode, newNode)
+    peerProfile(profileObj)
   }
 }
 
@@ -724,39 +723,40 @@ function peerProfile (profile) {
     profile = window.IpfsID.idData
   }
 
-  function cantFollow (event) {
-    notify.info('You cannot follow yourself')
-  }
-
   function follow (event) {
-    // TODO add this peerId to follwing DB
-    notify.success('Following...', `${profile.handle || profile.peerId}`)
+    // TODO subclass DB to add a "contactsDB.follow()" method
+    let _profile = {
+      id: profile.peerId,
+      peerId: profile.peerId,
+      following: true,
+      followTs: Date.now()
+    }
+
+    Object.assign(_profile, profile)
+
+    window.IpfsID.contactsDB.getOrCreate(_profile).then((result) => {
+      notify.success('Following...', `${profile.handle || profile.peerId}`)
+    }).
+      catch((err) => {
+        error(err)
+      })
   }
 
   function evtExaminePubKey (event) {
     // display overlay that shows public key
-    let keyCard = publicKeyCard(profile)
-    document.querySelector('#modal').appendChild(keyCard) // TODO: use `html.update()` here
-    verifyProofsUI(profile.peerId)
+    publicKeyCard(profile).then((keyCard) => {
+      // TODO: use `html.update()` here
+      document.querySelector('#modal').appendChild(keyCard)
+      verifyProofsUI(profile.peerId)
 
-    let _profile = profile;
-    if (profile.peerId === window.IpfsID.idData.peerId) {
-      // current user is the peer
-      _profile = window.IpfsID.idData
-    }
-
+      let _profile = profile;
+      if (profile.peerId === window.IpfsID.idData.peerId) {
+        // current user is the peer
+        _profile = window.IpfsID.idData
+      }
+    })
     // animate.startAnimation('verify-animation')
     // window.IpfsID.verifyPeer(_profile)
-  }
-
-  function btn (profile) {
-    if (profile.peerId === profile.clientPeerId) {
-      return html`
-        <button class="f6 button-reset bg-white ba b--black-10 dim pointer pv1 black-60" onclick=${cantFollow}>(You)</button>`
-    } else {
-      return html`
-        <button class="f6 button-reset bg-white ba b--black-10 dim pointer pv1 black-60" onclick=${follow}>+ Follow</button>`
-    }
   }
 
   let profileHtml = html`
@@ -770,10 +770,7 @@ function peerProfile (profile) {
         <h2 id="profile-handle" class="f7 pt1 fw4 mt0 mb0 black-60">${handle}</h2>
         <h3 class="f7 code pt1 fw4 mt0 mb0 black-60">${profile.peerId}</h3>
       </div>
-      <div class="dtc v-mid">
-        <div class="w-100 tr">
-          ${btn(profile)}
-        </div>
+      <div class="dtc v-mid flex">
         <div class="tr w-100 pr3">
           <img title="Examine Public Key"
                class="pt1 dim pointer h1"
@@ -787,22 +784,22 @@ function peerProfile (profile) {
     document.querySelector('#listen').prepend(profileHtml)
     return
   } else {
-    return profileHtml
+    html.update(existingNode, profileHtml)
   }
 }
 
-function validationUI (profile) {
-
-}
-
-function verifyProofsUI (peerId) {
+async function verifyProofsUI (peerId) {
   let verifiedProofs = IpfsID.getValidityDocs(peerId)
   var newNode
+  let follow = followBtn(peerId)
+
+  let origNode = document.querySelector('#verify-ui')
+
   const defaultNode = html`
     <p id="verify-ui" class="flex-justify-around">
       <span id="verify-animation"></span>
       <div id="verify-results" class="flex-justify-around">
-        <span><img class="h2" title="Peer proofs are un-verified" src="img/times-circle.svg" /></span>
+        <span><img class="h1" title="Peer proofs are un-verified" src="img/times-circle.svg" /></span>
       </div>
     </p>`
   if (!verifiedProofs) {
@@ -821,17 +818,45 @@ function verifyProofsUI (peerId) {
       </p>`
   }
 
-  let origNode = document.querySelector('#verify-ui')
   html.update(origNode, newNode)
 }
 
-function publicKeyCard (profile) {
+function followBtn (profile) {
+  function unfollow (event) {
+    notify.info('unimplemented')
+  }
+
+  function cantFollow (event) {
+    notify.info('You cannot follow yourself')
+  }
+
+  if (profile.peerId === profile.clientPeerId) {
+    return html`
+        <div id="follow-btn" class=""><button class="f6 button-reset bg-white ba b--black-10 dim pointer pv1 black-60" onclick=${cantFollow}>(You)</button></div>`
+  } else {
+    return window.IpfsID.contactsDB.get(profile.peerId).then((res) => {
+      console.log('peer:', res)
+      if (res) {
+        if (res.following) {
+          return html`<div id="follow-btn" class=""><button class="f6 button-reset bg-white ba b--black-10 dim pointer pv1 black-60" onclick=${unfollow}>Unfollow</button></div>`
+        } else {
+          return html`
+              <div id="follow-btn" class=""><button class="f6 button-reset bg-white ba b--black-10 dim pointer pv1 black-60" onclick=${follow}>+ Follow</button></div>`
+        }
+      }
+    })
+  }
+}
+
+async function publicKeyCard (profile) {
   const icon = avatar(profile.peerId)
 
   function close (event) {
     let card = document.querySelector('#public-key-card')
     card.parentNode.removeChild(card)
   }
+
+  let btn = await followBtn(profile)
 
   return html`
     <article id="public-key-card"
@@ -842,10 +867,13 @@ function publicKeyCard (profile) {
         <h1 class="f7 code">
           ${profile.handle || profile.peerId}
         </h1>
-        <p id="verify-ui">
-          <span id="verify-animation"></span>
-          <div id="verify-results"></div>
-        </p>
+        <div class="flex-justify-between">
+          ${btn}
+          <p id="verify-ui">
+            <span id="verify-animation"></span>
+            <div id="verify-results"></div>
+          </p>
+        </div>
       </div>
       <p class="code lh-copy measure center f7 pa2 black-70 h3 overflow-auto ba b--black-20">
         ${profile.bio || 'No bio available'}
