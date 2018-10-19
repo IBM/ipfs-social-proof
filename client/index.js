@@ -287,8 +287,14 @@ function closeConfModal (err, result) {
 
 function proofDetail (proofHash) {
 
-  function deleteProof(callback) {
-    window.IpfsID.deleteProof(proofHash, callback)
+  async function deleteProof(callback) {
+    try {
+      let res = await window.IpfsID.proofsDB.delete(proofHash)
+      callback(res)
+    } catch (ex) {
+      error(ex)
+      callback(ex)
+    }
   }
 
   function remove () {
@@ -300,7 +306,7 @@ function proofDetail (proofHash) {
   }
 
   // get the proof detail:
-  let proof = IpfsID.getProof(proofHash)
+  // let proof = IpfsID.proofsDB.get(proofHash)
   // get the published 'proof urls'
   let proofUrl = null
   let _proofUrl = IpfsID.getProofUrl(proofHash)
@@ -354,11 +360,11 @@ function proofDetail (proofHash) {
 
          </div>
          <textarea disabled
-                   class="flex w-100 h4 code lh-copy center f7 pa2 black-70 h5 overflow-auto ba b--black-20">${JSON.stringify(IpfsID.getProof(proofHash), null, 2)}</textarea>
+                   class="flex w-100 h4 code lh-copy center f7 pa2 black-70 h5 overflow-auto ba b--black-20">${JSON.stringify(IpfsID.proofsDB.get(proofHash).proof, null, 2)}</textarea>
           </article></div>`
 }
 
-function proofList (state) {
+async function proofList (state) {
   function viewProof (event) {
     let hash = event.target.dataset.hash
     let detailUI = proofDetail(hash)
@@ -372,7 +378,11 @@ function proofList (state) {
   if (!state) {
     // default view
     // get all proofs in db
-    list = window.IpfsID.getAllProofs()
+    try {
+      list = await window.IpfsID.proofsDB.getAll()
+    } catch (ex) {
+      error(ex)
+    }
     return html`
       <div id="proof-list"
            class="_proof_tab_ w-90 center pv4 bg-near-white">
@@ -417,7 +427,9 @@ function proof (proofData) {
       return notify.error('Error', 'Cannot save non-existent proof')
     }
     // Save to IPFS, pin & create IPNS URL
-    IpfsID.saveProof(proof).
+    // TODO: Needs an id property
+    // perhaps we generate a tmp ID??
+    IpfsID.proofsDB.create(proof).
       then((res) => {
         notify.success('Proof stored successfully')
       }).
@@ -789,7 +801,7 @@ function peerProfile (profile) {
 }
 
 async function verifyProofsUI (peerId) {
-  let verifiedProofs = IpfsID.getValidityDocs(peerId)
+  let verifiedProofs = IpfsID.proofsDB.getValidityDocs(peerId)
   var newNode
   let follow = followBtn(peerId)
 

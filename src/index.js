@@ -12,7 +12,9 @@ const { Buffer } = require('buffer')
 const multihashing = require('multihashing-async')
 const { pem, pki } = require('node-forge')
 const peerId = require('peer-id')
+
 const { DB } = require('./db')
+const { ProofsDB } = require('./proofs-db')
 
 const DEFAULT_HANDLE = 'InterPlanetaryPsuedoAnonymite'
 
@@ -144,6 +146,24 @@ class IpfsIdentity {
     }
   }
 
+  get proofsDB () {
+    // DB will be lazily loaded on first access
+    if (this._proofsDB) {
+      return this._proofsDB
+    } else {
+      this._proofsDB = new ProofsDB(
+      'proofs',
+        { id: STRING,
+          peerId: STRING,
+          createdTs: INTEGER,
+          updatedTs: INTEGER,
+          proof: OBJECT
+        }, {})
+
+      return this._proofsDB
+    }
+  }
+
   get idData () {
     try {
       this.updateProofs()
@@ -171,18 +191,6 @@ class IpfsIdentity {
     let accountHandle = null
     this._firstRun = false
     this._knownPeers = {}
-    // get handle to proof data, populate local in-memory
-    //     _proofsData via EventEmitter
-    this._proofData = {}
-    this.proofDB.on('put', (k, v) => {
-      that._proofData[k] = v
-    })
-    this.proofDB.on('del', (k) => {
-      delete that._proofData[k]
-    })
-    // set the put and del events on the proof db
-    this.initProofDb()
-
     this._uiEventHandlers = eventHandlers || {}
 
     if (!handle) { throw new Error(ERR.ARG_REQ_HANDLE) }
@@ -277,10 +285,6 @@ class IpfsIdentity {
     return this._roomApi
   }
 
-  get proofDB () {
-    return level(`./${PROOFS_DB_NAME}`)
-  }
-
   get proofUrlDB () {
     return level(`./${PROOFS_URL_DB_NAME}`)
   }
@@ -303,17 +307,6 @@ class IpfsIdentity {
     return this._proofUrlData
   }
 
-  get proofData () {
-    return this._proofData
-  }
-
-  getProof (hash) {
-    // TODO: get the published URLs too
-    let proof = JSON.parse(a2t(this._proofData[hash]))
-    proof._hash = hash
-    return proof
-  }
-
   getProofUrl (hash) {
     let url = null
     this.proofUrls.forEach((item) => {
@@ -324,99 +317,7 @@ class IpfsIdentity {
     return url
   }
 
-  getAllProofs () {
-    var that = this
-    let hashes = Object.keys(this._proofData)
-    let results = []
-    hashes.forEach((hash, idx) => {
-      results.push(
-        { hash: hash,
-          proof: JSON.parse(a2t(that._proofData[hash]))
-        })
-    })
-
-    return results
-  }
-
-  deleteProof (hash, callback) {
-    const that = this
-    // delete from db
-    this.proofDB.del(hash, (err, res) => {
-      if (err) {
-        return callback(err, res)
-      }
-      // delete from cache:
-      try {
-        delete that._proofData[hash]
-        that._uiEventHandlers['proof-deleted']()
-      } catch (ex) {
-        error(ex)
-      }
-      return callback(err, res)
-    })
-  }
-
-  initProofDb () {
-    const that = this
-    this._proofUrlData = {}
-
-    this.proofDB.createReadStream()
-      .on('data', function (data) {
-        log(data.key, '=', data.value)
-        that._proofData[data.key] = data.value
-      })
-      .on('error', function (err) {
-        error('Cannot read proofDB stream: ', err)
-      })
-      .on('close', function () {
-        log('ProofDB stream closed')
-      })
-      .on('end', function () {
-        // get proof urls
-        that.proofUrlDB.createReadStream()
-          .on('data', function (data) {
-            log(data.key, '=', data.value)
-            that._proofUrlData[data.key] = data.value
-          }).on('error', function (err) {
-            error('Cannot read proofUrlDB stream: ', err)
-          })
-          .on('close', function () {
-            log('ProofUrlDB stream closed')
-          })
-          .on('end', function () {
-            that.updateProofs()
-            log('ProofUrlDB stream ended')
-          })
-        log('ProofDB stream ended')
-      })
-    // this populates the in-memory _proofData property
-    this.proofDB.on('put', function (key, value) {
-      log('inserted into proof DB', { key, value })
-      that._proofData[key] = value
-    })
-    this.proofDB.on('del', function (key, value) {
-      log('deleted from proof DB', key)
-      delete that._proofData[key]
-    })
-  }
-
-  updateProofs () {
-    const that = this
-    // Need to collate all proofs + proofUrls here
-    let proofs = []
-    if (this.proofUrls.length) {
-      this.getAllProofs().forEach((proof, idx) => {
-        that.proofUrls.forEach((url, idx) => {
-          if (proof.hash === url.hash) {
-            proof.url = url.proof.url // TODO: fix this nested object
-            proofs.push(proof)
-          }
-        })
-      })
-    }
-    that._idData.proofs = proofs
-  }
-
+  // Move to an 'ipfs' property / module
   async saveProof (content) {
     try {
       var results = await this.saveProofToIpfs(content)
@@ -426,17 +327,8 @@ class IpfsIdentity {
     }
 
     let hash = results[0].hash
-    const success = await this.saveProofToDb(hash, content)
+    const success = await this.proofsDB.getOrCreate(hash, content)
     return success
-  }
-
-  async saveProofToDb (hash, content) {
-    let proof = Buffer.from(content)
-    proof.ipfsHash = hash
-    let result = await this.proofDB.put(hash, proof)
-    this._proofData[hash] = proof
-    // get the in-memory proof content
-    return proof
   }
 
   async saveProofUrl (hash, url) {
@@ -458,6 +350,7 @@ class IpfsIdentity {
     })
   }
 
+  // TODO: move to 'ipfs' property
   async saveProofToIpfs (content) {
     try {
       let result = await this.store(JSON.stringify(content))
@@ -467,6 +360,7 @@ class IpfsIdentity {
     }
   }
 
+  // TODO move to a 'crypto' property
   verifyProof (proof, callback) {
     // make sure the proof signature was generated by the private half of publicKey
     let _proof = null
@@ -488,6 +382,7 @@ class IpfsIdentity {
     })
   }
 
+  // TODO: move to a 'crypto' property
   verifyPeer (peerProfile) {
     if (!peerProfile.proofs) {
       return
@@ -505,7 +400,7 @@ class IpfsIdentity {
         } else {
           valid = true
         }
-
+        // TODO: use call to contactsDB oinstead of _knownPeers
         if (!that._knownPeers[proof.proof.ipfsId].validityDocs) {
           that._knownPeers[proof.proof.ipfsId].validityDocs = []
         }
@@ -515,15 +410,6 @@ class IpfsIdentity {
         })
       })
     })
-  }
-
-  getValidityDocs (peerId) {
-    if (this._knownPeers[peerId]) {
-      if (this._knownPeers[peerId].validityDocs) {
-        return this._knownPeers[peerId].validityDocs
-      }
-    }
-    return []
   }
 
   initStorage (callback) {
@@ -601,6 +487,7 @@ class IpfsIdentity {
     // TODO: update state to tell UI consumers
   }
 
+  // TODO: move to proofs property?
   createProof (username, service, callback, expires=null) {
     // Sign message, returning an Object with
     // service, username, message, handle and signature
@@ -885,21 +772,6 @@ class IpfsIdentity {
     return {
       getAccount: () => {
         checkForAccount()
-      },
-      getProofs: (callback) => {
-        this._storageDB.get(DB_PROOFS_KEY, (err, value) => {
-          if (err) { return error(err) }
-          let result;
-          try {
-            result = JSON.parse(value)
-            log(result)
-          } catch (ex) {
-            error(ex)
-          }
-          if (callback) {
-            callback(null, result)
-          }
-        })
       },
       strings: {
         encode: encode,

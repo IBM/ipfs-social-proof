@@ -1,6 +1,4 @@
-const { t2a, a2t } = require('./utils')
 const { log, error } = require('./log')
-const { Buffer } = require('buffer')
 var PouchDB = require('pouchdb');
 
 const DEFAULT_DB_NAME = 'DOCUMENTS'
@@ -38,7 +36,7 @@ class DB {
 
       return result
     } catch (err) {
-      console.log(err);
+      error(err);
     }
     return null
   }
@@ -51,24 +49,31 @@ class DB {
     try {
       var doc = await this.db.get(id);
     } catch (ex) {
-      console.log(ex);
+      return null
     }
 
     return doc
   }
 
   async getOrCreate (obj) {
+    let created = false
     try {
       var result = await this.db.get(obj.id)
-
     } catch (ex) {
-      log(ex)
+      error(ex)
     }
     if (!result) {
-      result = await this.create(obj)
+      try {
+        result = await this.create(obj)
+      } catch (ex) {
+        error(ex)
+        throw new Error(ex)
+      }
+      result = await this.db.get(obj.id)
+      created = true
     }
 
-    return result
+    return { result: result, created: created }
   }
 
   async create (obj) {
@@ -125,6 +130,7 @@ class DB {
       var result = await this.db.put(doc);
     } catch (ex) {
       console.log(ex);
+      throw new Error(ex)
     }
 
     return result
