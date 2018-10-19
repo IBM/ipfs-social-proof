@@ -143,7 +143,7 @@ describe("ProofsDB test suite", function () {
 
   context('proofs db context', () => {
 
-    it('db create', (done) => {
+    it('db create && getByIpfsHash', (done) => {
       expect(db).to.exist()
       expect(typeof db === 'object').to.be.true()
 
@@ -180,6 +180,11 @@ describe("ProofsDB test suite", function () {
         }).catch((ex) => {
           console.error(ex)
         })
+    })
+
+    it('db saveProofUrl', (done) => {
+      // TODO
+      done()
     })
 
   }) // context

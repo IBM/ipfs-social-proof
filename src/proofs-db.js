@@ -44,6 +44,23 @@ class ProofsDB extends DB {
     }
     return result.docs[0]
   }
+
+  async saveProofUrl (ipfsHash, url) {
+    try {
+      var proofObj = await this.getByIpfsHash(ipfsHash)
+    } catch (ex) {
+      console.error(ex)
+      throw new Error(ex)
+    }
+    proofObj.url = url
+    try {
+      let result = await this.db.update(proofObj)
+      return result
+    } catch (ex) {
+      console.error(ex)
+      throw new Error(ex)
+    }
+  }
 }
 
 module.exports = ProofsDB

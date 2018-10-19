@@ -309,7 +309,7 @@ function proofDetail (proofHash) {
   // let proof = IpfsID.proofsDB.get(proofHash)
   // get the published 'proof urls'
   let proofUrl = null
-  let _proofUrl = IpfsID.proofsDB.getByIpfsHash(proofHash)
+  let _proofUrl = IpfsID.proofsDB.getByIpfsHash(proofHash).url
   if (_proofUrl) {
     proofUrl = _proofUrl.proof.url
   }
@@ -325,7 +325,7 @@ function proofDetail (proofHash) {
       return notify.error('IPFS Hash required')
     }
 
-    window.IpfsID.saveProofUrl(hash, url).
+    IpfsID.proofsDB.saveProofUrl(hash, url).
         then((res) => {
           return notify.success('Url saved')
         }).catch((ex) => {

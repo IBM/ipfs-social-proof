@@ -154,11 +154,11 @@ class IpfsIdentity {
       this._proofsDB = new ProofsDB(
       'proofs',
         { id: STRING,
-          peerId: STRING,
           createdTs: INTEGER,
-          updatedTs: INTEGER,
-          proof: OBJECT
+          updatedTs: INTEGER
         }, {
+          proof: OBJECT,
+          peerId: STRING,
           url: STRING,
           ipfsHash: STRING,
           ipnsHash: STRING,
@@ -304,25 +304,6 @@ class IpfsIdentity {
     return success
   }
 
-  async saveProofUrl (hash, url) {
-    let content = {
-      url: url,
-      hash: hash,
-      // ipns hash
-      ts: Date.now()
-    }
-
-    let urlRecord = Buffer.from(JSON.stringify(content))
-    let result = await this.proofUrlDB.put(hash, urlRecord)
-    this.proofUrlDB.get(hash, (err, res) => {
-      if (err) {
-        error(err)
-      } else {
-        this._proofUrlData[hash] = res
-      }
-    })
-  }
-
   // TODO: move to 'ipfs' property
   async saveProofToIpfs (content) {
     try {
@@ -387,6 +368,7 @@ class IpfsIdentity {
 
   initStorage (callback) {
     const that = this
+    // TODO: Replace storageDB with a new db class
     this._storageDB = level(`./${DEFAULT_STORAGE_DB_NAME}`)
 
     this._storageDB.get(DB_ACCOUNT_KEY, (err, value) => {
@@ -409,6 +391,7 @@ class IpfsIdentity {
     }
   }
 
+  // Move to crypto module
   sign (stringToSign, callback) {
     let array = t2a(stringToSign) // make an array buffer from string to sign the arrayBuffer
 
@@ -418,6 +401,7 @@ class IpfsIdentity {
     })
   }
 
+  // Move to crypto module
   verify (signedString, signature, callback) {
     let array = t2a(signedString) // signed string must be raw characters, not base64!
 
@@ -501,6 +485,7 @@ class IpfsIdentity {
     })
   }
 
+  // TODO: move to crypto module
   get pubKeyDehydrated () {
     // get a base64 encoded marshaled pub key
     const pub = this._node._peerInfo.id._privKey.public
@@ -600,6 +585,7 @@ class IpfsIdentity {
     }
   }
 
+  // move to ipfs module
   async store (data) {
     // store data in IPFS
     let res = await this._node.files.add(Buffer.from(data))
@@ -645,6 +631,7 @@ class IpfsIdentity {
 
   }
 
+  // TODO: move to pubsub module
   triggerRoomEvent (event, message) {
     if (!this._uiEventHandlers) {
       return
@@ -728,6 +715,7 @@ class IpfsIdentity {
   getMultihashForStringContent (stringContent, callback) {
     // pass in content you need a multihash for in order to
     // see if the file exists on IPFS
+    //  NOTE: this will not work - it will just timeout
     const that = this;
     let buf = Buffer.from(stringContent)
 
@@ -760,21 +748,6 @@ class IpfsIdentity {
   }
 }
 
-// var uint8array = new TextEncoder("utf-8").encode("¢");
-// var string = new TextDecoder("utf-8").decode(uint8array);
-
-function base64ToArr (base64) {
-  const chars = atob(base64) // un-base64
-  const arr = new TextEncoder("utf-8").encode(chars) // chars to array
-  return arr
-}
-
-function arrToBase64 (arrBuff) {
-  const str = new TextDecoder("utf-8").decode(arrBuff); // array to chars
-  const base64 = btoa(str) // tobase64
-  return base64
-}
-
 function t2a (text) {
   return new TextEncoder("utf-8").encode(text)
 }
@@ -790,10 +763,6 @@ function a2c (arrayBuffer) {
   })
   log('text array inside a2c', text)
   return text.join('')
-}
-
-function c2a (charData) {
-
 }
 
 async function start (handle, eventHandlers=null, repoName=DEFAULT_REPO_NAME) {
