@@ -158,7 +158,12 @@ class IpfsIdentity {
           createdTs: INTEGER,
           updatedTs: INTEGER,
           proof: OBJECT
-        }, {})
+        }, {
+          url: STRING,
+          ipfsHash: STRING,
+          ipnsHash: STRING,
+          pinned: INTEGER // Date.now()
+        })
 
       return this._proofsDB
     }
@@ -283,38 +288,6 @@ class IpfsIdentity {
     }
 
     return this._roomApi
-  }
-
-  get proofUrlDB () {
-    return level(`./${PROOFS_URL_DB_NAME}`)
-  }
-
-  get proofUrls () {
-    var that = this
-    let hashes = Object.keys(this._proofUrlData)
-    let results = []
-    hashes.forEach((hash, idx) => {
-      results.push(
-        { hash: hash,
-          proof: JSON.parse(a2t(that._proofUrlData[hash]))
-        })
-    })
-
-    return results
-  }
-
-  get proofUrlData () {
-    return this._proofUrlData
-  }
-
-  getProofUrl (hash) {
-    let url = null
-    this.proofUrls.forEach((item) => {
-      if (item.hash === hash) {
-        url = item
-      }
-    })
-    return url
   }
 
   // Move to an 'ipfs' property / module

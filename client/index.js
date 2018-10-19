@@ -309,7 +309,7 @@ function proofDetail (proofHash) {
   // let proof = IpfsID.proofsDB.get(proofHash)
   // get the published 'proof urls'
   let proofUrl = null
-  let _proofUrl = IpfsID.getProofUrl(proofHash)
+  let _proofUrl = IpfsID.proofsDB.getByIpfsHash(proofHash)
   if (_proofUrl) {
     proofUrl = _proofUrl.proof.url
   }

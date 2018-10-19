@@ -1,5 +1,6 @@
 const { log, error } = require('./log')
 var PouchDB = require('pouchdb');
+PouchDB.plugin(require('pouchdb-find'));
 
 const DEFAULT_DB_NAME = 'DOCUMENTS'
 

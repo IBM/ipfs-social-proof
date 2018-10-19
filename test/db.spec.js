@@ -5,9 +5,17 @@ const expect = chai.expect
 chai.use(dirtyChai)
 
 const { DB } = require('../src/db')
+const ProofsDB = require('../src/proofs-db')
+
+const STRING = 'string'
+const OBJECT = 'object'
+const UNDEFINED = 'undefined'
+const INTEGER = 'integer'
+const ARRAY = 'array'
+const BOOL = 'boolean'
 
 describe("A test suite", function () {
-  this.timeout(3000)
+  this.timeout(5000)
   const db = new DB(`test-db-${Math.random()}`, {
     id: 'string'
   }, {
@@ -17,6 +25,8 @@ describe("A test suite", function () {
     foo: 'string',
     bar: 'string'
   })
+
+  let _id
 
   beforeEach(() => {});
 
@@ -31,9 +41,9 @@ describe("A test suite", function () {
       // create
       db.create({id: '1', name: 'Chachito', foo: 'a', bar: 'b', baz: 'c'}).
         then((doc) => {
+          _id = doc._id
           expect(doc.id).to.exist()
           expect(doc.id).to.equal('1')
-
           db.get('1').then((doc) => {
             expect(doc.name).to.equal('Chachito')
             expect(doc.foo).to.equal('a')
@@ -79,24 +89,98 @@ describe("A test suite", function () {
       })
     })
 
-    // Error: {"status":409,"name":"conflict","message":"Document update conflict"}
-
     // it('db update', (done) => {
-    //   db.update({_id: '1', id: '1',
-    //              name: 'Chachito', foo: 'a',
-    //              bar: '17', baz: 'c'}).
-    //     then((doc) => {
-    //       console.log(doc)
-    //       db.get('1').then((doc) => {
-    //         console.log(doc)
-    //         expect(doc.bar).to.equal('17')
-    //         expect(doc.name).to.equal('Chachito')
-    //         expect(doc.foo).to.equal('a')
-    //         expect(doc.baz).to.equal('c')
-    //         done()
+    //   let id = `${Math.random()}`
+    //   db.create({id: id, name: 'Chachito', foo: 'a', bar: 'b', baz: 'c'}).
+    //     then((res) => {
+    //       db.get(id).then((doc) => {
+    //         db.update({id: '1', _id: doc._id,
+    //                    name: 'Chachito', foo: 'a',
+    //                    bar: '17', baz: 'c'}).
+    //           then((doc) => {
+    //             console.log(doc)
+    //             db.get(id).then((doc) => {
+    //               console.log(doc)
+    //               expect(doc.bar).to.equal('17')
+    //               expect(doc.name).to.equal('Chachito')
+    //               expect(doc.foo).to.equal('a')
+    //               expect(doc.baz).to.equal('c')
+    //               done()
+    //             }).catch((ex) => {
+    //               console.error(ex)
+    //             })
+    //           }).catch((ex) => {
+    //             console.error(ex)
+    //           })
+    //       }).catch((ex) => {
+    //         console.error(ex)
     //       })
     //     })
     // })
+
+  }) // context
+})
+
+describe("ProofsDB test suite", function () {
+  this.timeout(5000)
+  const db = new ProofsDB(
+      'proofs',
+        { id: STRING,
+          createdTs: INTEGER,
+          updatedTs: INTEGER
+        }, {
+          proof: OBJECT,
+          peerId: STRING,
+          url: STRING,
+          ipfsHash: STRING,
+          ipnsHash: STRING,
+          pinned: INTEGER // Date.now()
+        })
+
+  beforeEach(() => {});
+
+  afterEach(() => {})
+
+  context('proofs db context', () => {
+
+    it('db create', (done) => {
+      expect(db).to.exist()
+      expect(typeof db === 'object').to.be.true()
+
+      // create
+      let id = `${Math.random()}`
+      db.create(
+        { id: id,
+          createdTs: Date.now(),
+          updatedTs: Date.now(),
+          peerId: 'mQChachito',
+          proof: { handle: 'Escaleto',
+                   peerId: 'mqEscaleto' },
+          url: 'https://gist.github.com/escaleto/mQfoobarbaz',
+          ipfsHash: 'mQgetThatCornOuttaMyFace',
+          ipnsHash: null,
+          pinned: Date.now()
+        }).then((doc) => {
+          expect(doc.id).to.exist()
+          expect(doc.id).to.equal(id)
+          db.get(id).then((doc) => {
+            expect(doc.peerId).to.equal('mQChachito')
+            expect(doc.proof).to.exist()
+            expect(doc.proof.handle).to.equal('Escaleto')
+
+            db.getByIpfsHash(doc.ipfsHash).then((doc) => {
+              expect(doc.ipfsHash).to.equal('mQgetThatCornOuttaMyFace')
+              expect(doc.url).to.equal('https://gist.github.com/escaleto/mQfoobarbaz')
+              done()
+            })
+
+          }).catch((ex) => {
+            console.error(ex)
+          })
+        }).catch((ex) => {
+          console.error(ex)
+        })
+    })
 
   }) // context
 })
