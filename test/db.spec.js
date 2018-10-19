@@ -18,6 +18,7 @@ describe("A test suite", function () {
   this.timeout(5000)
   const db = new DB(`test-db-${Math.random()}`, {
     id: 'string'
+    // _rev: 'string'
   }, {
     name: 'string',
     baz: 'string',
@@ -41,7 +42,6 @@ describe("A test suite", function () {
       // create
       db.create({id: '1', name: 'Chachito', foo: 'a', bar: 'b', baz: 'c'}).
         then((doc) => {
-          _id = doc._id
           expect(doc.id).to.exist()
           expect(doc.id).to.equal('1')
           db.get('1').then((doc) => {
@@ -62,7 +62,7 @@ describe("A test suite", function () {
       db.getOrCreate({id: '2', name: 'Nacho', foo: 'b', bar: 'c', baz: 'd'}).
         then((doc) => {
           expect(doc.result.name).to.equal('Nacho')
-          expect(doc.result.id).to.equal('2')
+          expect(doc.result._id).to.equal('2')
           expect(doc.result.foo).to.equal('b')
           expect(doc.created).to.equal(true)
           done()
@@ -79,6 +79,22 @@ describe("A test suite", function () {
         })
     })
 
+    it('db delete', (done) => {
+      let id = `${Math.random()}`
+      db.create({id: id, name: 'Encarnación', foo: 'a', bar: 'b', baz: 'c'}).
+        then((doc) => {
+          expect(doc.ok).to.equal(true)
+          db.delete(id).then((res) => {
+            expect(res).to.exist()
+            done()
+          }).catch((ex) => {
+            console.error(ex)
+          })
+        }).catch((ex) => {
+          console.error(ex)
+        })
+    })
+
     it('db getAll', (done) => {
       db.getAll().then((docs) => {
         expect(docs.rows.length).to.equal(2)
@@ -89,34 +105,31 @@ describe("A test suite", function () {
       })
     })
 
-    // it('db update', (done) => {
-    //   let id = `${Math.random()}`
-    //   db.create({id: id, name: 'Chachito', foo: 'a', bar: 'b', baz: 'c'}).
-    //     then((res) => {
-    //       db.get(id).then((doc) => {
-    //         db.update({id: '1', _id: doc._id,
-    //                    name: 'Chachito', foo: 'a',
-    //                    bar: '17', baz: 'c'}).
-    //           then((doc) => {
-    //             console.log(doc)
-    //             db.get(id).then((doc) => {
-    //               console.log(doc)
-    //               expect(doc.bar).to.equal('17')
-    //               expect(doc.name).to.equal('Chachito')
-    //               expect(doc.foo).to.equal('a')
-    //               expect(doc.baz).to.equal('c')
-    //               done()
-    //             }).catch((ex) => {
-    //               console.error(ex)
-    //             })
-    //           }).catch((ex) => {
-    //             console.error(ex)
-    //           })
-    //       }).catch((ex) => {
-    //         console.error(ex)
-    //       })
-    //     })
-    // })
+    it('db update', (done) => {
+      let id = `${Math.random()}`
+      db.create({id: id, name: 'Chachito', foo: 'a', bar: 'b', baz: 'c'}).
+        then((res) => {
+          db.get(id).then((doc) => {
+            doc.bar = "17"
+            db.update(doc).
+              then((doc) => {
+                db.get(id).then((doc) => {
+                  expect(doc.bar).to.equal('17')
+                  expect(doc.name).to.equal('Chachito')
+                  expect(doc.foo).to.equal('a')
+                  expect(doc.baz).to.equal('c')
+                  done()
+                }).catch((ex) => {
+                  console.error(ex)
+                })
+              }).catch((ex) => {
+                console.error(ex)
+              })
+          }).catch((ex) => {
+            console.error(ex)
+          })
+        })
+    })
 
   }) // context
 })
@@ -127,7 +140,8 @@ describe("ProofsDB test suite", function () {
       'proofs',
         { id: STRING,
           createdTs: INTEGER,
-          updatedTs: INTEGER
+          updatedTs: INTEGER,
+          _rev: STRING,
         }, {
           proof: OBJECT,
           peerId: STRING,
@@ -170,7 +184,7 @@ describe("ProofsDB test suite", function () {
 
             db.getByIpfsHash(doc.ipfsHash).then((doc) => {
               expect(doc.ipfsHash).to.equal('mQgetThatCornOuttaMyFace')
-              expect(doc.url).to.equal('https://gist.github.com/escaleto/mQfoobarbaz')
+              expect(doc.url).to.exist()
               done()
             })
 
@@ -183,8 +197,13 @@ describe("ProofsDB test suite", function () {
     })
 
     it('db saveProofUrl', (done) => {
-      // TODO
-      done()
+      let url = 'https://RamsesDoesNotDanceAtTheParty.com'
+      db.saveProofUrl('mQgetThatCornOuttaMyFace', url).then((res) => {
+        expect(res.ok).to.be.true
+        done()
+      }).catch((ex) => {
+        console.error(ex)
+      })
     })
 
   }) // context

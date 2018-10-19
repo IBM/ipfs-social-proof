@@ -2,6 +2,10 @@ const { DB } = require('./db')
 
 class ProofsDB extends DB {
 
+  constructor (dbName=null, requiredFields={}, optionalFields={}) {
+    super(dbName, requiredFields, optionalFields)
+  }
+
   async getValidityDocs (peerId) {
     // get all and filter? TODO: use find() API
     // TODO: query for all proofs with peerId of x
@@ -53,14 +57,21 @@ class ProofsDB extends DB {
       throw new Error(ex)
     }
     proofObj.url = url
+    // debugger;
     try {
-      let result = await this.db.update(proofObj)
+      let result = await this.update(proofObj)
       return result
     } catch (ex) {
       console.error(ex)
       throw new Error(ex)
     }
   }
+
+  // async update (obj) {
+  //   return super.update(object)
+  // }
 }
+
+// Object.setPrototypeOf(ProofsDB.prototype, DB);
 
 module.exports = ProofsDB

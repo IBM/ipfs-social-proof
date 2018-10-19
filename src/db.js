@@ -16,7 +16,6 @@ class DB {
     this.requiredFields = requiredFields
     this.optionalFields = optionalFields
 
-    this.init()
   }
 
   async get (id) {
@@ -42,10 +41,6 @@ class DB {
     return null
   }
 
-  init () {
-    this.db // initialize the db
-  }
-
   async getById (id) {
     try {
       var doc = await this.db.get(id);
@@ -61,7 +56,7 @@ class DB {
     try {
       var result = await this.db.get(obj.id)
     } catch (ex) {
-      error(ex)
+      // error(ex)
     }
     if (!result) {
       try {
@@ -97,7 +92,7 @@ class DB {
     try {
       var result = await this.db.put(doc);
     } catch (ex) {
-      console.log(ex);
+      console.error(ex);
     }
 
     return result
@@ -108,29 +103,13 @@ class DB {
       throw new Error(ERR.ARG_REQ_ID)
     }
 
-    let required = Object.keys(this.requiredFields)
-    let optional = Object.keys(this.optionalFields)
-    let doc = {}
-
-    // make sure we have required props
-    required.forEach((prop) => {
-      doc[prop] = obj[prop] ||
-        (() => {throw new Error(`required field ${prop} missing`)})()
-    })
-    // filter out any non-required or approved properties
-    optional.forEach((prop) => {
-      doc[prop] = obj[prop] || null
-    })
-
-    doc.updatedTs = Date.now() // maybe pouchdb handles this??
-    doc.id = obj.id
-    doc._rev = obj._rev
-    doc._id = obj._id
+    let doc = obj
+    doc._id = obj.id
 
     try {
       var result = await this.db.put(doc);
     } catch (ex) {
-      console.log(ex);
+      console.error(ex);
       throw new Error(ex)
     }
 
@@ -141,8 +120,10 @@ class DB {
     try {
       var doc = await this.db.get(id);
       var response = await this.db.remove(doc);
+      return response
     } catch (err) {
-      console.log(err);
+      console.error(err)
+      throw new Error(err)
     }
   }
 

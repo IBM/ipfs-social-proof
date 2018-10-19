@@ -29,10 +29,8 @@ var DEFAULT_IDENTITY_DATA = {
 const DEFAULT_REPO_NAME = 'IPFS_IDENTITY_SOCIAL_PROOF'
 const DEFAULT_ROOM_NAME = DEFAULT_REPO_NAME
 const DEFAULT_STORAGE_DB_NAME = 'SOCIAL_PROOF_DATA'
-const PROOFS_DB_NAME = 'SOCIAL_PROOF_DOCS'
-const PROOFS_URL_DB_NAME = 'SOCIAL_PROOF_URLS'
 const DB_ACCOUNT_KEY = 'ACCOUNT'
-const DB_PROOFS_KEY = 'PROOFS'
+// TODO?: setInterval to broadcast profile
 const BROADCAST_INTERVAL_MS = 5000;
 
 const STRING = 'string'
@@ -170,21 +168,18 @@ class IpfsIdentity {
   }
 
   get idData () {
-    try {
-      this.updateProofs()
-    } catch (ex) {}
-
     let profile = this._idData
     profile.peerId = this.peerId
     profile.publicKey = this.pubKeyDehydrated
     profile.pubKeyBase64 = this.pubKeyBase64
+    async () => {
+      profile.proofs = await this.proofsDB.getAll().rows
+    }
 
     return profile
   }
 
   broadcastProfile () {
-    this.updateProofs()
-
     let idData = this.idData
     idData.updated = Date.now()
     this.roomApi.broadcast(idData)
