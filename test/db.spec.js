@@ -4,21 +4,16 @@ const dirtyChai = require('dirty-chai')
 const expect = chai.expect
 chai.use(dirtyChai)
 
-const { DB } = require('../src/db')
+const DB = require('../src/db')
 const ProofsDB = require('../src/proofs-db')
 
-const STRING = 'string'
-const OBJECT = 'object'
-const UNDEFINED = 'undefined'
-const INTEGER = 'integer'
-const ARRAY = 'array'
-const BOOL = 'boolean'
+const { OBJECT, STRING, UNDEFINED,
+        ARRAY, INTEGER, BOOL } = require('../src/utils')
 
 describe("A test suite", function () {
   this.timeout(5000)
   const db = new DB(`test-db-${Math.random()}`, {
     id: 'string'
-    // _rev: 'string'
   }, {
     name: 'string',
     baz: 'string',
@@ -156,13 +151,13 @@ describe("ProofsDB test suite", function () {
   afterEach(() => {})
 
   context('proofs db context', () => {
-
+    let id = `${Math.random()}`
     it('db create && getByIpfsHash', (done) => {
       expect(db).to.exist()
       expect(typeof db === 'object').to.be.true()
 
       // create
-      let id = `${Math.random()}`
+      // let id = `${Math.random()}`
       db.create(
         { id: id,
           createdTs: Date.now(),
@@ -170,7 +165,7 @@ describe("ProofsDB test suite", function () {
           peerId: 'mQChachito',
           proof: { handle: 'Escaleto',
                    peerId: 'mqEscaleto' },
-          url: 'https://gist.github.com/escaleto/mQfoobarbaz',
+          url: null,
           ipfsHash: 'mQgetThatCornOuttaMyFace',
           ipnsHash: null,
           pinned: Date.now()
@@ -198,8 +193,8 @@ describe("ProofsDB test suite", function () {
 
     it('db saveProofUrl', (done) => {
       let url = 'https://RamsesDoesNotDanceAtTheParty.com'
-      db.saveProofUrl('mQgetThatCornOuttaMyFace', url).then((res) => {
-        expect(res.ok).to.be.true
+      db.saveProofUrl(id, url).then((res) => {
+        expect(res.updated).to.be.true
         done()
       }).catch((ex) => {
         console.error(ex)

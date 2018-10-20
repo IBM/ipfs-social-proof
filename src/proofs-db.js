@@ -1,4 +1,4 @@
-const { DB } = require('./db')
+const DB = require('./db')
 
 class ProofsDB extends DB {
 
@@ -50,26 +50,16 @@ class ProofsDB extends DB {
   }
 
   async saveProofUrl (ipfsHash, url) {
-    try {
-      var proofObj = await this.getByIpfsHash(ipfsHash)
-    } catch (ex) {
-      console.error(ex)
-      throw new Error(ex)
-    }
-    proofObj.url = url
-    // debugger;
-    try {
-      let result = await this.update(proofObj)
-      return result
-    } catch (ex) {
-      console.error(ex)
-      throw new Error(ex)
-    }
-  }
 
-  // async update (obj) {
-  //   return super.update(object)
-  // }
+    return this.db.upsert(ipfsHash, (doc) => {
+      doc.url = url
+      return doc
+    }).then((res) => {
+      return res
+    }).catch((err) => {
+      throw new Error(err)
+    });
+  }
 }
 
 // Object.setPrototypeOf(ProofsDB.prototype, DB);

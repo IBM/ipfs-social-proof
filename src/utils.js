@@ -11,5 +11,12 @@ function a2t (arrayBuffer) {
 
 module.exports = {
   a2t: a2t,
-  t2a: t2a
+  t2a: t2a,
+  STRING: 'string',
+  OBJECT: 'object',
+  UNDEFINED: 'undefined',
+  INTEGER: 'integer',
+  ARRAY: 'array',
+  BOOL: 'boolean',
+  FUNCTION: 'function'
 }

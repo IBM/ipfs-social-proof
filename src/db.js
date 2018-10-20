@@ -1,8 +1,13 @@
 const { log, error } = require('./log')
 var PouchDB = require('pouchdb');
 PouchDB.plugin(require('pouchdb-find'));
+PouchDB.plugin(require('pouchdb-upsert'));
+
+const { OBJECT, STRING, UNDEFINED,
+        ARRAY, INTEGER, BOOL } = require('./utils')
 
 const DEFAULT_DB_NAME = 'DOCUMENTS'
+const INDEXED_DB = 'idb'
 
 const ERR = {
   ARG_REQ: `argument(s) required`,
@@ -22,7 +27,7 @@ class DB {
     try {
       return await this.db.get(id)
     } catch (ex) {
-      error(ex)
+      console.error(ex)
       return null
     }
   }
@@ -36,7 +41,7 @@ class DB {
 
       return result
     } catch (err) {
-      error(err);
+      console.error(err);
     }
     return null
   }
@@ -62,7 +67,7 @@ class DB {
       try {
         result = await this.create(obj)
       } catch (ex) {
-        error(ex)
+        console.error(ex)
         throw new Error(ex)
       }
       result = await this.db.get(obj.id)
@@ -77,16 +82,16 @@ class DB {
     if (!obj.id) {
       throw new Error(ERR.ARG_REQ_ID)
     }
-    let optional = Object.keys(this.optionalFields)
+
     let doc = {
-      id: obj.id,
       _id: obj.id,
       createdTs: Date.now(),
       updatedTs: Date.now()
     }
-    // filter out any non-required or approved properties
-    optional.forEach((prop) => {
-      doc[prop] = obj[prop] || null
+
+    let keys = Object.keys(obj)
+    keys.forEach((prop) => {
+      doc[prop] = obj[prop]
     })
 
     try {
@@ -120,6 +125,7 @@ class DB {
     try {
       var doc = await this.db.get(id);
       var response = await this.db.remove(doc);
+
       return response
     } catch (err) {
       console.error(err)
@@ -129,14 +135,20 @@ class DB {
 
   get db () {
     if (this._db) {
+
       return this._db
     }
-    this._db = new PouchDB(this.dbName)
+
+    var adapter = undefined
+
+    if (typeof window === OBJECT) {
+      adapter = { adapter: INDEXED_DB }
+    }
+
+    this._db = new PouchDB(this.dbName, adapter)
 
     return this._db
   }
 }
 
-module.exports = {
-  DB: DB
-}
+module.exports = DB

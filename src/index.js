@@ -13,8 +13,8 @@ const multihashing = require('multihashing-async')
 const { pem, pki } = require('node-forge')
 const peerId = require('peer-id')
 
-const { DB } = require('./db')
-const { ProofsDB } = require('./proofs-db')
+const DB = require('./db')
+const ProofsDB = require('./proofs-db')
 
 const DEFAULT_HANDLE = 'InterPlanetaryPsuedoAnonymite'
 
@@ -33,12 +33,8 @@ const DB_ACCOUNT_KEY = 'ACCOUNT'
 // TODO?: setInterval to broadcast profile
 const BROADCAST_INTERVAL_MS = 5000;
 
-const STRING = 'string'
-const OBJECT = 'object'
-const UNDEFINED = 'undefined'
-const INTEGER = 'integer'
-const ARRAY = 'array'
-const BOOL = 'boolean'
+const { OBJECT, STRING, UNDEFINED,
+        ARRAY, INTEGER, BOOL } = require('./utils')
 
 const SHA_256 = 'sha2-256'
 
@@ -288,15 +284,31 @@ class IpfsIdentity {
   // Move to an 'ipfs' property / module
   async saveProof (content) {
     try {
-      var results = await this.saveProofToIpfs(content)
+      var proofData = content
+      if (typeof content === OBJECT) {
+        proofData = JSON.stringify(content)
+      }
+      var results = await this.saveProofToIpfs(proofData)
       log('results', results)
     } catch (ex) {
       throw new Error(ex)
     }
+    var saveData
+    if (typeof proofData === STRING) {
+      saveData = JSON.parse(proofData)
+    }
 
     let hash = results[0].hash
-    const success = await this.proofsDB.getOrCreate(hash, content)
-    return success
+    saveData.ipfsHash = hash
+    saveData.id = hash
+
+    try {
+      const success = await this.proofsDB.create(saveData)
+      return success
+    } catch (ex) {
+      console.error(ex)
+      throw new Error(ex)
+    }
   }
 
   // TODO: move to 'ipfs' property

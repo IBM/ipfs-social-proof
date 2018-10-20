@@ -17,6 +17,7 @@
     "clipboard": "^1.7.1",
     "pouchdb": "^7.0.0",
     "qrcode-generator": "^1.4.1",
+    "uuid": "^3.3.2",
     "valid-url": "^1.0.9",
     "yo-yo": "^1.4.1"
   },
