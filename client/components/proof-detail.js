@@ -33,6 +33,14 @@ class ProofDetail {
   // get the state async
   setState (state=null) {
     this.state = state
+    this.state.confirmConfig = {
+      id: this.config.proofId,
+      headline: 'Are you sure you want to delete this proof?',
+      details: 'You can easily create this proof again later',
+      proceedLabel: 'Delete',
+      proceedFunc: this.deleteProof
+    }
+
     this.render()
   }
 
@@ -53,7 +61,7 @@ class ProofDetail {
              <span id="proof-hash">${state.proof.ipfsHash}</span>
              <span class="mr2">
                <img class="h1 ml4" title="Delete this Proof"
-                    onclick=${this.remove}
+                    onclick=${function (event) { confirmProceed(state.confirmConfig) } }
                     src="./img/trash.svg" />
              </span>
            </div>
@@ -96,14 +104,6 @@ class ProofDetail {
     html.update(currentNode, defaultNode)
   }
 
-  remove () {
-    confirmProceed({
-      headline: 'Are you sure you want to delete this proof?',
-      details: 'You can easily create this proof again later',
-          proceedLabel: 'Delete'
-    }, this.deleteProof)
-  }
-
   saveProofUrl () {
     let url = document.querySelector('#save-proof-url').value
     let hash = document.querySelector('#proof-hash').innerText
@@ -124,10 +124,17 @@ class ProofDetail {
         })
   }
 
-  deleteProof () {
+  deleteProof (proofHash, callback) {
+    const that = this
     window.IpfsID.proofsDB.delete(proofHash).
       then((res) => {
         notify.success('Proof deleted')
+        callback(null, res)
+        // that.closeModal({ target: { dataset: { parent: that.selector }}})
+        let currentNode = document.
+            querySelector('#proof-detail')
+        let defaultNode = html`<div id="#proof-detail" class="w-80"></div>`
+        html.update(currentNode, defaultNode)
       }).catch((ex) => {
         console.error(ex)
         notify.error('Proof delete failed')

@@ -3,27 +3,25 @@
 const html = require('yo-yo')
 const notify = require('./notify')
 
-function confirmProceed (detailsConf, proceedFunc) {
-  // detailsConf: { headline: 'are you sure?',
+function confirmProceed (detailsConf) {
+  // detailsConf: { id: an ID to use in the callback, optional
+  //                headline: 'are you sure?',
   //                details: 'if you confirm...'
-  //                proceedLabel: 'Delete and stuff' }
-  // proceedFunc: operational function to proceed
+  //                proceedLabel: 'Delete and stuff',
+  //                proceedFunc: operational function to proceed }
 
   function closeConfModal (err, result) {
-    if (err && !err.target) {
+    if (err) {
       return notify.error(err)
     }
 
     let origNode = document.querySelector('#confirmation-modal')
     let modal = html`<div id="confirmation-modal" class="w-60"></div>`
     html.update(origNode, modal)
-    origNode = document.querySelector('#modal')
-    modal = html`<div id="modal" class="w-80"></div>`
-    html.update(origNode, modal)
   }
 
   function proceedAndClose () {
-    proceedFunc(closeConfModal)
+    detailsConf.proceedFunc(detailsConf.id, closeConfModal)
   }
 
   const newNode = html
