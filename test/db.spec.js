@@ -201,5 +201,15 @@ describe("ProofsDB test suite", function () {
       })
     })
 
+    it('db getValidityDocs', (done) => {
+      let peerId = 'mQChachito'
+      db.getValidityDocs(id).then((res) => {
+        expect(res.length).to.equal(1)
+        done()
+      }).catch((ex) => {
+        console.error(ex)
+      })
+    })
+
   }) // context
 })

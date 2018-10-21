@@ -9,25 +9,20 @@ class ProofsDB extends DB {
   async getValidityDocs (peerId) {
     // get all and filter? TODO: use find() API
     // TODO: query for all proofs with peerId of x
-    try {
-      var result = await this.db.allDocs({
-        include_docs: true,
-        attachments: true
-      });
-
+    return this.db.allDocs({
+      include_docs: true,
+      attachments: true
+    }).then((res) => {
       let docs = []
-
-      result.forEach((doc) => {
-        if (doc.peerId === peerId) {
-          docs.push(doc)
+      res.rows.forEach((row) => {
+        if (row.id === peerId) {
+          docs.push(row)
         }
       })
-
       return docs
-    } catch (err) {
-      console.log(err);
-    }
-    return null
+    }).catch((ex) => {
+      return null
+    })
   }
 
   async filter (filterObj) {} // TODO
