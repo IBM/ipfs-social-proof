@@ -350,7 +350,9 @@ class IpfsIdentity {
     if (proof.doc) {
       _proof = proof.doc
     }
-
+    // TODO: revert to using helper functions and test
+    //       `this` was undefined here being called from PublicKeyCard
+    //        which, BTW, was called from a DOM eventHandler
     const signedProofText = JSON.stringify(_proof.proof) // JSON -> string
     // const bufferSig = this.rehydrate(_proof.signature) //  string -> encode to arraybuffer
     const obj = JSON.parse(_proof.signature)

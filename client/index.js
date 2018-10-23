@@ -608,39 +608,26 @@ function peerProfile (profile) {
     profile = window.IpfsID.idData
   }
 
-  function follow (event) {
-    // TODO subclass DB to add a "contactsDB.follow()" method
-    let _profile = {
-      id: profile.peerId,
-      peerId: profile.peerId,
-      following: true,
-      followTs: Date.now()
-    }
+  // function follow (event) {
+  //   // TODO subclass DB to add a "contactsDB.follow()" method
+  //   let _profile = {
+  //     id: profile.peerId,
+  //     peerId: profile.peerId,
+  //     following: true,
+  //     followTs: Date.now()
+  //   }
 
-    Object.assign(_profile, profile)
+  //   Object.assign(_profile, profile)
 
-    window.IpfsID.contactsDB.getOrCreate(_profile).then((result) => {
-      notify.success('Following...', `${profile.handle || profile.peerId}`)
-    }).
-      catch((err) => {
-        error(err)
-      })
-  }
+  //   window.IpfsID.contactsDB.getOrCreate(_profile).then((result) => {
+  //     notify.success('Following...', `${profile.handle || profile.peerId}`)
+  //   }).
+  //     catch((err) => {
+  //       error(err)
+  //     })
+  // }
 
   function evtExaminePubKey (event) {
-    // display overlay that shows public key
-    // publicKeyCard(profile).then((keyCard) => {
-    //   // TODO: use `html.update()` here
-    //   document.querySelector('#modal').appendChild(keyCard)
-    //   verifyProofsUI(profile.peerId)
-
-    //   let _profile = profile;
-    //   if (profile.peerId === window.IpfsID.idData.peerId) {
-    //     // current user is the peer
-    //     _profile = window.IpfsID.idData
-    //   }
-    // })
-
     new PublicKeyCard(IpfsID, 'public-key-card', { profile: profile })
   }
 
@@ -673,39 +660,6 @@ function peerProfile (profile) {
   }
 }
 
-async function verifyProofsUI (peerId) {
-  let verifiedProofs = IpfsID.proofsDB.getValidityDocs(peerId)
-  var newNode
-  let follow = followBtn(peerId)
-
-  let origNode = document.querySelector('#verify-ui')
-
-  const defaultNode = html`
-    <p id="verify-ui" class="flex-justify-around">
-      <span id="verify-animation"></span>
-      <div id="verify-results" class="flex-justify-around">
-        <span><img class="h1" title="Peer proofs are un-verified" src="img/times-circle.svg" /></span>
-      </div>
-    </p>`
-  if (!verifiedProofs) {
-    newNode = defaultNode
-  } else if (!verifiedProofs.length) {
-    newNode = defaultNode
-  } else if (verifiedProofs.length) {
-    newNode = html`
-      <p id="verify-ui">
-        <span id="verify-animation"></span>
-        <div id="verify-results" class="flex-justify-around">
-          ${verifiedProofs.map((proof) => {
-            return html`<a target="_blank" href="${proof.proof.url}" class="mr2 pointer"><img class="h1" title="Peer proof is verified: ${proof.proof.url}" src="img/check-circle-green.svg" /></a>`
-          })}
-        </div>
-      </p>`
-  }
-
-  html.update(origNode, newNode)
-}
-
 function followBtn (profile) {
   function unfollow (event) {
     notify.info('unimplemented')
@@ -731,40 +685,6 @@ function followBtn (profile) {
       }
     })
   }
-}
-
-async function publicKeyCard (profile) {
-  const icon = avatar(profile.peerId)
-
-  function close (event) {
-    let card = document.querySelector('#public-key-card')
-    card.parentNode.removeChild(card)
-  }
-
-  let btn = await followBtn(profile)
-
-  return html`
-    <article id="public-key-card"
-             class="center w-80 shadow-1 bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
-      <div><img class="h1" onclick=${close} src="./img/close.svg" /></div>
-      <div class="tc">
-        <div>${icon}</div>
-        <h1 class="f7 code">
-          ${profile.handle || profile.peerId}
-        </h1>
-        <div class="flex-justify-between">
-          ${btn}
-          <p id="verify-ui">
-            <span id="verify-animation"></span>
-            <div id="verify-results"></div>
-          </p>
-        </div>
-      </div>
-      <p class="code lh-copy measure center f7 pa2 black-70 h3 overflow-auto ba b--black-20">
-        ${profile.bio || 'No bio available'}
-      </p>
-      <textarea disabled class="flex w-100 code lh-copy measure center f7 pa2 black-70 h4 overflow-auto ba b--black-20">${profile.pubKeyBase64 || 'No shared public key available'}</textarea>
-    </article>`
 }
 
 function updateFavicon (peerId) {

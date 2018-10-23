@@ -124,32 +124,6 @@ class PublicKeyCard {
             }
           })
         })
-
-        // let promises = proofs.map(IpfsID.verifyProof)
-        // Promise.all(promises).
-        //   then((results) => {
-        //     results.forEach((valid, idx) => {
-        //       if (valid) {
-        //         that.config.profile.validDocs.push({
-        //           proof: proofs[idx].doc,
-        //           valid: valid
-        //         })
-        //       } else {
-        //         that.config.profile.invalidDocs.push({
-        //           proof: proofs[idx].doc,
-        //           valid: valid
-        //         })
-        //       }
-        //     })
-        //     return that.setState({
-        //       profile: that.profile,
-        //       config: that.config
-        //     })
-        //   }).catch((ex) => {
-        //     console.error(ex)
-        //     notify.error('Cannot verify all proofs')
-        //     that.setState({ profile: that.profile, config: that.config })
-        //   })
       }
     } else {
       console.error('Proofs array has a length of 0')
