@@ -451,7 +451,7 @@ function nav () {
     <div id="nav" data-name="component">
       <header class="bg-black-90 fixed w-100 ph3 pv3 pv4-ns ph4-m ph5-l">
         <nav class="f6 fw6 ttu tracked w-80 center">
-          <span id="nav-animation" class="f2 code link dim white dib mr3"></span>
+          <span id="nav-animation" class="f2 code link dim blue dib mr3"></span>
           <div id="nav-links" class="center" style="text-align: center;">
             <a id="autonomica-link"
                class="link dim white dib mr3"
