@@ -140,9 +140,12 @@ class PublicKeyCard {
             }
           })
         })
+      } else {
+        console.error('Proofs array has a length of 0')
+        this.setState({ profile: that.profile, config: that.config })
       }
     } else {
-      console.error('Proofs array has a length of 0')
+      console.error('Proofs is null')
       this.setState({ profile: that.profile, config: that.config })
     }
   }
