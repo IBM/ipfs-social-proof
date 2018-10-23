@@ -12,7 +12,9 @@ const { Buffer } = require('buffer')
 const multihashing = require('multihashing-async')
 const { pem, pki } = require('node-forge')
 const peerId = require('peer-id')
-const { DB } = require('./db')
+
+const DB = require('./db')
+const ProofsDB = require('./proofs-db')
 
 const DEFAULT_HANDLE = 'InterPlanetaryPsuedoAnonymite'
 
@@ -27,18 +29,12 @@ var DEFAULT_IDENTITY_DATA = {
 const DEFAULT_REPO_NAME = 'IPFS_IDENTITY_SOCIAL_PROOF'
 const DEFAULT_ROOM_NAME = DEFAULT_REPO_NAME
 const DEFAULT_STORAGE_DB_NAME = 'SOCIAL_PROOF_DATA'
-const PROOFS_DB_NAME = 'SOCIAL_PROOF_DOCS'
-const PROOFS_URL_DB_NAME = 'SOCIAL_PROOF_URLS'
 const DB_ACCOUNT_KEY = 'ACCOUNT'
-const DB_PROOFS_KEY = 'PROOFS'
+// TODO?: setInterval to broadcast profile
 const BROADCAST_INTERVAL_MS = 5000;
 
-const STRING = 'string'
-const OBJECT = 'object'
-const UNDEFINED = 'undefined'
-const INTEGER = 'integer'
-const ARRAY = 'array'
-const BOOL = 'boolean'
+const { OBJECT, STRING, UNDEFINED,
+        ARRAY, INTEGER, BOOL } = require('./utils')
 
 const SHA_256 = 'sha2-256'
 
@@ -111,6 +107,7 @@ class IpfsIdentity {
     if (!idData) { throw new Error(ERR.ARG_REQ_ID_DATA) }
     if (!idData.handle) { throw new Error(ERR.ARG_REQ_HANDLE) }
 
+    const that = this
     this._idData = idData
   }
 
@@ -137,18 +134,38 @@ class IpfsIdentity {
           bio: STRING,
           url: STRING,
           following: BOOL,
-          followTs: INTEGER
+          followTs: INTEGER,
+          validityDocs: OBJECT
         })
 
       return this._contactsDB
     }
   }
 
-  get idData () {
-    try {
-      this.updateProofs()
-    } catch (ex) {}
+  get proofsDB () {
+    // DB will be lazily loaded on first access
+    if (this._proofsDB) {
+      return this._proofsDB
+    } else {
+      this._proofsDB = new ProofsDB(
+      'proofs',
+        { id: STRING,
+          createdTs: INTEGER,
+          updatedTs: INTEGER
+        }, {
+          proof: OBJECT,
+          peerId: STRING,
+          url: STRING,
+          ipfsHash: STRING,
+          ipnsHash: STRING,
+          pinned: INTEGER // Date.now()
+        })
 
+      return this._proofsDB
+    }
+  }
+
+  get idData () {
     let profile = this._idData
     profile.peerId = this.peerId
     profile.publicKey = this.pubKeyDehydrated
@@ -158,8 +175,6 @@ class IpfsIdentity {
   }
 
   broadcastProfile () {
-    this.updateProofs()
-
     let idData = this.idData
     idData.updated = Date.now()
     this.roomApi.broadcast(idData)
@@ -170,19 +185,6 @@ class IpfsIdentity {
     const that = this
     let accountHandle = null
     this._firstRun = false
-    this._knownPeers = {}
-    // get handle to proof data, populate local in-memory
-    //     _proofsData via EventEmitter
-    this._proofData = {}
-    this.proofDB.on('put', (k, v) => {
-      that._proofData[k] = v
-    })
-    this.proofDB.on('del', (k) => {
-      delete that._proofData[k]
-    })
-    // set the put and del events on the proof db
-    this.initProofDb()
-
     this._uiEventHandlers = eventHandlers || {}
 
     if (!handle) { throw new Error(ERR.ARG_REQ_HANDLE) }
@@ -277,187 +279,55 @@ class IpfsIdentity {
     return this._roomApi
   }
 
-  get proofDB () {
-    return level(`./${PROOFS_DB_NAME}`)
-  }
-
-  get proofUrlDB () {
-    return level(`./${PROOFS_URL_DB_NAME}`)
-  }
-
-  get proofUrls () {
-    var that = this
-    let hashes = Object.keys(this._proofUrlData)
-    let results = []
-    hashes.forEach((hash, idx) => {
-      results.push(
-        { hash: hash,
-          proof: JSON.parse(a2t(that._proofUrlData[hash]))
-        })
-    })
-
-    return results
-  }
-
-  get proofUrlData () {
-    return this._proofUrlData
-  }
-
-  get proofData () {
-    return this._proofData
-  }
-
-  getProof (hash) {
-    // TODO: get the published URLs too
-    let proof = JSON.parse(a2t(this._proofData[hash]))
-    proof._hash = hash
-    return proof
-  }
-
-  getProofUrl (hash) {
-    let url = null
-    this.proofUrls.forEach((item) => {
-      if (item.hash === hash) {
-        url = item
-      }
-    })
-    return url
-  }
-
-  getAllProofs () {
-    var that = this
-    let hashes = Object.keys(this._proofData)
-    let results = []
-    hashes.forEach((hash, idx) => {
-      results.push(
-        { hash: hash,
-          proof: JSON.parse(a2t(that._proofData[hash]))
-        })
-    })
-
-    return results
-  }
-
-  deleteProof (hash, callback) {
+  updateLocalValidityDocs () {
+    // `validityDocs` are prrofs that the peer profile carries
+    // around and broadcasts to peers as p2p discovery happens
+    // get all local client proofs and add them to the in-memory _idData
+    // fire and forget as needed
     const that = this
-    // delete from db
-    this.proofDB.del(hash, (err, res) => {
-      if (err) {
-        return callback(err, res)
+
+    this.proofsDB.getValidityDocs().then((res) => {
+      if (res) {
+        that._idData.validityDocs = res
       }
-      // delete from cache:
-      try {
-        delete that._proofData[hash]
-        that._uiEventHandlers['proof-deleted']()
-      } catch (ex) {
-        error(ex)
-      }
-      return callback(err, res)
+    }).catch((ex) => {
+      console.error(ex)
     })
   }
 
-  initProofDb () {
-    const that = this
-    this._proofUrlData = {}
-
-    this.proofDB.createReadStream()
-      .on('data', function (data) {
-        log(data.key, '=', data.value)
-        that._proofData[data.key] = data.value
-      })
-      .on('error', function (err) {
-        error('Cannot read proofDB stream: ', err)
-      })
-      .on('close', function () {
-        log('ProofDB stream closed')
-      })
-      .on('end', function () {
-        // get proof urls
-        that.proofUrlDB.createReadStream()
-          .on('data', function (data) {
-            log(data.key, '=', data.value)
-            that._proofUrlData[data.key] = data.value
-          }).on('error', function (err) {
-            error('Cannot read proofUrlDB stream: ', err)
-          })
-          .on('close', function () {
-            log('ProofUrlDB stream closed')
-          })
-          .on('end', function () {
-            that.updateProofs()
-            log('ProofUrlDB stream ended')
-          })
-        log('ProofDB stream ended')
-      })
-    // this populates the in-memory _proofData property
-    this.proofDB.on('put', function (key, value) {
-      log('inserted into proof DB', { key, value })
-      that._proofData[key] = value
-    })
-    this.proofDB.on('del', function (key, value) {
-      log('deleted from proof DB', key)
-      delete that._proofData[key]
-    })
-  }
-
-  updateProofs () {
-    const that = this
-    // Need to collate all proofs + proofUrls here
-    let proofs = []
-    if (this.proofUrls.length) {
-      this.getAllProofs().forEach((proof, idx) => {
-        that.proofUrls.forEach((url, idx) => {
-          if (proof.hash === url.hash) {
-            proof.url = url.proof.url // TODO: fix this nested object
-            proofs.push(proof)
-          }
-        })
-      })
-    }
-    that._idData.proofs = proofs
-  }
-
+  // Move to an 'ipfs' property / module
   async saveProof (content) {
     try {
-      var results = await this.saveProofToIpfs(content)
+      var proofData = content
+      if (typeof content === OBJECT) {
+        proofData = JSON.stringify(content)
+      }
+      var results = await this.saveProofToIpfs(proofData)
       log('results', results)
     } catch (ex) {
       throw new Error(ex)
     }
-
-    let hash = results[0].hash
-    const success = await this.saveProofToDb(hash, content)
-    return success
-  }
-
-  async saveProofToDb (hash, content) {
-    let proof = Buffer.from(content)
-    proof.ipfsHash = hash
-    let result = await this.proofDB.put(hash, proof)
-    this._proofData[hash] = proof
-    // get the in-memory proof content
-    return proof
-  }
-
-  async saveProofUrl (hash, url) {
-    let content = {
-      url: url,
-      hash: hash,
-      // ipns hash
-      ts: Date.now()
+    var saveData
+    if (typeof proofData === STRING) {
+      saveData = JSON.parse(proofData)
     }
 
-    let urlRecord = Buffer.from(JSON.stringify(content))
-    let result = await this.proofUrlDB.put(hash, urlRecord)
-    this.proofUrlDB.get(hash, (err, res) => {
-      if (err) {
-        error(err)
-      } else {
-        this._proofUrlData[hash] = res
-      }
-    })
+    let hash = results[0].hash
+    saveData.ipfsHash = hash
+    saveData.id = hash
+
+    try {
+      const success = await this.proofsDB.create(saveData)
+      // TODO: re-generate validityDocs property on the idData object
+      this.updateLocalValidityDocs()
+      return success
+    } catch (ex) {
+      console.error(ex)
+      throw new Error(ex)
+    }
   }
 
+  // TODO: move to 'ipfs' property
   async saveProofToIpfs (content) {
     try {
       let result = await this.store(JSON.stringify(content))
@@ -467,37 +337,59 @@ class IpfsIdentity {
     }
   }
 
+  // TODO move to a 'crypto' property
   verifyProof (proof, callback) {
     // make sure the proof signature was generated by the private half of publicKey
-    let _proof = null
+    // XXX: had to remove all references to this as it was undefined!!!??
+    let _proof
     if (typeof proof == STRING) {
       _proof = JSON.parse(proof)
     } else {
       _proof = proof
     }
+    if (proof.doc) {
+      _proof = proof.doc
+    }
+    // TODO: revert to using helper functions and test
+    //       `this` was undefined here being called from PublicKeyCard
+    //        which, BTW, was called from a DOM eventHandler
     const signedProofText = JSON.stringify(_proof.proof) // JSON -> string
-    const bufferSig = this.rehydrate(_proof.signature) //  string -> encode to arraybuffer
-    const publicKey = this.unmarshalPubKey(_proof.publicKey) // Instanciate RsaPubKey
+    // const bufferSig = this.rehydrate(_proof.signature) //  string -> encode to arraybuffer
+    const obj = JSON.parse(_proof.signature)
+    // Get the Uint8Array version of the stringified data (key or signature)
+    const bufferSig = Buffer.from(obj.data)
+    // const publicKey = this.unmarshalPubKey(_proof.publicKey) // Instanciate RsaPubKey
+    const objKey = JSON.parse(_proof.publicKey)
+    // Get the Uint8Array version of the stringified key
+    const bufferKey = Buffer.from(objKey)
+    // unmarshal pub key (any pub key)
+    const publicKey = libp2pCrypto.keys.unmarshalPublicKey(bufferKey)
+
     const textArr = t2a(signedProofText) // encode text to array
     // check the signature in the proof
-    publicKey.verify(textArr, bufferSig, (err, valid) => {
-      if (err) {
-        return callback(err, null)
-      }
-      return callback(null, valid)
-    })
+    return publicKey.verify(textArr, bufferSig, callback)
   }
 
-  verifyPeer (peerProfile) {
-    if (!peerProfile.proofs) {
-      return
-    }
-    if (!peerProfile.proofs.length) {
-      return
-    }
+  // TODO: move to a 'crypto' property
+  async verifyPeer (peerProfile, saveContact=false) {
     const that = this
-    let proofsDoc = []
-    peerProfile.proofs.forEach((proof, idx) => {
+    let proofs = []
+    if (peerProfile.peerId === this.idData.peerId) {
+      // verifying self
+      let _proofs = await this.idData.getProofs()
+      proofs = _proofs.rows || []
+    } else {
+      if (!peerProfile.proofs) {
+        return
+      }
+      if (!peerProfile.proofs.length) {
+        return
+      }
+      proofs = peerProfile.proofs
+    }
+
+    let proofDocs = []
+    proofs.forEach((proof, idx) => {
       that.verifyProof(proof.proof, (err, valid) => {
         var valid = false
         if (err) {
@@ -505,29 +397,25 @@ class IpfsIdentity {
         } else {
           valid = true
         }
-
-        if (!that._knownPeers[proof.proof.ipfsId].validityDocs) {
-          that._knownPeers[proof.proof.ipfsId].validityDocs = []
-        }
-        that._knownPeers[proof.proof.ipfsId].validityDocs.push({
-          proof: proof,
-          valid: valid
-        })
+        proofDocs.push({proof: proof.proof, valid: valid, ts: Date.now()})
       })
     })
-  }
-
-  getValidityDocs (peerId) {
-    if (this._knownPeers[peerId]) {
-      if (this._knownPeers[peerId].validityDocs) {
-        return this._knownPeers[peerId].validityDocs
-      }
+    if (saveContact) {
+      let contact = peerProfile
+      contact.validityDocs = proofDocs
+      that.contactsDB.upsert(peerProfile.peerId, contact).
+        then((res) => {
+          console.log('contact saved')
+          // TODO: set state in a notify component that will give feedback
+        }).catch((ex) => {
+          console.error(ex)
+        })
     }
-    return []
   }
 
   initStorage (callback) {
     const that = this
+    // TODO: Replace storageDB with a new db class
     this._storageDB = level(`./${DEFAULT_STORAGE_DB_NAME}`)
 
     this._storageDB.get(DB_ACCOUNT_KEY, (err, value) => {
@@ -550,6 +438,7 @@ class IpfsIdentity {
     }
   }
 
+  // Move to crypto module
   sign (stringToSign, callback) {
     let array = t2a(stringToSign) // make an array buffer from string to sign the arrayBuffer
 
@@ -559,6 +448,7 @@ class IpfsIdentity {
     })
   }
 
+  // Move to crypto module
   verify (signedString, signature, callback) {
     let array = t2a(signedString) // signed string must be raw characters, not base64!
 
@@ -601,6 +491,7 @@ class IpfsIdentity {
     // TODO: update state to tell UI consumers
   }
 
+  // TODO: move to proofs property?
   createProof (username, service, callback, expires=null) {
     // Sign message, returning an Object with
     // service, username, message, handle and signature
@@ -641,6 +532,7 @@ class IpfsIdentity {
     })
   }
 
+  // TODO: move to crypto module
   get pubKeyDehydrated () {
     // get a base64 encoded marshaled pub key
     const pub = this._node._peerInfo.id._privKey.public
@@ -740,6 +632,7 @@ class IpfsIdentity {
     }
   }
 
+  // move to ipfs module
   async store (data) {
     // store data in IPFS
     let res = await this._node.files.add(Buffer.from(data))
@@ -785,6 +678,7 @@ class IpfsIdentity {
 
   }
 
+  // TODO: move to pubsub module
   triggerRoomEvent (event, message) {
     if (!this._uiEventHandlers) {
       return
@@ -868,6 +762,7 @@ class IpfsIdentity {
   getMultihashForStringContent (stringContent, callback) {
     // pass in content you need a multihash for in order to
     // see if the file exists on IPFS
+    //  NOTE: this will not work - it will just timeout
     const that = this;
     let buf = Buffer.from(stringContent)
 
@@ -886,21 +781,6 @@ class IpfsIdentity {
       getAccount: () => {
         checkForAccount()
       },
-      getProofs: (callback) => {
-        this._storageDB.get(DB_PROOFS_KEY, (err, value) => {
-          if (err) { return error(err) }
-          let result;
-          try {
-            result = JSON.parse(value)
-            log(result)
-          } catch (ex) {
-            error(ex)
-          }
-          if (callback) {
-            callback(null, result)
-          }
-        })
-      },
       strings: {
         encode: encode,
         decode: decode,
@@ -913,21 +793,6 @@ class IpfsIdentity {
       pki: pki
     }
   }
-}
-
-// var uint8array = new TextEncoder("utf-8").encode("¢");
-// var string = new TextDecoder("utf-8").decode(uint8array);
-
-function base64ToArr (base64) {
-  const chars = atob(base64) // un-base64
-  const arr = new TextEncoder("utf-8").encode(chars) // chars to array
-  return arr
-}
-
-function arrToBase64 (arrBuff) {
-  const str = new TextDecoder("utf-8").decode(arrBuff); // array to chars
-  const base64 = btoa(str) // tobase64
-  return base64
 }
 
 function t2a (text) {
@@ -945,10 +810,6 @@ function a2c (arrayBuffer) {
   })
   log('text array inside a2c', text)
   return text.join('')
-}
-
-function c2a (charData) {
-
 }
 
 async function start (handle, eventHandlers=null, repoName=DEFAULT_REPO_NAME) {

@@ -8,6 +8,12 @@ const Clipboard = require('./node_modules/clipboard/dist/clipboard.min')
 const createIcon = require('blockies-npm')
 const validUrl = require('valid-url')
 const animate = require('./animate')
+const uuid = require('uuid/v1');
+
+const notify = require('./components/notify')
+const ProofDetail = require('./components/proof-detail')
+const PublicKeyCard = require('./components/public-key-card')
+const confirmProceed = require('./components/confirm-proceed')
 
 const APP_NAME = 'Autonomica'
 const VIEW_IDENT = 'identity-app'
@@ -16,9 +22,8 @@ const VIEW_PROOF = 'proof'
 const VIEW_LISTEN = 'listen'
 const VIEW_LOG = 'log-ui'
 
-const STRING = 'string'
-const OBJECT = 'object'
-const FUNCTION = 'function'
+const { OBJECT, STRING, UNDEFINED,
+        ARRAY, INTEGER, BOOL, FUNCTION } = require('../src/utils')
 
 class AppState {
   constructor (state, events) {
@@ -55,9 +60,10 @@ appState.events = {
   proofTabList: (state) => {
     let nodeId = 'proof-list'
     let existing = document.querySelector(`#${nodeId}`)
-    let newUi = proofList(state)
-    html.update(existing, newUi)
-    view(nodeId, '_proof_tab_')
+    proofList(state).then((newUi) => {
+      html.update(existing, newUi)
+      view(nodeId, '_proof_tab_')
+    })
   },
 
   proofTabCreate: (state) => {
@@ -197,7 +203,7 @@ function idUI (ipfsID, handle) {
       </div>
       <div class="w-100 pa3 center">
         <p class="f6 f5-ns lh-copy">
-          <div class="w-100 mr3 ml3 f6 code">IPFS RSA Public Key (dehydrated) [signing only]</div>
+          <div class="w-100 mr3 ml3 f6 code">IPFS RSA Public Key [signing only]</div>
           <textarea disabled
                     class="h5 flex w-80 lh-copy code f7 ma3 bg-white br3 ph3 pv2 mb2 overflow-auto"
                     title="IPFS Public Key [Signing Only]">${ipfsID.pubKeyBase64}</textarea>
@@ -235,160 +241,40 @@ function splash () {
       </article>`
 }
 
-function confirmProceed (detailsConf, proceedFunc) {
-  // detailsConf: { headline: 'are you sure?',
-  //                details: 'if you confirm...'
-  //                proceedLabel: 'Delete and stuff' }
-  // proceedFunc: operational function to proceed
-
-
-  function proceedAndClose () {
-    proceedFunc(closeConfModal)
-  }
-
-  const newNode = html
-    `<div id="confirmation-modal" class="w-60">
-       <article class="w-80 shadow-1 center bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
-         <div>
-           <img title="Close" class="h1" onclick=${closeConfModal} src="./img/close.svg" />
-         </div>
-         <div class="tc">
-            <h1 class="f7 code">${detailsConf.headline}</h1>
-            <div>
-             <p class="mv4">${detailsConf.details || ''}</p>
-              <a title="Close"
-                 class="no-underline f6 ph3 pv3 bn bg-animate bg-dark-red hover-bg-light-red white pointer w-100 w-25-m w-20-l br2-ns br--all-ns f5-l"
-                 onclick=${proceedAndClose}>${detailsConf.proceedLabel}</a>
-              </div>
-         </div>
-       </article>
-     </div>`
-  html.update(document.querySelector('#confirmation-modal'), newNode)
-}
-
-function closeModal (event) {
-  let origNode = document.querySelector('#modal')
-  let modal = html`<div id="modal" class="w-80"></div>`
-  html.update(origNode, modal)
-}
-// XXX: genericize this close modal function
-function closeConfModal (err, result) {
-  if (err && !err.target) {
-    return notify.error(err)
-  }
-
-  let origNode = document.querySelector('#confirmation-modal')
-  let modal = html`<div id="confirmation-modal" class="w-60"></div>`
-  html.update(origNode, modal)
-  origNode = document.querySelector('#modal')
-  modal = html`<div id="modal" class="w-80"></div>`
-  html.update(origNode, modal)
-}
-
-function proofDetail (proofHash) {
-
-  function deleteProof(callback) {
-    window.IpfsID.deleteProof(proofHash, callback)
-  }
-
-  function remove () {
-      confirmProceed({
-          headline: 'Are you sure you want to delete this proof?',
-          details: 'You can easily create this proof again later',
-          proceedLabel: 'Delete'
-      }, deleteProof)
-  }
-
-  // get the proof detail:
-  let proof = IpfsID.getProof(proofHash)
-  // get the published 'proof urls'
-  let proofUrl = null
-  let _proofUrl = IpfsID.getProofUrl(proofHash)
-  if (_proofUrl) {
-    proofUrl = _proofUrl.proof.url
-  }
-
-  function saveProofUrl () {
-    let url = document.querySelector('#save-proof-url').value
-    let hash = document.querySelector('#proof-hash').textContent
-    // npm install valid-url
-    if (!validUrl.isUri(url)) {
-      return notify.error('Please enter a URL')
-    }
-    if (!hash) {
-      return notify.error('IPFS Hash required')
-    }
-
-    window.IpfsID.saveProofUrl(hash, url).
-        then((res) => {
-          return notify.success('Url saved')
-        }).catch((ex) => {
-          console.error(ex)
-          return notify.error('Url save failed')
-        })
-  }
-
-  return html
-    `<div id="modal" class="w-80"><article id="proof-card"
-          class="w-60 shadow-1 center bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
-       <div><img title="Close" class="h1" onclick=${closeModal} src="./img/close.svg" /></div>
-       <div class="tc mv3">
-           <div class="flex-justify-between f7 code mv2">
-             <span id="proof-hash">${proofHash}</span>
-             <span class="mr2">
-               <img class="h1 ml4" title="Delete this Proof"
-                    onclick=${remove}
-                    src="./img/trash.svg" />
-             </span>
-           </div>
-           <div class="flex-justify-between f7 code mv2">
-             <input class="f7 pa2 code w-70"
-                    title="Enter a published proof URL"
-                    id="save-proof-url"
-                    name="save-proof-url" value=${proofUrl || ''} />
-             <img title="Save published proof URL"
-                  class="h1 mh2"
-                  src="img/save.svg"
-                  onclick=${saveProofUrl} />
-           </div>
-
-         </div>
-         <textarea disabled
-                   class="flex w-100 h4 code lh-copy center f7 pa2 black-70 h5 overflow-auto ba b--black-20">${JSON.stringify(IpfsID.getProof(proofHash), null, 2)}</textarea>
-          </article></div>`
-}
-
-function proofList (state) {
+async function proofList (state) {
   function viewProof (event) {
-    let hash = event.target.dataset.hash
-    let detailUI = proofDetail(hash)
-    // XXX: use update on modal via a new modal node created here on the fly
-    // document.querySelector('#modal').appendChild(detailUI)
-    let origNode = document.querySelector('#modal')
-    html.update(origNode, detailUI)
+    var hash = event.target.dataset.hash
+    new ProofDetail('proof-detail', { proofId: hash })
   }
 
   let list = []
   if (!state) {
     // default view
     // get all proofs in db
-    list = window.IpfsID.getAllProofs()
+    try {
+      list = await window.IpfsID.proofsDB.getAll()
+    } catch (ex) {
+      console.error(ex)
+    }
+    if (!list.rows.length) {
+      return html`
+        <div id="proof-list"
+             class="_proof_tab_ w-90 center pv4 bg-near-white">
+          <h3>0 Proofs</h3>
+        </div>`
+    }
     return html`
       <div id="proof-list"
            class="_proof_tab_ w-90 center pv4 bg-near-white">
         <table class="w-100 collapse pl4 mt0 ba b--black-10">
-          ${list.map((item) => {
-             let proofUrl = ''
-             let proofUrlObj = window.IpfsID.getProofUrl(item.hash) || null
-             if (proofUrlObj) {
-               proofUrl = proofUrlObj.proof.url
-             }
+          ${list.rows.map((item) => {
             return html`
               <tr class="pv2 striped--light-gray">
                 <td><img src="img/eye.svg"
                          onclick=${viewProof}
-                         data-hash="${item.hash}" class="h1 ph2" /></td>
-      <td class="f6">${item.proof.proof.message.username}@${item.proof.proof.message.service}</td><td class="ipfs-url fw1 f7 code"><a href="${proofUrl}" target="_new">${proofUrl}</a></td><td class="ipfs-url fw1 f7 code"><a target="_new" href="https://ipfs.io/ipfs/${item.hash}" title="${item.hash}">/ipfs/${item.hash}</a></td>
+                         data-hash="${item.doc.ipfsHash}"
+                         class="h1 ph2" /></td>
+      <td class="f6">${item.doc.proof.message.username}@${item.doc.proof.message.service}</td><td class="ipfs-url fw1 f7 code"><a href="${item.doc.url}" target="_new">${item.doc.url}</a></td><td class="ipfs-url fw1 f7 code"><a target="_new" href="https://ipfs.io/ipfs/${item.doc.ipfsHash}" title="${item.doc.ipfsHash}">/ipfs/${item.doc.ipfsHash}</a></td>
               </tr>`
             })}
           </table>
@@ -412,19 +298,19 @@ function proof (proofData) {
 
   function evtProofSave () {
     // Save to local indexDB: save { 'proof:username:service': { ipfsUrl: <url>, ipnsUrl: <url>, timestamp: <ts> }
-    let proof = document.querySelector('#proof-preview-display').value.trim()
+    let proof = JSON.parse(
+      document.querySelector('#proof-preview-display').value.trim()
+    )
     if (!proof) {
       return notify.error('Error', 'Cannot save non-existent proof')
     }
-    // Save to IPFS, pin & create IPNS URL
-    IpfsID.saveProof(proof).
-      then((res) => {
-        notify.success('Proof stored successfully')
-      }).
-      catch((err) => {
-        console.error(err)
-        notify.error(err)
-      })
+    proof.id = uuid() //  TODO: do this inside library/API
+    IpfsID.saveProof(proof).then((res) => {
+      notify.success('Proof stored successfully')
+    }).catch((ex) => {
+      console.error(err)
+      notify.error(err)
+    })
   }
 
   function evtShowProofs () {
@@ -705,7 +591,6 @@ function peerProfile (profile) {
 
   const icon = avatar(profile.peerId)
   var name, handle, canFollow = true
-  const DEFAULT_PROFILE_NAME = 'Another Noob'
 
   if (!profile.handle) {
     handle = profile.peerId
@@ -723,40 +608,27 @@ function peerProfile (profile) {
     profile = window.IpfsID.idData
   }
 
-  function follow (event) {
-    // TODO subclass DB to add a "contactsDB.follow()" method
-    let _profile = {
-      id: profile.peerId,
-      peerId: profile.peerId,
-      following: true,
-      followTs: Date.now()
-    }
+  // function follow (event) {
+  //   // TODO subclass DB to add a "contactsDB.follow()" method
+  //   let _profile = {
+  //     id: profile.peerId,
+  //     peerId: profile.peerId,
+  //     following: true,
+  //     followTs: Date.now()
+  //   }
 
-    Object.assign(_profile, profile)
+  //   Object.assign(_profile, profile)
 
-    window.IpfsID.contactsDB.getOrCreate(_profile).then((result) => {
-      notify.success('Following...', `${profile.handle || profile.peerId}`)
-    }).
-      catch((err) => {
-        error(err)
-      })
-  }
+  //   window.IpfsID.contactsDB.getOrCreate(_profile).then((result) => {
+  //     notify.success('Following...', `${profile.handle || profile.peerId}`)
+  //   }).
+  //     catch((err) => {
+  //       error(err)
+  //     })
+  // }
 
   function evtExaminePubKey (event) {
-    // display overlay that shows public key
-    publicKeyCard(profile).then((keyCard) => {
-      // TODO: use `html.update()` here
-      document.querySelector('#modal').appendChild(keyCard)
-      verifyProofsUI(profile.peerId)
-
-      let _profile = profile;
-      if (profile.peerId === window.IpfsID.idData.peerId) {
-        // current user is the peer
-        _profile = window.IpfsID.idData
-      }
-    })
-    // animate.startAnimation('verify-animation')
-    // window.IpfsID.verifyPeer(_profile)
+    new PublicKeyCard(IpfsID, 'public-key-card', { profile: profile })
   }
 
   let profileHtml = html`
@@ -788,39 +660,6 @@ function peerProfile (profile) {
   }
 }
 
-async function verifyProofsUI (peerId) {
-  let verifiedProofs = IpfsID.getValidityDocs(peerId)
-  var newNode
-  let follow = followBtn(peerId)
-
-  let origNode = document.querySelector('#verify-ui')
-
-  const defaultNode = html`
-    <p id="verify-ui" class="flex-justify-around">
-      <span id="verify-animation"></span>
-      <div id="verify-results" class="flex-justify-around">
-        <span><img class="h1" title="Peer proofs are un-verified" src="img/times-circle.svg" /></span>
-      </div>
-    </p>`
-  if (!verifiedProofs) {
-    newNode = defaultNode
-  } else if (!verifiedProofs.length) {
-    newNode = defaultNode
-  } else if (verifiedProofs.length) {
-    newNode = html`
-      <p id="verify-ui">
-        <span id="verify-animation"></span>
-        <div id="verify-results" class="flex-justify-around">
-          ${verifiedProofs.map((proof) => {
-            return html`<a target="_blank" href="${proof.proof.url}" class="mr2 pointer"><img class="h1" title="Peer proof is verified: ${proof.proof.url}" src="img/check-circle-green.svg" /></a>`
-          })}
-        </div>
-      </p>`
-  }
-
-  html.update(origNode, newNode)
-}
-
 function followBtn (profile) {
   function unfollow (event) {
     notify.info('unimplemented')
@@ -848,40 +687,6 @@ function followBtn (profile) {
   }
 }
 
-async function publicKeyCard (profile) {
-  const icon = avatar(profile.peerId)
-
-  function close (event) {
-    let card = document.querySelector('#public-key-card')
-    card.parentNode.removeChild(card)
-  }
-
-  let btn = await followBtn(profile)
-
-  return html`
-    <article id="public-key-card"
-             class="center w-80 shadow-1 bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
-      <div><img class="h1" onclick=${close} src="./img/close.svg" /></div>
-      <div class="tc">
-        <div>${icon}</div>
-        <h1 class="f7 code">
-          ${profile.handle || profile.peerId}
-        </h1>
-        <div class="flex-justify-between">
-          ${btn}
-          <p id="verify-ui">
-            <span id="verify-animation"></span>
-            <div id="verify-results"></div>
-          </p>
-        </div>
-      </div>
-      <p class="code lh-copy measure center f7 pa2 black-70 h3 overflow-auto ba b--black-20">
-        ${profile.bio || 'No bio available'}
-      </p>
-      <textarea disabled class="flex w-100 code lh-copy measure center f7 pa2 black-70 h4 overflow-auto ba b--black-20">${profile.pubKeyBase64 || 'No shared public key available'}</textarea>
-    </article>`
-}
-
 function updateFavicon (peerId) {
   // get ref to your blocky
   let blockyCanvas
@@ -892,43 +697,6 @@ function updateFavicon (peerId) {
     // set href of favicon
     let base64 = blockyCanvas.toDataURL('image/jpeg')
     document.querySelector('#favicon').href = base64
-  }
-}
-
-const notify = {
-  get notifyNode () {
-    return document.querySelector('#notifications')
-  },
-  display: (uiNode) => {
-    notify.notifyNode.appendChild(uiNode)
-    window.setTimeout(() => {
-      notify.notifyNode.removeChild(uiNode)
-    }, 2500)
-  },
-  modes: {
-    success: 'green',
-    info: 'blue',
-    warn: 'yellow',
-    error: 'red'
-  },
-  notifyUI: (headline, message, mode) => {
-    return html`
-      <p class="_notification_ f7 w-50 ba br2 pa3 ma2 ${notify.modes[mode]} bg-washed-${notify.modes[mode]}"
-         role="alert">
-        <strong>${headline}</strong> ${message}
-      </p>`
-  },
-  success: (headline, message) => {
-    notify.display(notify.notifyUI(headline, message, 'success'))
-  },
-  info: (headline, message) => {
-    notify.display(notify.notifyUI(headline, message, 'info'))
-  },
-  warn: (headline, message) => {
-    notify.display(notify.notifyUI(headline, message, 'warn'))
-  },
-  error: (headline, message) => {
-    notify.display(notify.notifyUI(headline, message, 'error'))
   }
 }
 
@@ -946,11 +714,6 @@ function stripNode (message) {
     return _msg
   }
   return message
-}
-
-function handleDirectMessage (message) {
-  // process DMs coming in
-
 }
 
 window.notify = notify
@@ -1018,8 +781,9 @@ document.addEventListener('DOMContentLoaded', () => {
           // reload the proofUI
           let nodeId = 'proof-list'
           let existing = document.querySelector(`#${nodeId}`)
-          let newUi = proofList()
-          html.update(existing, newUi)
+          proofList().then((newUi) => {
+            html.update(existing, newUi)
+          })
         },
 
         'peer joined': (message) => {
@@ -1034,13 +798,15 @@ document.addEventListener('DOMContentLoaded', () => {
             name: message.name || null,
             handle: message.handle || null,
             canFollow: true,
-            connected: true
+            connected: true,
+            proofs: message.proofs || []
           }
 
           updatePeerProfile(profile)
 
-          IpfsID._knownPeers[message.peerId] = profile
-          IpfsID.verifyPeer(profile)
+          // IpfsID._knownPeers[message.peerId] = profile
+          // IpfsID.verifyPeer(profile)
+          // NOTE: TODO: do verifyPeer before displayong pubkeycard
         },
 
         'peer left': (message) => {
@@ -1055,20 +821,15 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         'message': (message) => {
-          const DIRECT = 'direct-message'
           message.event = 'Message Rcvd'
           let _msg = JSON.parse(message.data)
           if (_msg.updated) {
             // store the peer in IpfsID._knownPeers
-            IpfsID._knownPeers[_msg.peerId] = _msg
+            // IpfsID._knownPeers[_msg.peerId] = _msg
             updatePeerProfile(_msg)
-            IpfsID.verifyPeer(_msg)
+            // IpfsID.verifyPeer(_msg)
           }
-          if (_msg.messageType) {
-            if (_msg.messageType === DIRECT) {
-              handleDirectMessage(_msg)
-            }
-          }
+
           logMessage(_msg)
         },
         'updatePeerProfile': (profile) => {
