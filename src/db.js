@@ -28,7 +28,7 @@ class DB {
       return await this.db.get(id)
     } catch (ex) {
       console.error(ex)
-      return null
+      throw new Error(ex)
     }
   }
 

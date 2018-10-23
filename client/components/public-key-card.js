@@ -56,15 +56,15 @@ class PublicKeyCard {
         } else {
           that.config.profile.validityDocs = []
         }
-        return that.validateProofs(true, that.config.profile.validityDocs)
+        return that.validateProofs(that.config.profile.validityDocs)
       }).catch((ex) => {
         console.log(ex)
-        return that.validateProofs(true)
+        return that.validateProofs(that.config.profile.validityDocs || [])
       })
     } else {
       this.IpfsID.contactsDB.get(this.config.profile.peerId).
         then((res) => {
-          let disabled = undefined
+          let disabled = ''
           let label = 'Follow'
           let saveContact = false
           let proofs = that.config.profile.validityDocs || []
@@ -89,12 +89,28 @@ class PublicKeyCard {
           that.validateProofs(saveContact, _validityDocs)
         }).catch((ex) => {
           console.error(ex)
-          notify.error('Cannot display Public Key Card')
+          that.config.profile.validDocs = []
+          that.config.profile.invalidDocs = []
+          that.config.followBtn = {
+            disabled: '',
+            label: 'Follow'
+          }
+          // We do not have this contact and proofs in
+          // our local database
+          // If profile.validityDocs, process the verification here
+          if (that.profile.validityDocs) {
+            return that.validateProofs(that.config.profile.validityDocs)
+          } else {
+            this.setState({
+              profile: that.config.profile,
+              config: that.config
+            })
+          }
         })
     }
   }
 
-  async validateProofs (validateLocal=false, proofs=null) {
+  async validateProofs (proofs=null) {
     let that = this
     this.config.profile.invalidDocs = []
     this.config.profile.validDocs = []
@@ -173,7 +189,7 @@ class PublicKeyCard {
              <button ${state.config.followBtn.disabled}
                      class="f6 button-reset bg-white ba b--black-10 dim pointer pv1 black-60"
                      data-peerId="${profile.peerId}"
-                     onclick=${this.follow}>
+                     onclick=${this.follow.bind(this)}>
                ${state.config.followBtn.label}
              </button>
            </div>
@@ -200,8 +216,29 @@ class PublicKeyCard {
   }
 
   follow () {
-    // add the follow flag and ts to the current peer contact
-
+    const that = this
+    // create a new contact, with follow flag, etc
+    // let keys = Object.keys()
+    // TODO: add a follow() method
+    this.IpfsID.contactsDB.db.upsert(this.config.profile.peerId, (contact) => {
+      if (!contact._id) {
+        contact = that.config.profile
+        contact.following = true
+        contact.followTs = Date.now()
+      } else {
+        contact.following = true
+        contact.followTs = Date.now()
+      }
+      return contact
+    }).then((res) => {
+        console.log('contact saved')
+        // TODO: set state in a notify component that will give feedback
+        notify.success(`Success`, `You are now following ${that.config.profile.handle}`)
+        // TODO: setState
+      }).catch((ex) => {
+        console.error(ex)
+        notify.error(`Error`, `Could not follow ${that.config.profilecontact.handle}`)
+      })
     // update state so it re-renders
   }
 
