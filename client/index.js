@@ -12,6 +12,7 @@ const uuid = require('uuid/v1');
 
 const notify = require('./components/notify')
 const ProofDetail = require('./components/proof-detail')
+const PublicKeyCard = require('./components/public-key-card')
 const confirmProceed = require('./components/confirm-proceed')
 
 const APP_NAME = 'Autonomica'
@@ -202,7 +203,7 @@ function idUI (ipfsID, handle) {
       </div>
       <div class="w-100 pa3 center">
         <p class="f6 f5-ns lh-copy">
-          <div class="w-100 mr3 ml3 f6 code">IPFS RSA Public Key (dehydrated) [signing only]</div>
+          <div class="w-100 mr3 ml3 f6 code">IPFS RSA Public Key [signing only]</div>
           <textarea disabled
                     class="h5 flex w-80 lh-copy code f7 ma3 bg-white br3 ph3 pv2 mb2 overflow-auto"
                     title="IPFS Public Key [Signing Only]">${ipfsID.pubKeyBase64}</textarea>
@@ -590,7 +591,6 @@ function peerProfile (profile) {
 
   const icon = avatar(profile.peerId)
   var name, handle, canFollow = true
-  const DEFAULT_PROFILE_NAME = 'Another Noob'
 
   if (!profile.handle) {
     handle = profile.peerId
@@ -629,19 +629,19 @@ function peerProfile (profile) {
 
   function evtExaminePubKey (event) {
     // display overlay that shows public key
-    publicKeyCard(profile).then((keyCard) => {
-      // TODO: use `html.update()` here
-      document.querySelector('#modal').appendChild(keyCard)
-      verifyProofsUI(profile.peerId)
+    // publicKeyCard(profile).then((keyCard) => {
+    //   // TODO: use `html.update()` here
+    //   document.querySelector('#modal').appendChild(keyCard)
+    //   verifyProofsUI(profile.peerId)
 
-      let _profile = profile;
-      if (profile.peerId === window.IpfsID.idData.peerId) {
-        // current user is the peer
-        _profile = window.IpfsID.idData
-      }
-    })
-    // animate.startAnimation('verify-animation')
-    // window.IpfsID.verifyPeer(_profile)
+    //   let _profile = profile;
+    //   if (profile.peerId === window.IpfsID.idData.peerId) {
+    //     // current user is the peer
+    //     _profile = window.IpfsID.idData
+    //   }
+    // })
+
+    new PublicKeyCard(IpfsID, 'public-key-card', { profile: profile })
   }
 
   let profileHtml = html`
@@ -878,13 +878,15 @@ document.addEventListener('DOMContentLoaded', () => {
             name: message.name || null,
             handle: message.handle || null,
             canFollow: true,
-            connected: true
+            connected: true,
+            proofs: message.proofs || []
           }
 
           updatePeerProfile(profile)
 
-          IpfsID._knownPeers[message.peerId] = profile
-          IpfsID.verifyPeer(profile)
+          // IpfsID._knownPeers[message.peerId] = profile
+          // IpfsID.verifyPeer(profile)
+          // NOTE: TODO: do verifyPeer before displayong pubkeycard
         },
 
         'peer left': (message) => {
@@ -899,14 +901,13 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         'message': (message) => {
-          const DIRECT = 'direct-message'
           message.event = 'Message Rcvd'
           let _msg = JSON.parse(message.data)
           if (_msg.updated) {
             // store the peer in IpfsID._knownPeers
-            IpfsID._knownPeers[_msg.peerId] = _msg
+            // IpfsID._knownPeers[_msg.peerId] = _msg
             updatePeerProfile(_msg)
-            IpfsID.verifyPeer(_msg)
+            // IpfsID.verifyPeer(_msg)
           }
 
           logMessage(_msg)

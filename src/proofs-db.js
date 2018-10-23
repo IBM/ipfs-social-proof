@@ -6,18 +6,14 @@ class ProofsDB extends DB {
     super(dbName, requiredFields, optionalFields)
   }
 
-  async getValidityDocs (peerId) {
-    // get all and filter? TODO: use find() API
-    // TODO: query for all proofs with peerId of x
+  async getValidityDocs () {
     return this.db.allDocs({
       include_docs: true,
       attachments: true
     }).then((res) => {
       let docs = []
       res.rows.forEach((row) => {
-        if (row.id === peerId) {
-          docs.push(row)
-        }
+        docs.push(row)
       })
       return docs
     }).catch((ex) => {
@@ -56,7 +52,5 @@ class ProofsDB extends DB {
     });
   }
 }
-
-// Object.setPrototypeOf(ProofsDB.prototype, DB);
 
 module.exports = ProofsDB
