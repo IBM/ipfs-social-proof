@@ -13,7 +13,6 @@ const Room = require('ipfs-pubsub-room')
 const libp2pCrypto = require('libp2p-crypto')
 const TextDecoder = require('text-encoding').TextDecoder
 const TextEncoder = require('text-encoding').TextEncoder
-const btoa = require('btoa')
 const level = require('level-browserify')
 const { encode, decode } = require('base64-arraybuffer')
 const { Buffer } = require('buffer')

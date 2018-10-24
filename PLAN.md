@@ -46,4 +46,15 @@
 
 ### Embed Gists via <script> tage and Tweets via embed HTML for the Proofs to display inline on a user's profile
 
-## Manual validation UI to paste proof data that cnanot dynamically be fetched via a url / embed / script tag
+## Manual validation UI to paste proof data that cannot dynamically be fetched via a url / embed / script tag
+
+## Channels
+
+Each per can establish channels and invite followers / followees to the channel. The Channel TOPIC is also an IPFS pinned / named path
+
+* The peer creates a channel Identifier object that names the channel in human terms and is signed by the creator.
+* This JSON doc is saved to IPFS and pinned, named, etc.
+* Peers (perhaps only those that follow or are follwees) can be notified of owned 'channels'.
+* A channel is merely a pubsub topic that can be used like a social/media feed, discussion "subject", etc.
+* "Posts" to the "sub" are saved to IPFS, pinned, named, etc and passed on to the owner of the channel.
+* Each post `IPFS path` is agregated via a pubsub append only log or some other kind of CRDT, etc. Orbit? Only the IPFS path is saved to these logs to minimize the amount of data that needs to be aggregated and sync'd.
