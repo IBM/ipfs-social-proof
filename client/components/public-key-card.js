@@ -9,6 +9,9 @@ const notify = require('./notify')
 const { OBJECT, STRING, UNDEFINED,
         ARRAY, INTEGER, BOOL } = require('../../src/utils')
 
+const OP_UNFOLLOW = 'Unfollow'
+const OP_FOLLOW = 'Follow'
+
 class PublicKeyCard {
 
   constructor (IpfsID, domId, config={}) {
@@ -64,6 +67,7 @@ class PublicKeyCard {
     } else {
       this.IpfsID.contactsDB.get(this.config.profile.peerId).
         then((res) => {
+          console.log(res)
           let disabled = ''
           let label = 'Follow'
           let saveContact = false
@@ -153,6 +157,14 @@ class PublicKeyCard {
   // get the state async
   setState (state=null) {
     this.state = state
+    // A client may have zero proofs, lets stub in the empty arrays
+    if (!state.profile.validDocs) {
+      state.profile.validDocs = []
+    }
+    if (!state.profile.invalidDocs) {
+      state.profile.invalidDocs = []
+    }
+
     this.render()
   }
 
@@ -191,6 +203,7 @@ class PublicKeyCard {
            <div id="follow-btn" class="mv2">
              <button ${state.config.followBtn.disabled}
                      class="f6 button-reset bg-white ba b--black-10 dim pointer pv1 black-60"
+                     data-operation="${state.config.followBtn.label}"
                      data-peerId="${profile.peerId}"
                      onclick=${this.follow.bind(this)}>
                ${state.config.followBtn.label}
@@ -218,37 +231,54 @@ class PublicKeyCard {
     html.update(card, closedNode)
   }
 
-  follow () {
+  follow (event) {
     const that = this
+    if (event.target.dataset.operation) {
+      if (event.target.dataset.operation === OP_UNFOLLOW) {
+        return this.unfollow()
+      }
+    }
     // create a new contact, with follow flag, etc
     // let keys = Object.keys()
     // TODO: add a follow() method
     this.IpfsID.contactsDB.db.upsert(this.config.profile.peerId, (contact) => {
       if (!contact._id) {
         contact = that.config.profile
-        contact.following = true
-        contact.followTs = Date.now()
-      } else {
-        contact.following = true
-        contact.followTs = Date.now()
       }
+      contact.following = true
+      contact.followTs = Date.now()
+      that.config.profile = contact
       return contact
     }).then((res) => {
-        console.log('contact saved')
-        // TODO: set state in a notify component that will give feedback
-        notify.success(`Success`, `You are now following ${that.config.profile.handle}`)
-        // TODO: setState
-      }).catch((ex) => {
-        console.error(ex)
-        notify.error(`Error`, `Could not follow ${that.config.profilecontact.handle}`)
-      })
-    // update state so it re-renders
+      console.log('contact saved')
+      notify.success(`Success`, `You are now following ${that.config.profile.handle}`)
+      that.config.followBtn.label = OP_UNFOLLOW
+      this.setState({ profile: that.config.profile, config: that.config })
+    }).catch((ex) => {
+      console.error(ex)
+      notify.error(`Error`, `Could not follow ${that.config.profilecontact.handle}`)
+    })
   }
 
   unfollow () {
+    const that = this
     // remove the follow flag and ts from the current peer contact
-
-    // update state so it re-renders :)
+    this.IpfsID.contactsDB.db.upsert(this.config.profile.peerId, (contact) => {
+      contact.following = false
+      contact.followTs = Date.now()
+      that.config.profile = contact
+      return contact
+    }).then((res) => {
+      console.log('contact saved')
+      // TODO: set state in a notify component that will give feedback
+      notify.success(`Success`, `You have unfollowed ${that.config.profile.handle}`)
+      console.log('unfollow', res)
+      that.config.followBtn.label = OP_FOLLOW
+      that.setState({ profile: that.config.profile , config: that.config })
+    }).catch((ex) => {
+      console.error(ex)
+      notify.error(`Error`, `Could not unfollow ${that.config.profilecontact.handle}`)
+    })
   }
 
   cleanup () {
