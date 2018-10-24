@@ -21,21 +21,27 @@ THIS IS VERY MUCH A Work In Progress
 
 ## Build Bundle
 
-* `npm start`
+* `npm bundle`
 * This will produce a bundle one can consume in a web/electron app at `bundle.js`
 
-## Example app
+## Example client Identity DApp: `Autonomica`
 
 ### Identity management & peer discovery
 
 ![Alt Identity](client/screenshots/identity.png?raw=true "Identity")
 
-* see `client/README.md` for instructions
-* `cd ./client && npm install && npm start`
+#### Quickstart
+
+* First time: build and run
+* `npm run make`
+* Subsequent runs:
+* `npm run client`
+
+* see `client/README.md` for morr information
 
 ## Plan
 
-* See PLAN.md (preliminary plan)
+* See PLAN.md (preliminary plan - may be outdated)
 
 ## Contributing
 

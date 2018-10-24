@@ -10,7 +10,9 @@
     "start": "npm run bundle && echo 'Bundle complete at ./bundle.js'",
     "test_bundle": "browserify test/index.js > test/bundle.js",
     "test:browser": "./node_modules/karma/bin/karma start karma.conf.js",
-    "test": "mocha"
+    "test": "mocha",
+    "make": "./make.sh",
+    "client": "./run-client.sh"
   },
   "keywords": [
     "ipfs",
@@ -45,6 +47,7 @@
     "karma-mocha": "^1.3.0",
     "karma-sinon": "^1.0.5",
     "mocha": "^5.2.0",
+    "opn": "^5.4.0",
     "watchify": "^3.11.0"
   },
   "dependencies": {

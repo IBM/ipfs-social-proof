@@ -1,3 +1,13 @@
+/*
+ * ipfs-social-proof experimental UI
+ * @author David Dahl ddahl@nulltxt.se daviddahl
+ *
+ * Copyright 2018, IBM
+ * Licensed under MIT license
+ */
+
+/* IpfsID */
+
 'use strict'
 
 const { IpfsIdentity, start, checkForAccount } = require('../src/')
@@ -608,25 +618,6 @@ function peerProfile (profile) {
     profile = window.IpfsID.idData
   }
 
-  // function follow (event) {
-  //   // TODO subclass DB to add a "contactsDB.follow()" method
-  //   let _profile = {
-  //     id: profile.peerId,
-  //     peerId: profile.peerId,
-  //     following: true,
-  //     followTs: Date.now()
-  //   }
-
-  //   Object.assign(_profile, profile)
-
-  //   window.IpfsID.contactsDB.getOrCreate(_profile).then((result) => {
-  //     notify.success('Following...', `${profile.handle || profile.peerId}`)
-  //   }).
-  //     catch((err) => {
-  //       error(err)
-  //     })
-  // }
-
   function evtExaminePubKey (event) {
     new PublicKeyCard(IpfsID, 'public-key-card', { profile: profile })
   }
@@ -793,9 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'peer joined': (message) => {
           message.event = 'Peer Joined'
           logMessage(message)
-          // Display peer profile card
-          // We want to replace the peers on `peer join`
-          // TODO: remove peers on `peer left`
+          // TODO: remove / gray out peers on `peer left`
           let profile = {
             peerId: message.peerId,
             clientPeerId: message.ipfsId.peerId,
@@ -807,10 +796,6 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           updatePeerProfile(profile)
-
-          // IpfsID._knownPeers[message.peerId] = profile
-          // IpfsID.verifyPeer(profile)
-          // NOTE: TODO: do verifyPeer before displayong pubkeycard
         },
 
         'peer left': (message) => {

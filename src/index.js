@@ -1,3 +1,11 @@
+/*
+ * ipfs-social-proof main library
+ * @author David Dahl ddahl@nulltxt.se daviddahl
+ *
+ * Copyright 2018, IBM
+ * Licensed under MIT license
+ */
+
 'use strict'
 
 const IPFS = require('ipfs')
