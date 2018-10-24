@@ -58,3 +58,9 @@ Each per can establish channels and invite followers / followees to the channel.
 * A channel is merely a pubsub topic that can be used like a social/media feed, discussion "subject", etc.
 * "Posts" to the "sub" are saved to IPFS, pinned, named, etc and passed on to the owner of the channel.
 * Each post `IPFS path` is agregated via a pubsub append only log or some other kind of CRDT, etc. Orbit? Only the IPFS path is saved to these logs to minimize the amount of data that needs to be aggregated and sync'd.
+
+## Credentials Synching
+
+* PBKDF key is generated in order to wrap account data: mainly the private key and related primitives.
+* The Account bundle is sent to a peer device to be decrypted and used as the same node on a different device.
+* Look into shamir's secret sharding as well
