@@ -37,7 +37,7 @@ THIS IS VERY MUCH A Work In Progress
 * Subsequent runs:
 * `npm run client`
 
-* see `client/README.md` for morr information
+* see `client/README.md` for more information
 
 ## Plan
 
