@@ -15,7 +15,6 @@ const { IpfsIdentity, start, checkForAccount } = require('../src/')
 const html = require('yo-yo')
 const qrcode = require('qrcode-generator')
 const Clipboard = require('./node_modules/clipboard/dist/clipboard.min')
-const createIcon = require('blockies-npm')
 const validUrl = require('valid-url')
 const animate = require('./animate')
 const uuid = require('uuid/v1');
@@ -24,6 +23,8 @@ const notify = require('./components/notify')
 const ProofDetail = require('./components/proof-detail')
 const PublicKeyCard = require('./components/public-key-card')
 const confirmProceed = require('./components/confirm-proceed')
+
+const avatar = require('./utils/avatar')
 
 const APP_NAME = 'Autonomica'
 const VIEW_IDENT = 'identity-app'
@@ -502,22 +503,6 @@ function nav () {
         </nav>
       </header>
     </div>`
-}
-
-function avatar (peerId) {
-  let icon = createIcon({ // All options are optional
-    seed: peerId, // seed used to generate icon data, default: random
-    // color: '#dfe', // to manually specify the icon color, default: random
-    // bgcolor: '#aaa', // choose a different background color, default: white
-    // size: 15, // width/height of the icon in blocks, default: 10
-    // scale: 3 // width/height of each block in pixels, default: 5
-  })
-  let list = 'w3-ns h3-ns'.split(' ');
-  list.forEach((klass) => {
-    icon.classList.add(klass)
-  })
-
-  return icon
 }
 
 function listen () {

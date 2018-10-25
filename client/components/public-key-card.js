@@ -3,6 +3,7 @@
 const html = require('yo-yo')
 const validUrl = require('valid-url')
 const createIcon = require('blockies-npm')
+const avatar = require('../utils/avatar')
 
 const notify = require('./notify')
 
@@ -27,15 +28,7 @@ class PublicKeyCard {
   }
 
   avatar (peerId) {
-    let icon = createIcon({
-      seed: peerId
-    })
-    let list = 'w3-ns h3-ns'.split(' ');
-    list.forEach((klass) => {
-      icon.classList.add(klass)
-    })
-
-    return icon
+    return avatar(peerId)
   }
 
   doWork () {
