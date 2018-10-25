@@ -288,7 +288,7 @@ class IpfsIdentity {
   }
 
   updateLocalValidityDocs () {
-    // `validityDocs` are prrofs that the peer profile carries
+    // `validityDocs` are proofs that the peer profile carries
     // around and broadcasts to peers as p2p discovery happens
     // get all local client proofs and add them to the in-memory _idData
     // fire and forget as needed
@@ -379,47 +379,47 @@ class IpfsIdentity {
   }
 
   // TODO: move to a 'crypto' property
-  async verifyPeer (peerProfile, saveContact=false) {
-    const that = this
-    let proofs = []
-    if (peerProfile.peerId === this.idData.peerId) {
-      // verifying self
-      let _proofs = await this.idData.getProofs()
-      proofs = _proofs.rows || []
-    } else {
-      if (!peerProfile.proofs) {
-        return
-      }
-      if (!peerProfile.proofs.length) {
-        return
-      }
-      proofs = peerProfile.proofs
-    }
+  // async verifyPeer (peerProfile, saveContact=false) {
+  //   const that = this
+  //   let proofs = []
+  //   if (peerProfile.peerId === this.idData.peerId) {
+  //     // verifying self
+  //     let _proofs = await this.idData.getProofs()
+  //     proofs = _proofs.rows || []
+  //   } else {
+  //     if (!peerProfile.proofs) {
+  //       return
+  //     }
+  //     if (!peerProfile.proofs.length) {
+  //       return
+  //     }
+  //     proofs = peerProfile.proofs
+  //   }
 
-    let proofDocs = []
-    proofs.forEach((proof, idx) => {
-      that.verifyProof(proof.proof, (err, valid) => {
-        var valid = false
-        if (err) {
-          valid = false
-        } else {
-          valid = true
-        }
-        proofDocs.push({proof: proof.proof, valid: valid, ts: Date.now()})
-      })
-    })
-    if (saveContact) {
-      let contact = peerProfile
-      contact.validityDocs = proofDocs
-      that.contactsDB.upsert(peerProfile.peerId, contact).
-        then((res) => {
-          console.log('contact saved')
-          // TODO: set state in a notify component that will give feedback
-        }).catch((ex) => {
-          console.error(ex)
-        })
-    }
-  }
+  //   let proofDocs = []
+  //   proofs.forEach((proof, idx) => {
+  //     that.verifyProof(proof.proof, (err, valid) => {
+  //       var valid = false
+  //       if (err) {
+  //         valid = false
+  //       } else {
+  //         valid = true
+  //       }
+  //       proofDocs.push({proof: proof.proof, valid: valid, ts: Date.now()})
+  //     })
+  //   })
+  //   if (saveContact) {
+  //     let contact = peerProfile
+  //     contact.validityDocs = proofDocs
+  //     that.contactsDB.upsert(peerProfile.peerId, contact).
+  //       then((res) => {
+  //         console.log('contact saved')
+  //         // TODO: set state in a notify component that will give feedback
+  //       }).catch((ex) => {
+  //         console.error(ex)
+  //       })
+  //   }
+  // }
 
   initStorage (callback) {
     const that = this

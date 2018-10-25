@@ -104,15 +104,32 @@ class RemoteProofs {
     return valid
   }
 
-  processGist (url) {
+  async processGist (url) {
+    const that = this;
     // extract gist ID from url
-
+    let arr = url.split('/')
+    let gistId
+    arr.some((item) => {
+      if (item.length === 32) {
+        gistId = item
+        return true
+      }
+    })
     // get gist
+    return await this.getGist(gistId).then((res) => {
+      // extract proof
+      let proof = that.extractProofFromGist(res)
+      console.log('proof', proof)
+      // validate proof
+      let valid = that.validateProof(proof)
 
-    // extract proof
+      if (!valid) {
+        throw new Error('Proof document is not valid')
+      }
+      // verify Proof
 
-    // validate proof
+    }).catch((ex) => {
 
-    // verify Proof
+    })
   }
 }
