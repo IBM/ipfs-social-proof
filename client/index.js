@@ -233,7 +233,7 @@ function splash () {
             ... in decentralized identity. Through the magic of IPFS and modern web browsers we can organize our online identity outside of any walled gardens and without any official authorities other than ourselves.
           </p>
           <p class="f6 f5-ns lh-copy">
-            Through ${APP_NAME}, your cryptogrphic identity is established via the IPFS node running here.
+            Through ${APP_NAME}, your cryptographic identity is established via the IPFS node running here.
           </p>
           <p class="f6 f5-ns lh-copy">
             In order to prove your identity, one creates a Proof using ${APP_NAME} - click 'Proof' above to begin.
