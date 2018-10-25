@@ -100,7 +100,8 @@ const ERR = {
   ARG_REQ_USERNAME_SERVICE: `username & service ${this.ARG_REQ}`,
   ARG_REQ_BASE64_STR: `base64Str and format ${this.ARG_REQ}`,
   ARG_REQ_PROOF: `peerId, publicKey and proof ${this.ARG_REQ}`,
-  ARG_REQ_PROOFS: `Peer profile is missing proofs property`
+  ARG_REQ_PROOFS: `Peer profile is missing proofs property`,
+  ARG_REQ_ID: `id ${this.ARG_REQ}`
 }
 
 class IpfsIdentity {
@@ -797,7 +798,8 @@ class IpfsIdentity {
       crypto: libp2pCrypto,
       Buffer: Buffer,
       pem: pem,
-      pki: pki
+      pki: pki,
+      getGist: getGist
     }
   }
 }

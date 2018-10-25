@@ -1,0 +1,118 @@
+const Gists = require('gists')
+
+const { OBJECT, STRING, UNDEFINED,
+        ARRAY, INTEGER, BOOL, FUNCTION } = require('./utils')
+
+class RemoteProofs {
+
+  constructor (config={}) {
+    this.config = config
+  }
+
+  async getGist (id) {
+    if (!id) { throw new Error(ERR.ARG_REQ_ID) }
+
+    const gists = new Gists()
+
+    return await gists.get(id)
+  }
+
+  extractProofFromGist (response) {
+    if (!gist) {
+      throw new Error('gist is required')
+    }
+
+    // JSON = gist -> body -> files -> first key -> content
+    let files = response.body.files
+    let keys = Object.keys(response.body.files)
+    let jsonDocs = []
+    keys.forEach((key) => {
+      jsonDocs.push(JSON.parse(response.body.files[key]))
+    })
+
+    let firstValidDoc
+    jsonDocs.forEach((doc) => {
+      // make sure the proof has proper keys
+      let valid = this.validateProof(doc)
+      if (valid) {
+        firstValidDoc = doc
+        return
+      }
+    })
+    // Owner data = body -> owner -> login
+  }
+
+  // validate the proof format
+  // TODO: formalize this format & use jsonschema & format versioning
+  validateProof (assertion, username, service) {
+    if (typeof assertion !== OBJECT) {
+      throw new Error('assertion arg must be object')
+    }
+
+    let validKeysProof = {
+      message: OBJECT,
+      timestamp: INTEGER,
+      expires: INTEGER,
+      ipfsId: STRING,
+      handle: STRING
+    }
+    let validKeysAssertion = {
+      handle: STRING,
+      ipfsId: STRING,
+      proof: OBJECT,
+      signature: STRING,
+      timestamp: INTEGER,
+      publicKey: STRING
+    }
+
+    let validKeysMessage = {
+      statement: STRING,
+      username: STRING,
+      service: STRING
+    }
+
+    let valid = true
+    let keys = Object.keys(assertion)
+    keys.forEach((key) => {
+      if (typeof assertion.proof[key] !== validKeysProof[key]) {
+        valid = false
+      }
+    })
+
+    keys = Object.keys(validKeysAssertion)
+    keys.forEach((key) => {
+      if (typeof assertion[key] !== validKeysAssertion[key]) {
+        valid = false
+      }
+    })
+
+    keys = Object.keys(assertion.proof.message)
+    keys.forEach((key) => {
+      if (typeof assertion.proof.message[key] !== validKeysMessage[key]) {
+        valid = false
+      }
+    })
+
+    if (assertion.proof.message.username !== username) {
+      valid = false
+    }
+
+    if (assertion.proof.message.service !== service) {
+      valid = false
+    }
+
+    return valid
+  }
+
+  processGist (url) {
+    // extract gist ID from url
+
+    // get gist
+
+    // extract proof
+
+    // validate proof
+
+    // verify Proof
+  }
+}
