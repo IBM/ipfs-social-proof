@@ -1,7 +1,5 @@
-const libp2pCrypto = require('libp2p-crypto')
 const TextDecoder = require('text-encoding').TextDecoder
 const TextEncoder = require('text-encoding').TextEncoder
-const { encode, decode } = require('base64-arraybuffer')
 const { Buffer } = require('buffer')
 const multihashing = require('multihashing-async')
 const { pem, pki } = require('node-forge')
@@ -19,6 +17,7 @@ class Crypto {
   constructor (node) {
     if (!node) { throw new Error('IPFS node is required') }
     this._node = node
+    this._crypto = this._node.util.crypto // libp2pCrypto
   }
 
   get identity () {
@@ -65,7 +64,7 @@ class Crypto {
     // Get the Uint8Array version of the stringified key
     const bufferKey = Buffer.from(objKey)
     // unmarshal pub key (any pub key)
-    const publicKey = libp2pCrypto.keys.unmarshalPublicKey(bufferKey)
+    const publicKey = this._crypto.keys.unmarshalPublicKey(bufferKey)
 
     const textArr = t2a(signedProofText) // encode text to array
     // check the signature in the proof
@@ -98,7 +97,7 @@ class Crypto {
   get pubKeyDehydrated () {
     // get a base64 encoded marshaled pub key
     const pub = this.node._peerInfo.id._privKey.public
-    const mk = libp2pCrypto.keys.marshalPublicKey(pub)
+    const mk = this._crypto.keys.marshalPublicKey(pub)
     return this.dehydrate(mk)
   }
 
@@ -107,7 +106,7 @@ class Crypto {
     // Get the Uint8Array version of the stringified key
     const bufferKey = Buffer.from(obj.data)
     // unmarshal pub key (any pub key)
-    const umpk = libp2pCrypto.keys.unmarshalPublicKey(bufferKey)
+    const umpk = this._crypto.keys.unmarshalPublicKey(bufferKey)
     return umpk // now, one can use this pub key to verify signatures
   }
 
