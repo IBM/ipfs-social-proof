@@ -1,7 +1,9 @@
+const { log, error } = require('./log')
+const RemoteProofs = require('./remote-proofs')
+const {t2a, a2t } = require('./crypto')
+
 const { OBJECT, STRING, UNDEFINED,
         ARRAY, INTEGER, BOOL, FUNCTION } = require('./utils')
-
-const RemoteProofs = require('./remote-proofs')
 
 class Proof {
 
@@ -83,7 +85,7 @@ class Proof {
       message: message,
       timestamp: ts,
       expires: expires,
-      ipfsId: this.peerId,
+      ipfsId: this.identity.peerId,
       handle: this.identity.handle
     })
 
@@ -92,11 +94,11 @@ class Proof {
 
       let assertion = {
         handle: that.identity.handle,
-        ipfsId: that.peerId,
+        ipfsId: that.identity.peerId,
         proof: proof,
-        signature: that.dehydrate(signature),
+        signature: that.crypto.dehydrate(signature),
         timestamp: ts,
-        publicKey: that.pubKeyDehydrated
+        publicKey: that.crypto.pubKeyDehydrated
       }
       if (callback) {
         callback(err, assertion)
@@ -107,7 +109,7 @@ class Proof {
   // TODO: move to 'ipfs' property
   async saveProofToIpfs (content) {
     try {
-      let result = await this.store(JSON.stringify(content))
+      let result = await this.ipfs.store(JSON.stringify(content))
       return result
     } catch (ex) {
       throw new Error(ex)
@@ -140,7 +142,7 @@ class Proof {
     // Get the Uint8Array version of the stringified key
     const bufferKey = Buffer.from(objKey)
     // unmarshal pub key (any pub key)
-    const publicKey = libp2pCrypto.keys.unmarshalPublicKey(bufferKey)
+    const publicKey = this.crypto.keys.unmarshalPublicKey(bufferKey)
 
     const textArr = t2a(signedProofText) // encode text to array
     // check the signature in the proof

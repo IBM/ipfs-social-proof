@@ -228,8 +228,8 @@ function proof (proofData) {
     IpfsID.proof.saveProof(proof).then((res) => {
       notify.success('Proof stored successfully')
     }).catch((ex) => {
-      console.error(err)
-      notify.error(err)
+      console.error(ex)
+      notify.error(ex)
     })
   }
 
@@ -635,7 +635,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       start(HANDLE, {
         startComplete: (ipfsId) => {
-          new IdUI(ipfsId, VIEW_IDENT, { handle: ipfsId.idData.handle })
+          new IdUI(ipfsId, VIEW_IDENT, {
+            handle: ipfsId.identity.profile.handle
+          })
 
           var clip = new Clipboard('#proof-copy');
 
@@ -652,10 +654,10 @@ document.addEventListener('DOMContentLoaded', () => {
           view(VIEW_IDENT)
 
           peerProfile({
-            peerId: ipfsId.peerId,
-            clientPeerId: ipfsId.peerId,
-            name: ipfsId.idData.handle,
-            handle: ipfsId.idData.handle,
+            peerId: ipfsId.identity.profile.peerId,
+            clientPeerId: ipfsId.identity.profile.peerId,
+            name: ipfsId.identity.profile.handle, // TODO: givenName, surName
+            handle: ipfsId.identity.profile.handle,
             canFollow: true,
             self: true
           })

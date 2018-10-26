@@ -18,6 +18,7 @@ class IdUI {
   constructor (IpfsID, domId, config={}) {
     const selector = `${ config.prefix || '#' }${ domId }`
     const icon = avatar(IpfsID.identity.profile.peerId)
+    // const icon = avatar(IpfsID._node._peerInfo.id.toB58String())
     this.setState({
       icon,
       IpfsID,
