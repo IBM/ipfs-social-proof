@@ -1,4 +1,6 @@
-const { Buffer } = require('buffer') // TODO: Use Buffer in ipfs.whatever.types ???
+ // TODO: Use Buffer in ipfs.whatever.types ???
+const { Buffer } = require('buffer')
+const { log, error } = require('./log')
 
 class Ipfs {
 
@@ -76,10 +78,12 @@ class Ipfs {
   }
 
   broadcastProfile () {
-    let idData = this.idData
-    idData.updated = Date.now()
-    this.roomApi.broadcast(idData)
-    log('Broadcast: ', idData)
+    let id = this.identity.profile
+    id.updated = Date.now()
+    this.roomApi.broadcast(id)
+    log('Broadcast: ', id)
   }
 
 }
+
+module.exports = Ipfs

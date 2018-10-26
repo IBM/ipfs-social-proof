@@ -22,6 +22,10 @@ const peerId = require('peer-id')
 
 const DB = require('./db')
 const ProofsDB = require('./proofs-db')
+const { Crypto } = require('./crypto')
+const Identity = require('./identity')
+const Ipfs = require('./ipfs')
+const Proof = require('./proof')
 
 const DEFAULT_HANDLE = 'InterPlanetaryPsuedoAnonymite'
 
@@ -191,8 +195,17 @@ class IpfsIdentity {
 
   constructor (handle=null, repoName, eventHandlers=null) {
     const that = this
+
+    this._node = new IPFS(config)
+
     let accountHandle = null
+
     this._firstRun = false
+
+    if (repoName) {
+      this.setRepoName(repoName)
+    }
+
     this._uiEventHandlers = eventHandlers || {}
 
     if (!handle) { throw new Error(ERR.ARG_REQ_HANDLE) }
@@ -200,19 +213,40 @@ class IpfsIdentity {
     if (!accountHandle) {
       accountHandle = handle
     }
+
     let idData = DEFAULT_IDENTITY_DATA
+
     idData.handle = accountHandle
 
     this.setIdentityData(idData)
-
-    if (repoName) {
-      this.setRepoName(repoName)
-    }
-
-    this._node = new IPFS(config)
     this._room = null
 
     this.setEventHandlers(this._node, this._room)
+
+    that.initStorage((firstRun, account) => {
+      log('...storage initialized...')
+      that.crypto = new Crypto(that._node)
+
+      that.identity = new Identity(
+        account || idData,
+        that.crypto,
+        that._storageDB
+      )
+
+      that.ipfs = new Ipfs(
+        that._node,
+        that.roomApi,
+        that.identity
+      )
+
+      that.proof = new Proof(
+        that.proofsDB,
+        that.identity,
+        that.ipfs,
+        that.crypto
+      )
+
+    })
   }
 
   get room () {
@@ -230,10 +264,15 @@ class IpfsIdentity {
     const that = this
     this._roomApi = {
       broadcast: (message) => {
+        log('broadcast', message)
         if (typeof message === OBJECT) {
-          return room.broadcast(JSON.stringify(message))
+          if (room) {
+            return room.broadcast(JSON.stringify(message))
+          }
         }
-        room.broadcast(message)
+        if (room) {
+          room.broadcast(message)
+        }
       },
 
       processMessage: (from, data) => {
@@ -423,7 +462,7 @@ class IpfsIdentity {
 
   initStorage (callback) {
     const that = this
-    // TODO: Replace storageDB with a new db class
+    // TODO: Replace storageDB with a new account / identity db class
     this._storageDB = level(`./${DEFAULT_STORAGE_DB_NAME}`)
 
     this._storageDB.get(DB_ACCOUNT_KEY, (err, value) => {
@@ -437,7 +476,11 @@ class IpfsIdentity {
       log('Account found', value)
       if (callback) {
         // Account will be written now on first run
-        callback()
+        let account = null
+        if (value) {
+          account = JSON.parse(value)
+        }
+        callback(that._firstRun, account)
       }
     })
 
@@ -728,10 +771,6 @@ class IpfsIdentity {
       log('IPFS node is ready')
       this._room = Room(this._node, DEFAULT_ROOM_NAME)
 
-      that.initStorage(() => {
-        log('...storage initialized...')
-      })
-
       try {
         that._uiEventHandlers['startComplete'](that)
       } catch (ex) {
@@ -798,8 +837,7 @@ class IpfsIdentity {
       crypto: libp2pCrypto,
       Buffer: Buffer,
       pem: pem,
-      pki: pki,
-      getGist: getGist
+      pki: pki
     }
   }
 }

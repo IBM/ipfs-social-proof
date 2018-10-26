@@ -8,7 +8,7 @@ class Proof {
       throw new Error('proofsDB, identity, ipfs, crypto are required')
     }
 
-    this.proofsDB = db
+    this.proofsDB = proofsDB
     this.identity = identity
     this.ipfs = ipfs
     this.crypto = crypto
@@ -17,27 +17,26 @@ class Proof {
   updateLocalValidityDocs () {
     // `validityDocs` are proofs that the peer profile carries
     // around and broadcasts to peers as p2p discovery happens
-    // get all local client proofs and add them to the in-memory _idData
+    // get all local client proofs and add them to the identity prop
     // fire and forget as needed
     const that = this
 
     this.proofsDB.getValidityDocs().then((res) => {
       if (res) {
-        that.identity.validityDocs = res // TODO create setter in Identity class
+        that.identity.validityDocs = res
       }
     }).catch((ex) => {
       console.error(ex)
     })
   }
 
-  // Move to an 'ipfs' property / module
   async saveProof (content) {
     try {
       var proofData = content
       if (typeof content === OBJECT) {
         proofData = JSON.stringify(content)
       }
-      var results = await this.saveProofToIpfs(proofData)
+      var results = await this.ipfs.saveProofToIpfs(proofData)
       log('results', results)
     } catch (ex) {
       throw new Error(ex)
@@ -53,7 +52,6 @@ class Proof {
 
     try {
       const success = await this.proofsDB.create(saveData)
-      // TODO: re-generate validityDocs property on the idData object
       this.updateLocalValidityDocs()
       return success
     } catch (ex) {
@@ -82,14 +80,14 @@ class Proof {
       timestamp: ts,
       expires: expires,
       ipfsId: this.peerId,
-      handle: this._idData.handle
+      handle: this.identity.handle
     })
 
     this.crypto.sign(proof, (err, signature) => {
       if (err) { throw new Error(err) }
 
       let assertion = {
-        handle: that._idData.handle,
+        handle: that.identity.handle,
         ipfsId: that.peerId,
         proof: proof,
         signature: that.dehydrate(signature),
@@ -146,3 +144,5 @@ class Proof {
   }
 
 }
+
+module.exports = Proof
