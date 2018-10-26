@@ -22,6 +22,10 @@ const peerId = require('peer-id')
 
 const DB = require('./db')
 const ProofsDB = require('./proofs-db')
+const { Crypto } = require('./crypto')
+const Identity = require('./identity')
+const Ipfs = require('./ipfs')
+const Proof = require('./proof')
 
 const DEFAULT_HANDLE = 'InterPlanetaryPsuedoAnonymite'
 
@@ -100,7 +104,8 @@ const ERR = {
   ARG_REQ_USERNAME_SERVICE: `username & service ${this.ARG_REQ}`,
   ARG_REQ_BASE64_STR: `base64Str and format ${this.ARG_REQ}`,
   ARG_REQ_PROOF: `peerId, publicKey and proof ${this.ARG_REQ}`,
-  ARG_REQ_PROOFS: `Peer profile is missing proofs property`
+  ARG_REQ_PROOFS: `Peer profile is missing proofs property`,
+  ARG_REQ_ID: `id ${this.ARG_REQ}`
 }
 
 class IpfsIdentity {
@@ -190,8 +195,17 @@ class IpfsIdentity {
 
   constructor (handle=null, repoName, eventHandlers=null) {
     const that = this
+
+    this._node = new IPFS(config)
+
     let accountHandle = null
+
     this._firstRun = false
+
+    if (repoName) {
+      this.setRepoName(repoName)
+    }
+
     this._uiEventHandlers = eventHandlers || {}
 
     if (!handle) { throw new Error(ERR.ARG_REQ_HANDLE) }
@@ -199,19 +213,14 @@ class IpfsIdentity {
     if (!accountHandle) {
       accountHandle = handle
     }
+
     let idData = DEFAULT_IDENTITY_DATA
+
     idData.handle = accountHandle
 
     this.setIdentityData(idData)
 
-    if (repoName) {
-      this.setRepoName(repoName)
-    }
-
-    this._node = new IPFS(config)
-    this._room = null
-
-    this.setEventHandlers(this._node, this._room)
+    this.setEventHandlers()
   }
 
   get room () {
@@ -229,8 +238,11 @@ class IpfsIdentity {
     const that = this
     this._roomApi = {
       broadcast: (message) => {
+        log('broadcast', message)
         if (typeof message === OBJECT) {
+
           return room.broadcast(JSON.stringify(message))
+
         }
         room.broadcast(message)
       },
@@ -287,7 +299,7 @@ class IpfsIdentity {
   }
 
   updateLocalValidityDocs () {
-    // `validityDocs` are prrofs that the peer profile carries
+    // `validityDocs` are proofs that the peer profile carries
     // around and broadcasts to peers as p2p discovery happens
     // get all local client proofs and add them to the in-memory _idData
     // fire and forget as needed
@@ -378,51 +390,51 @@ class IpfsIdentity {
   }
 
   // TODO: move to a 'crypto' property
-  async verifyPeer (peerProfile, saveContact=false) {
-    const that = this
-    let proofs = []
-    if (peerProfile.peerId === this.idData.peerId) {
-      // verifying self
-      let _proofs = await this.idData.getProofs()
-      proofs = _proofs.rows || []
-    } else {
-      if (!peerProfile.proofs) {
-        return
-      }
-      if (!peerProfile.proofs.length) {
-        return
-      }
-      proofs = peerProfile.proofs
-    }
+  // async verifyPeer (peerProfile, saveContact=false) {
+  //   const that = this
+  //   let proofs = []
+  //   if (peerProfile.peerId === this.idData.peerId) {
+  //     // verifying self
+  //     let _proofs = await this.idData.getProofs()
+  //     proofs = _proofs.rows || []
+  //   } else {
+  //     if (!peerProfile.proofs) {
+  //       return
+  //     }
+  //     if (!peerProfile.proofs.length) {
+  //       return
+  //     }
+  //     proofs = peerProfile.proofs
+  //   }
 
-    let proofDocs = []
-    proofs.forEach((proof, idx) => {
-      that.verifyProof(proof.proof, (err, valid) => {
-        var valid = false
-        if (err) {
-          valid = false
-        } else {
-          valid = true
-        }
-        proofDocs.push({proof: proof.proof, valid: valid, ts: Date.now()})
-      })
-    })
-    if (saveContact) {
-      let contact = peerProfile
-      contact.validityDocs = proofDocs
-      that.contactsDB.upsert(peerProfile.peerId, contact).
-        then((res) => {
-          console.log('contact saved')
-          // TODO: set state in a notify component that will give feedback
-        }).catch((ex) => {
-          console.error(ex)
-        })
-    }
-  }
+  //   let proofDocs = []
+  //   proofs.forEach((proof, idx) => {
+  //     that.verifyProof(proof.proof, (err, valid) => {
+  //       var valid = false
+  //       if (err) {
+  //         valid = false
+  //       } else {
+  //         valid = true
+  //       }
+  //       proofDocs.push({proof: proof.proof, valid: valid, ts: Date.now()})
+  //     })
+  //   })
+  //   if (saveContact) {
+  //     let contact = peerProfile
+  //     contact.validityDocs = proofDocs
+  //     that.contactsDB.upsert(peerProfile.peerId, contact).
+  //       then((res) => {
+  //         console.log('contact saved')
+  //         // TODO: set state in a notify component that will give feedback
+  //       }).catch((ex) => {
+  //         console.error(ex)
+  //       })
+  //   }
+  // }
 
   initStorage (callback) {
     const that = this
-    // TODO: Replace storageDB with a new db class
+    // TODO: Replace storageDB with a new account / identity db class
     this._storageDB = level(`./${DEFAULT_STORAGE_DB_NAME}`)
 
     this._storageDB.get(DB_ACCOUNT_KEY, (err, value) => {
@@ -436,7 +448,11 @@ class IpfsIdentity {
       log('Account found', value)
       if (callback) {
         // Account will be written now on first run
-        callback()
+        let account = null
+        if (value) {
+          account = JSON.parse(value)
+        }
+        callback(that._firstRun, account)
       }
     })
 
@@ -721,14 +737,38 @@ class IpfsIdentity {
 
   setEventHandlers () {
     const that = this
-    this._node.on('error', (e) => error(e))
+
+    this._node.on('error', (e) => {
+      error(e)
+    })
 
     this._node.on('ready', () => {
       log('IPFS node is ready')
-      this._room = Room(this._node, DEFAULT_ROOM_NAME)
+      that._room = Room(that._node, DEFAULT_ROOM_NAME)
 
-      that.initStorage(() => {
+      that.initStorage((firstRun, account) => {
         log('...storage initialized...')
+        that.crypto = new Crypto(that._node)
+
+        that.identity = new Identity(
+          account || idData,
+          that.crypto,
+          that._storageDB
+        )
+
+        that.ipfs = new Ipfs(
+          that._node,
+          that.roomApi,
+          that.identity
+        )
+
+        that.proof = new Proof(
+          that.proofsDB,
+          that.identity,
+          that.ipfs,
+          that.crypto
+        )
+
       })
 
       try {
