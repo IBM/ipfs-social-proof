@@ -1,0 +1,26 @@
+{
+  "name": "client-choo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "bankai build index.js",
+    "create": "choo-scaffold",
+    "inspect": "bankai inspect index.js",
+    "start": "bankai start index.js",
+    "test": "standard && npm run test-deps",
+    "test-deps": "dependency-check . && dependency-check . --extra --no-dev -i tachyons"
+  },
+  "dependencies": {
+    "choo": "^6.13.0",
+    "choo-service-worker": "^2.4.0",
+    "sheetify": "^7.3.3",
+    "tachyons": "^4.11.1"
+  },
+  "devDependencies": {
+    "bankai": "^9.15.0",
+    "choo-devtools": "^2.5.1",
+    "choo-scaffold": "^1.2.0",
+    "dependency-check": "^3.2.1",
+    "standard": "^12.0.1"
+  }
+}
