@@ -219,34 +219,8 @@ class IpfsIdentity {
     idData.handle = accountHandle
 
     this.setIdentityData(idData)
-    this._room = null
 
-    this.setEventHandlers(this._node, this._room)
-
-    that.initStorage((firstRun, account) => {
-      log('...storage initialized...')
-      that.crypto = new Crypto(that._node)
-
-      that.identity = new Identity(
-        account || idData,
-        that.crypto,
-        that._storageDB
-      )
-
-      that.ipfs = new Ipfs(
-        that._node,
-        that.roomApi,
-        that.identity
-      )
-
-      that.proof = new Proof(
-        that.proofsDB,
-        that.identity,
-        that.ipfs,
-        that.crypto
-      )
-
-    })
+    this.setEventHandlers()
   }
 
   get room () {
@@ -266,13 +240,11 @@ class IpfsIdentity {
       broadcast: (message) => {
         log('broadcast', message)
         if (typeof message === OBJECT) {
-          if (room) {
-            return room.broadcast(JSON.stringify(message))
-          }
+
+          return room.broadcast(JSON.stringify(message))
+
         }
-        if (room) {
-          room.broadcast(message)
-        }
+        room.broadcast(message)
       },
 
       processMessage: (from, data) => {
@@ -765,11 +737,39 @@ class IpfsIdentity {
 
   setEventHandlers () {
     const that = this
-    this._node.on('error', (e) => error(e))
+
+    this._node.on('error', (e) => {
+      error(e)
+    })
 
     this._node.on('ready', () => {
       log('IPFS node is ready')
-      this._room = Room(this._node, DEFAULT_ROOM_NAME)
+      that._room = Room(that._node, DEFAULT_ROOM_NAME)
+
+      that.initStorage((firstRun, account) => {
+        log('...storage initialized...')
+        that.crypto = new Crypto(that._node)
+
+        that.identity = new Identity(
+          account || idData,
+          that.crypto,
+          that._storageDB
+        )
+
+        that.ipfs = new Ipfs(
+          that._node,
+          that.roomApi,
+          that.identity
+        )
+
+        that.proof = new Proof(
+          that.proofsDB,
+          that.identity,
+          that.ipfs,
+          that.crypto
+        )
+
+      })
 
       try {
         that._uiEventHandlers['startComplete'](that)
