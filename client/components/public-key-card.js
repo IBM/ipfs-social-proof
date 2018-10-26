@@ -38,9 +38,9 @@ class PublicKeyCard {
     // So we need to get all validityDocs and verify them and split them up
     const that = this;
     let profile
-    if (this.config.profile.peerId === this.IpfsID.idData.peerId) {
+    if (this.config.profile.peerId === this.IpfsID.identity.profile.peerId) {
       // self
-      profile = this.IpfsID.idData
+      profile = this.IpfsID.identity.profile
       this.config.followBtn = {
         disabled: 'disabled',
         label: '(You)'
@@ -116,7 +116,7 @@ class PublicKeyCard {
       let proofCount = 0
       if (proofs.length) {
         proofs.map((row) => {
-          IpfsID.verifyProof(row.doc, (err, valid) => {
+          IpfsID.crypto.verifyProof(row.doc, (err, valid) => {
             if (valid) {
               that.config.profile.validDocs.push({
                 proof: row.doc,
