@@ -32,7 +32,7 @@ class Crypto {
   set identity (identity) {
     if (!identity) {
       throw new Error('Identity object required')
-    }g
+    }
     this._identity = identity
   }
 

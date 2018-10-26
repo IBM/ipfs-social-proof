@@ -1,6 +1,8 @@
 const { OBJECT, STRING, UNDEFINED,
         ARRAY, INTEGER, BOOL, FUNCTION } = require('./utils')
 
+const RemoteProofs = require('./remote-proofs')
+
 class Proof {
 
   constructor (proofsDB, identity, ipfs, crypto) {
@@ -12,6 +14,8 @@ class Proof {
     this.identity = identity
     this.ipfs = ipfs
     this.crypto = crypto
+    // isn't that cute? they need each other
+    this.remoteProofs = new RemoteProofs(this)
   }
 
   updateLocalValidityDocs () {

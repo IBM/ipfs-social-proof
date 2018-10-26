@@ -2,11 +2,12 @@ const Gists = require('gists')
 
 const { OBJECT, STRING, UNDEFINED,
         ARRAY, INTEGER, BOOL, FUNCTION } = require('./utils')
+const { log, error } = require('./log')
 
 class RemoteProofs {
 
-  constructor (config={}) {
-    this.config = config
+  constructor (proof) {
+    this.proofAPI = proof
   }
 
   async getGist (id) {
@@ -18,7 +19,7 @@ class RemoteProofs {
   }
 
   extractProofFromGist (response) {
-    if (!gist) {
+    if (!response) {
       throw new Error('gist is required')
     }
 
@@ -27,7 +28,7 @@ class RemoteProofs {
     let keys = Object.keys(response.body.files)
     let jsonDocs = []
     keys.forEach((key) => {
-      jsonDocs.push(JSON.parse(response.body.files[key]))
+      jsonDocs.push(response.body.files[key])
     })
 
     let firstValidDoc
@@ -104,7 +105,7 @@ class RemoteProofs {
     return valid
   }
 
-  async processGist (url) {
+  async processGist (url, callback) { //  callback??
     const that = this;
     // extract gist ID from url
     let arr = url.split('/')
@@ -118,18 +119,30 @@ class RemoteProofs {
     // get gist
     return await this.getGist(gistId).then((res) => {
       // extract proof
-      let proof = that.extractProofFromGist(res)
-      console.log('proof', proof)
+      let proofDoc = that.extractProofFromGist(res)
+      log('proof', proofDoc)
       // validate proof
-      let valid = that.validateProof(proof)
+      let valid = that.validateProof(proofDoc)
 
       if (!valid) {
         throw new Error('Proof document is not valid')
       }
       // verify Proof
+      this.proofApi.verifyProof(proofDoc, (err, valid) => {
 
+        if (valid) {
+          log('proof is valid!')
+        } else {
+          error('proof is NOT valid')
+        }
+        if (typeof callback === FUNCTION) {
+          callback(err, valid)
+        }
+      })
     }).catch((ex) => {
-
+      error(ex)
     })
   }
 }
+
+module.exports = RemoteProofs
