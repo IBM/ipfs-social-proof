@@ -1,13 +1,13 @@
 const Gists = require('gists')
 
 const { OBJECT, STRING, UNDEFINED,
-        ARRAY, INTEGER, BOOL, FUNCTION } = require('./utils')
+        ARRAY, INTEGER, NUMBER, BOOL, FUNCTION } = require('./utils')
 const { log, error } = require('./log')
 
 class RemoteProofs {
 
   constructor (proof) {
-    this.proofAPI = proof
+    this.proofApi = proof
   }
 
   async getGist (id) {
@@ -26,44 +26,38 @@ class RemoteProofs {
     // JSON = gist -> body -> files -> first key -> content
     let files = response.body.files
     let keys = Object.keys(response.body.files)
-    let jsonDocs = []
-    keys.forEach((key) => {
-      jsonDocs.push(response.body.files[key])
-    })
 
-    let firstValidDoc
-    jsonDocs.forEach((doc) => {
-      // make sure the proof has proper keys
-      let valid = this.validateProof(doc)
-      if (valid) {
-        firstValidDoc = doc
-        return
-      }
-    })
-    // Owner data = body -> owner -> login
+    try {
+      // TODO: for now assume there is only one document to deal with
+      //       We may need to loop & get all
+      return JSON.parse(files[keys[0]].content)
+    } catch (ex) {
+      return null
+    }
   }
 
   // validate the proof format
   // TODO: formalize this format & use jsonschema & format versioning
-  validateProof (assertion, username, service) {
-    if (typeof assertion !== OBJECT) {
-      throw new Error('assertion arg must be object')
+  validateProof (proofWrapper, username, service) {
+    if (typeof proofWrapper !== OBJECT) {
+      throw new Error('proofWrapper arg must be object')
     }
 
     let validKeysProof = {
       message: OBJECT,
-      timestamp: INTEGER,
-      expires: INTEGER,
+      timestamp: NUMBER,
+      expires: NUMBER,
       ipfsId: STRING,
       handle: STRING
     }
-    let validKeysAssertion = {
+    let validKeysProofWrapper = {
       handle: STRING,
       ipfsId: STRING,
       proof: OBJECT,
       signature: STRING,
-      timestamp: INTEGER,
-      publicKey: STRING
+      timestamp: NUMBER,
+      publicKey: STRING,
+      _hash: STRING // TODO: change to ipfsContentHash
     }
 
     let validKeysMessage = {
@@ -73,68 +67,70 @@ class RemoteProofs {
     }
 
     let valid = true
-    let keys = Object.keys(assertion)
+    let keys = Object.keys(proofWrapper)
     keys.forEach((key) => {
-      if (typeof assertion.proof[key] !== validKeysProof[key]) {
+      if (typeof proofWrapper[key] !== validKeysProofWrapper[key]) {
         valid = false
       }
     })
 
-    keys = Object.keys(validKeysAssertion)
+    keys = Object.keys(proofWrapper.proof)
     keys.forEach((key) => {
-      if (typeof assertion[key] !== validKeysAssertion[key]) {
+      if (typeof proofWrapper.proof[key] !== validKeysProof[key]) {
+        if (!(key === 'expires')) { // TODO: test expires!
+          valid = false
+        }
+      }
+    })
+
+    keys = Object.keys(proofWrapper.proof.message)
+    keys.forEach((key) => {
+      if (typeof proofWrapper.proof.message[key] !== validKeysMessage[key]) {
         valid = false
       }
     })
 
-    keys = Object.keys(assertion.proof.message)
-    keys.forEach((key) => {
-      if (typeof assertion.proof.message[key] !== validKeysMessage[key]) {
-        valid = false
-      }
-    })
-
-    if (assertion.proof.message.username !== username) {
+    if (proofWrapper.proof.message.username !== username) {
       valid = false
     }
 
-    if (assertion.proof.message.service !== service) {
+    if (proofWrapper.proof.message.service !== service) {
       valid = false
     }
 
+    // TODO: validate the host we fetched the proof from agains the service domain
     return valid
   }
 
-  async processGist (url, callback) { //  callback??
-    const that = this;
-    // extract gist ID from url
+  getGistIdFromUrl (url) {
     let arr = url.split('/')
     let gistId
     arr.some((item) => {
       if (item.length === 32) {
         gistId = item
-        return true
+        return gistId
       }
     })
+    return gistId
+  }
+
+  async processGist (url, username, service, callback) { //  callback??
+    const that = this;
+    // extract gist ID from url
+    let gistId = this.getGistIdFromUrl(url)
     // get gist
     return await this.getGist(gistId).then((res) => {
       // extract proof
       let proofDoc = that.extractProofFromGist(res)
-      log('proof', proofDoc)
       // validate proof
-      let valid = that.validateProof(proofDoc)
+      let valid = that.validateProof(proofDoc, username, service)
 
       if (!valid) {
         throw new Error('Proof document is not valid')
       }
+      debugger
       // verify Proof
-      this.proofApi.verifyProof(proofDoc, (err, valid) => {
-
-        if (valid) {
-          log('proof is valid!')
-        } else {
-          error('proof is NOT valid')
-        }
+      that.proofApi.verifyProof(proofDoc, (err, valid) => {
         if (typeof callback === FUNCTION) {
           callback(err, valid)
         }

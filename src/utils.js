@@ -16,6 +16,7 @@ module.exports = {
   OBJECT: 'object',
   UNDEFINED: 'undefined',
   INTEGER: 'integer',
+  NUMBER: 'number',
   ARRAY: 'array',
   BOOL: 'boolean',
   FUNCTION: 'function'

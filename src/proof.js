@@ -66,6 +66,7 @@ class Proof {
     }
   }
 
+  // TODO: expires default should be `0` to denote N/A???
   createProof (username, service, callback, expires=null) {
     // Sign message, returning an Object with
     // service, username, message, handle and signature
