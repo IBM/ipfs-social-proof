@@ -14,14 +14,16 @@ THIS IS VERY MUCH A Work In Progress
 * node.js 10
 * Chrome / Firefox
 
-## Install
+## First time install & launch client
 
 * git clone / fork this repo
-* `npm install`
+* `npm run make`
+* Subsequent runs:
+* `npm run client`
 
 ## Build Bundle
 
-* `npm bundle`
+* `npm run bundle`
 * This will produce a bundle one can consume in a web/electron app at `bundle.js`
 
 ## Example client Identity DApp: `Autonomica`
@@ -30,19 +32,12 @@ THIS IS VERY MUCH A Work In Progress
 
 ![Alt Identity](client/screenshots/identity.png?raw=true "Identity")
 
-#### Quickstart
-
-* First time: build and run
-* `npm run make`
-* Subsequent runs:
-* `npm run client`
-
-* see `client/README.md` for more information
+* see [client/README.md](client/README.md) for more information
 
 ## Plan
 
-* See PLAN.md (preliminary plan - may be outdated)
+* See [PLAN.md](PLAN.md) (preliminary plan & ideas scratchpad)
 
 ## Contributing
 
-* see CONTRIBUTING.md
+* see [CONTRIBUTING.md](CONTRIBUTING.md)
