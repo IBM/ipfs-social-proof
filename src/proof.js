@@ -66,6 +66,7 @@ class Proof {
     }
   }
 
+  // TODO: expires default should be `0` to denote N/A???
   createProof (username, service, callback, expires=null) {
     // Sign message, returning an Object with
     // service, username, message, handle and signature
@@ -142,7 +143,7 @@ class Proof {
     // Get the Uint8Array version of the stringified key
     const bufferKey = Buffer.from(objKey)
     // unmarshal pub key (any pub key)
-    const publicKey = this.crypto.keys.unmarshalPublicKey(bufferKey)
+    const publicKey = this.crypto._crypto.keys.unmarshalPublicKey(bufferKey)
 
     const textArr = t2a(signedProofText) // encode text to array
     // check the signature in the proof
