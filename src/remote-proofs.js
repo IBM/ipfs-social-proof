@@ -128,7 +128,6 @@ class RemoteProofs {
       if (!valid) {
         throw new Error('Proof document is not valid')
       }
-      debugger
       // verify Proof
       that.proofApi.verifyProof(proofDoc, (err, valid) => {
         if (typeof callback === FUNCTION) {

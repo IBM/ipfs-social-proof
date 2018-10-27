@@ -143,7 +143,7 @@ class Proof {
     // Get the Uint8Array version of the stringified key
     const bufferKey = Buffer.from(objKey)
     // unmarshal pub key (any pub key)
-    const publicKey = this.crypto.keys.unmarshalPublicKey(bufferKey)
+    const publicKey = this.crypto._crypto.keys.unmarshalPublicKey(bufferKey)
 
     const textArr = t2a(signedProofText) // encode text to array
     // check the signature in the proof
