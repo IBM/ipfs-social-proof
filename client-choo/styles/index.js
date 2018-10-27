@@ -2,7 +2,7 @@ const css = require('sheetify')
 
 const body = css`
   :host {
-    opacity:0;
+    /* opacity:0; */
     transition: opacity 4s;
     -webkit-transition: opacity 4s; /* Safari */
   }
@@ -82,7 +82,7 @@ const confirmationModal = css`
 
 const navLinks = css`
   :host {
-    opacity: 0;
+    /* opacity:0; */
     transition: opacity 2s;
   }
 `

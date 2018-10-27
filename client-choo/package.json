@@ -3,12 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "bankai build index.js",
-    "create": "choo-scaffold",
-    "inspect": "bankai inspect index.js",
-    "start": "bankai start index.js",
-    "test": "standard && npm run test-deps",
-    "test-deps": "dependency-check . && dependency-check . --extra --no-dev -i tachyons"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "bundle": "browserify -t sheetify -t brfs -t nanohtml index.js > bundle.js",
+    "serve": "http-server ./ -a 127.0.0.1 -p 8889",
+    "start": "npm run bundle && npm run serve"
   },
   "dependencies": {
     "choo": "^6.13.0",
@@ -17,10 +15,12 @@
     "tachyons": "^4.11.1"
   },
   "devDependencies": {
-    "bankai": "^9.15.0",
+    "brfs": "^2.0.1",
+    "browserify": "^16.2.3",
     "choo-devtools": "^2.5.1",
     "choo-scaffold": "^1.2.0",
     "dependency-check": "^3.2.1",
+    "http-server": "^0.11.1",
     "standard": "^12.0.1"
   }
 }
