@@ -100,13 +100,13 @@ function store (state, emitter) {
       })
     })
 
-    emitter.on('clicks:add', function (count) {
-      state.totalClicks += count
+    emitter.on('changeContent', function (content) {
+      state.currentContent = content
       emitter.emit(state.events.RENDER)
     })
 
-    emitter.on('changeContent', function (content) {
-      state.currentContent = content
+    emitter.on('updateProofContent', function (content) {
+      state.currentProofContent = content
       emitter.emit(state.events.RENDER)
     })
   })
