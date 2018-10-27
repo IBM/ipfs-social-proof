@@ -5,6 +5,7 @@ const styles = require('../styles')
 const Splash = require('../components/splash')
 const IdentityUI = require('../components/identity')
 const Proof = require('../components/proof')
+const Peers = require('../components/peers')
 
 const TITLE = 'client-choo - main'
 const APP_NAME = 'Autonomica'
@@ -26,6 +27,8 @@ function view (state, emit) {
     content = state.cache(Splash, 'content:splash').render(state, APP_NAME)
   } else if (state.currentContent === VIEW_PROOF) {
     content = state.cache(Proof, 'content:proof').render(state)
+  } else if (state.currentContent === VIEW_LISTEN) {
+    content = state.cache(Peers, 'content:peers').render(state)
   }
 
   function handleClick () {
@@ -46,7 +49,7 @@ function view (state, emit) {
   }
 
   function evtListenLink (event) {
-    view(VIEW_LISTEN, baseClass)
+    emit('changeContent', VIEW_LISTEN)
   }
 
   function evtLogLink (event) {

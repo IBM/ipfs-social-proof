@@ -2,6 +2,29 @@ const { start, checkForAccount } = require('../../src/')
 
 module.exports = store
 
+function logMessage (message) {
+  let msg = stripNode(message)
+  let _msg
+  let ts = new Date().toISOString()
+  if (typeof msg === STRING) {
+    _msg = `${ts}: ${msg}`
+  } else if (typeof message === OBJECT) {
+    msg.ts = ts
+    _msg = JSON.stringify(msg, null, 2)
+  } else {
+    return
+  }
+
+  const msgNode = html`
+    <div
+      class="f7 green code"
+      style="word-break: break-word">
+      ${_msg}
+    </div>`
+
+  document.querySelector('#log-output').prepend(msgNode)
+}
+
 function store (state, emitter) {
   // initial state
   state.proofsList = {
@@ -28,14 +51,14 @@ function store (state, emitter) {
           // let qrCode = makeQrCode(ipfsId.peerId)
           // document.querySelector('#qr-code').innerHTML = qrCode
 
-          // peerProfile({
-          //   peerId: ipfsId.identity.profile.peerId,
-          //   clientPeerId: ipfsId.identity.profile.peerId,
-          //   name: ipfsId.identity.profile.handle, // TODO: givenName, surName
-          //   handle: ipfsId.identity.profile.handle,
-          //   canFollow: true,
-          //   self: true
-          // })
+          state.peerProfile = {
+            peerId: ipfsId.identity.profile.peerId,
+            clientPeerId: ipfsId.identity.profile.peerId,
+            name: ipfsId.identity.profile.handle, // TODO: givenName, surName
+            handle: ipfsId.identity.profile.handle,
+            canFollow: true,
+            self: true
+          }
 
           // updateFavicon(ipfsId.peerId)
           // animate.endAnimation()
@@ -44,63 +67,58 @@ function store (state, emitter) {
           emitter.emit(state.events.RENDER)
         },
 
-        // 'proof-deleted': () => {
-        //   // reload the proofUI
-        //   let nodeId = 'proof-list'
-        //   let existing = document.querySelector(`#${nodeId}`)
-        //   proofList().then((newUi) => {
-        //     html.update(existing, newUi)
-        //   })
-        // },
-        //
-        // 'peer joined': (message) => {
-        //   message.event = 'Peer Joined'
-        //   logMessage(message)
-        //   // TODO: remove / gray out peers on `peer left`
-        //   let profile = {
-        //     peerId: message.peerId,
-        //     clientPeerId: message.ipfsId.peerId,
-        //     name: message.name || null,
-        //     handle: message.handle || null,
-        //     canFollow: true,
-        //     connected: true,
-        //     proofs: message.proofs || []
-        //   }
-        //
-        //   updatePeerProfile(profile)
-        // },
-        //
-        // 'peer left': (message) => {
-        //   message.event = 'Peer Left'
-        //   logMessage(message)
-        //   // TODO: update the UI to reflect disconnection
-        // },
-        //
-        // 'subscribed': (message) => {
-        //   message.event = 'Subscribed to Room'
-        //   logMessage(message)
-        // },
-        //
-        // 'message': (message) => {
-        //   message.event = 'Message Rcvd'
-        //   let _msg = JSON.parse(message.data)
-        //   if (_msg.updated) {
-        //     updatePeerProfile(_msg)
-        //   }
-        //
-        //   logMessage(_msg)
-        // },
-        // 'updatePeerProfile': (profile) => {
-        //   let _profile = {
-        //     peerId: profile.peerId,
-        //     clientPeerId: null, // need this in this closure
-        //     name: null,
-        //     handle: profile.handle,
-        //     bio: profile.bio,
-        //     canFollow: true
-        //   }
-        //   updatePeerProfile(_profile)
-        // }
+        'proof-deleted': () => {
+          emitter.emit('updateProofsList')
+        },
+
+        'peer joined': (message) => {
+          message.event = 'Peer Joined'
+          logMessage(message)
+          // TODO: remove / gray out peers on `peer left`
+          let profile = {
+            peerId: message.peerId,
+            clientPeerId: message.ipfsId.peerId,
+            name: message.name || null,
+            handle: message.handle || null,
+            canFollow: true,
+            connected: true,
+            proofs: message.proofs || []
+          }
+
+          emitter.emit('updatePeerProfile', profile)
+        },
+
+        'peer left': (message) => {
+          message.event = 'Peer Left'
+          logMessage(message)
+          // TODO: update the UI to reflect disconnection
+        },
+
+        'subscribed': (message) => {
+          message.event = 'Subscribed to Room'
+          logMessage(message)
+        },
+
+        'message': (message) => {
+          message.event = 'Message Rcvd'
+          let _msg = JSON.parse(message.data)
+          if (_msg.updated) {
+            emitter.emit('updatePeerProfile', _msg)
+          }
+
+          logMessage(_msg)
+        },
+        'updatePeerProfile': (profile) => {
+          let _profile = {
+            peerId: profile.peerId,
+            clientPeerId: null, // need this in this closure
+            name: null,
+            handle: profile.handle,
+            bio: profile.bio,
+            canFollow: true
+          }
+          emitter.emit('updatePeerProfile', _profile)
+        }
       })
     })
 
@@ -123,6 +141,16 @@ function store (state, emitter) {
       } catch (ex) {
         console.error(ex)
       }
+    })
+
+    emitter.on('updatePeerProfile', async function(peerProfile) {
+      if (!peerProfile || !peerProfile.peerId) {
+        return
+      }
+
+      peerProfile.updated = Date.now()
+      state.peerProfile = peerProfile
+      emitter.emit(state.events.RENDER)
     })
   })
 }
