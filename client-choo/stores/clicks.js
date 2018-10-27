@@ -26,10 +26,10 @@ function store (state, emitter) {
           // document.querySelector('#qr-code').innerHTML = qrCode
 
           // peerProfile({
-          //   peerId: ipfsId.peerId,
-          //   clientPeerId: ipfsId.peerId,
-          //   name: ipfsId.idData.handle,
-          //   handle: ipfsId.idData.handle,
+          //   peerId: ipfsId.identity.profile.peerId,
+          //   clientPeerId: ipfsId.identity.profile.peerId,
+          //   name: ipfsId.identity.profile.handle, // TODO: givenName, surName
+          //   handle: ipfsId.identity.profile.handle,
           //   canFollow: true,
           //   self: true
           // })
@@ -81,10 +81,7 @@ function store (state, emitter) {
         //   message.event = 'Message Rcvd'
         //   let _msg = JSON.parse(message.data)
         //   if (_msg.updated) {
-        //     // store the peer in IpfsID._knownPeers
-        //     // IpfsID._knownPeers[_msg.peerId] = _msg
         //     updatePeerProfile(_msg)
-        //     // IpfsID.verifyPeer(_msg)
         //   }
         //
         //   logMessage(_msg)

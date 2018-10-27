@@ -44,7 +44,7 @@ module.exports = class IdentityUI extends Component {
     const { IpfsID } = this.state
     const input = document.querySelector('#handle-edit')
     let updatedData = { handle: input.value }
-    window.IpfsID.saveIdData(updatedData)
+    window.IpfsID.identity.save(updatedData)
     input.style = 'border-color: green;'
     input.disabled = true;
     // notification !
@@ -62,8 +62,8 @@ module.exports = class IdentityUI extends Component {
 
   createElement (state) {
     const { IpfsID } = state
-    const handle = IpfsID.idData.handle
-    const icon = avatar(IpfsID.peerId)
+    const handle = IpfsID.identity.profile.handle
+    const icon = avatar(IpfsID.identity.profile.peerId)
 
     return html`
       <article id="identity-app" class="_view_ w-80 center mw7 br3 ba b--black-10 mv4">
@@ -75,7 +75,7 @@ module.exports = class IdentityUI extends Component {
                class="flex code f5 mt3"
                onclick=${this.broadcastId.bind(this)}
                title="IPFS Peer ID">
-            <div class="mh4">${IpfsID.peerId}</div>
+            <div class="mh4">${IpfsID.identity.profile.peerId}</div>
           </span>
           <span id="qr-code" class="flex"
                 title="IPFS Peer ID as QR Code"></span>
@@ -108,7 +108,7 @@ module.exports = class IdentityUI extends Component {
             <div class="w-100 mr3 ml3 f6 code">IPFS RSA Public Key [signing only]</div>
             <textarea disabled
                       class="h5 flex w-80 lh-copy code f7 ma3 bg-white br3 ph3 pv2 mb2 overflow-auto"
-                      title="IPFS Public Key [Signing Only]">${IpfsID.pubKeyBase64}</textarea>
+                      title="IPFS Public Key [Signing Only]">${IpfsID.identity.profile.pubKeyBase64}</textarea>
           </p>
         </div>
       </article>
