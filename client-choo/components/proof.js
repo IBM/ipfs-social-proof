@@ -1,6 +1,7 @@
 var html = require('choo/html')
 var Component = require('choo/component')
 const notify = require('./notify')
+const uuid = require('uuid/v1')
 
 const CONTENT_PROOFS = 'show-proofs'
 const CONTENT_HELP = 'help-proof'
@@ -48,6 +49,7 @@ module.exports = class Proof extends Component {
     proof.id = uuid() //  TODO: do this inside library/API
     IpfsID.proof.saveProof(proof).then((res) => {
       notify.success('Proof stored successfully')
+      this.emit('updateProofsList')
     }).catch((ex) => {
       console.error(ex)
       notify.error(ex)
@@ -92,41 +94,35 @@ module.exports = class Proof extends Component {
     // new ProofDetail('proof-detail', { proofId: hash })
   }
 
-  // async proofList () {
-  //   const { IpfsID } = this.state
-  //   let list = []
-  //   // default view
-  //   // get all proofs in db
-  //   try {
-  //     list = await IpfsID.proofsDB.getAll()
-  //   } catch (ex) {
-  //     console.error(ex)
-  //   }
-  //   if (!list.rows.length) {
-  //     return html`
-  //       <div id="proof-list"
-  //            class="_proof_tab_ w-90 center pv4 bg-near-white">
-  //         <h3>0 Proofs</h3>
-  //       </div>`
-  //   }
-  //   return html`
-  //     <div id="proof-list"
-  //          class="_proof_tab_ w-90 center pv4 bg-near-white">
-  //       <table class="w-100 collapse pl4 mt0 ba b--black-10">
-  //         ${list.rows.map((item) => {
-  //           return html`
-  //             <tr class="pv2 striped--light-gray">
-  //               <td><img src="img/eye.svg"
-  //                        onclick=${this.viewProof.bind(this)}
-  //                        data-hash="${item.doc.ipfsHash}"
-  //                        class="h1 ph2" /></td>
-  //     <td class="f6">${item.doc.proof.message.username}@${item.doc.proof.message.service}</td><td class="ipfs-url fw1 f7 code"><a href="${item.doc.url}" target="_new">${item.doc.url}</a></td><td class="ipfs-url fw1 f7 code"><a target="_new" href="https://ipfs.io/ipfs/${item.doc.ipfsHash}" title="${item.doc.ipfsHash}">/ipfs/${item.doc.ipfsHash}</a></td>
-  //             </tr>`
-  //           })}
-  //         </table>
-  //      </div>
-  //   `
-  // }
+  proofList () {
+    const { proofsList } = this.state
+    // default view
+    if (!proofsList.rows.length) {
+      return html`
+        <div id="proof-list"
+             class="_proof_tab_ w-90 center pv4 bg-near-white">
+          <h3>0 Proofs</h3>
+        </div>
+      `
+    }
+    return html`
+      <div id="proof-list"
+           class="_proof_tab_ w-90 center pv4 bg-near-white">
+        <table class="w-100 collapse pl4 mt0 ba b--black-10">
+          ${proofsList.rows.map((item) => {
+            return html`
+              <tr class="pv2 striped--light-gray">
+                <td><img src="img/eye.svg"
+                         onclick=${this.viewProof.bind(this)}
+                         data-hash="${item.doc.ipfsHash}"
+                         class="h1 ph2" /></td>
+      <td class="f6">${item.doc.proof.message.username}@${item.doc.proof.message.service}</td><td class="ipfs-url fw1 f7 code"><a href="${item.doc.url}" target="_new">${item.doc.url}</a></td><td class="ipfs-url fw1 f7 code"><a target="_new" href="https://ipfs.io/ipfs/${item.doc.ipfsHash}" title="${item.doc.ipfsHash}">/ipfs/${item.doc.ipfsHash}</a></td>
+              </tr>`
+            })}
+          </table>
+       </div>
+    `
+  }
 
   createElement (state) {
     const currentProofContent = state.currentProofContent || CONTENT_CREATE
@@ -138,11 +134,7 @@ module.exports = class Proof extends Component {
     let proofContent
     if (currentProofContent === CONTENT_PROOFS) {
       proofListTab = selectedTab
-      proofContent = html`
-        <div id="proof-list"
-             class="_proof_tab_ w-90 center pa4 bg-near-white">
-        </div>
-      `
+      proofContent = this.proofList()
     } else if (currentProofContent === CONTENT_HELP) {
       proofHelpTab = selectedTab
       proofContent = html`
@@ -219,7 +211,6 @@ module.exports = class Proof extends Component {
             <a class=${proofHelpTab}
                href="#" id="help-proof-tab" onclick=${this.evtProofHelp.bind(this)}>Help</a>
           </div>
-(())
           ${proofContent}
         </div>
 

@@ -3,7 +3,10 @@ const { start, checkForAccount } = require('../../src/')
 module.exports = store
 
 function store (state, emitter) {
-  state.totalClicks = 0
+  // initial state
+  state.proofsList = {
+    rows: []
+  }
 
   emitter.on('DOMContentLoaded', function () {
     //Default
@@ -37,6 +40,7 @@ function store (state, emitter) {
           // updateFavicon(ipfsId.peerId)
           // animate.endAnimation()
           // document.querySelector('#nav-links').style.opacity='1'
+          emitter.emit('updateProofsList')
           emitter.emit(state.events.RENDER)
         },
 
@@ -108,6 +112,17 @@ function store (state, emitter) {
     emitter.on('updateProofContent', function (content) {
       state.currentProofContent = content
       emitter.emit(state.events.RENDER)
+    })
+
+    emitter.on('updateProofsList', async function() {
+      // get all proofs in db
+      try {
+        list = await state.IpfsID.proofsDB.getAll()
+        state.proofsList = list
+        emitter.emit(state.events.RENDER)
+      } catch (ex) {
+        console.error(ex)
+      }
     })
   })
 }
