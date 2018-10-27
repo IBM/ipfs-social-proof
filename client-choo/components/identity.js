@@ -1,7 +1,9 @@
 var html = require('choo/html')
+const raw = require('choo/html/raw')
 var Component = require('choo/component')
 const avatar = require('../../client/utils/avatar')
 const notify = require('./notify')
+const qrcode = require('qrcode-generator')
 
 function hide (node) {
   node.style = 'display: none;'
@@ -60,10 +62,19 @@ module.exports = class IdentityUI extends Component {
     IpfsID.broadcastProfile()
   }
 
+  makeQrCode(data) {
+    const typeNumber = 0
+    const errorCorrectionLevel = 'L'
+    const qr = qrcode(typeNumber, errorCorrectionLevel)
+    qr.addData(data)
+    qr.make()
+    return qr.createSvgTag()
+  }
+
   createElement (state) {
     const { IpfsID } = state
-    const handle = IpfsID.identity.profile.handle
-    const icon = avatar(IpfsID.identity.profile.peerId)
+    const { peerId, handle, pubKeyBase64 } = IpfsID.identity.profile
+    const icon = avatar(peerId)
 
     return html`
       <article id="identity-app" class="_view_ w-80 center mw7 br3 ba b--black-10 mv4">
@@ -75,10 +86,12 @@ module.exports = class IdentityUI extends Component {
                class="flex code f5 mt3"
                onclick=${this.broadcastId.bind(this)}
                title="IPFS Peer ID">
-            <div class="mh4">${IpfsID.identity.profile.peerId}</div>
+            <div class="mh4">${peerId}</div>
           </span>
           <span id="qr-code" class="flex"
-                title="IPFS Peer ID as QR Code"></span>
+                title="IPFS Peer ID as QR Code">
+            ${raw(this.makeQrCode(peerId))}
+          </span>
         </div>
         <div title="Account Handle"
              class="w-100 f3 bg-near-white br3 br--top black-80 mv0 pa4">
@@ -108,7 +121,7 @@ module.exports = class IdentityUI extends Component {
             <div class="w-100 mr3 ml3 f6 code">IPFS RSA Public Key [signing only]</div>
             <textarea disabled
                       class="h5 flex w-80 lh-copy code f7 ma3 bg-white br3 ph3 pv2 mb2 overflow-auto"
-                      title="IPFS Public Key [Signing Only]">${IpfsID.identity.profile.pubKeyBase64}</textarea>
+                      title="IPFS Public Key [Signing Only]">${pubKeyBase64}</textarea>
           </p>
         </div>
       </article>

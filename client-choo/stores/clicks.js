@@ -61,8 +61,6 @@ function store (state, emitter) {
       start(HANDLE, {
         startComplete: (ipfsId) => {
           state.IpfsID = ipfsId
-          // let qrCode = makeQrCode(ipfsId.peerId)
-          // document.querySelector('#qr-code').innerHTML = qrCode
 
           state.peerProfile = {
             peerId: ipfsId.identity.profile.peerId,
