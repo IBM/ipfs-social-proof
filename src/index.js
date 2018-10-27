@@ -291,6 +291,8 @@ class IpfsIdentity {
         } else {
           account = DEFAULT_IDENTITY_DATA
           account.handle = that._accountHandle
+          account.ipfsId = that._node._peerInfo.id._idB58String
+          account.peerId = that._node._peerInfo.id._idB58String
         }
         callback(that._firstRun, account)
       }

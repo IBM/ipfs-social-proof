@@ -5,6 +5,7 @@ const { OBJECT, STRING, UNDEFINED,
 
 DEFAULT_HANDLE = 'DWeb Enthusiast'
 DEFAULT_BIO = 'Decentralized Technology and Tacos Twenty-four/seven'
+const DB_ACCOUNT_KEY = 'ACCOUNT'
 
 const PROFILE_KEYS = {
   surName: STRING,
