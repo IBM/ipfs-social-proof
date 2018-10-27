@@ -23,7 +23,7 @@ class ProofDetail {
     let proofId = this.config.proofId
 
     await IpfsID.proofsDB.getByIpfsHash(proofId).then((res) => {
-      this.setState({proof: res})
+      this.setState({ proof: res })
     }).catch((ex) => {
       console.error(ex)
       notify.error('Cannot get proof from local database')

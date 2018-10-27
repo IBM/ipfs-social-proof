@@ -269,5 +269,5 @@ module.exports = {
   Crypto: Crypto,
   t2a: t2a,
   a2t: a2t,
-  atc: a2c
+  a2c: a2c
 }

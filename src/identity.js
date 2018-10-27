@@ -1,8 +1,11 @@
+const { log, error } = require('./log')
+
 const { OBJECT, STRING, UNDEFINED,
         ARRAY, INTEGER, BOOL, FUNCTION } = require('./utils')
 
 DEFAULT_HANDLE = 'DWeb Enthusiast'
 DEFAULT_BIO = 'Decentralized Technology and Tacos Twenty-four/seven'
+const DB_ACCOUNT_KEY = 'ACCOUNT'
 
 const PROFILE_KEYS = {
   surName: STRING,
@@ -16,7 +19,7 @@ const PROFILE_KEYS = {
 
 class Identity {
 
-  constructor (profile, crypto, db) {
+  constructor (profile, crypto, db, firstRun=false) {
     if (typeof profile !== OBJECT) { throw new Error('profile is required') }
     this._profile = profile // <-- will either be default ID data or account from db
 
@@ -37,6 +40,10 @@ class Identity {
         this[key] = profile[key]
       }
     })
+
+    if (firstRun) {
+      this.save()
+    }
   }
 
   set validityDocs (docs) {

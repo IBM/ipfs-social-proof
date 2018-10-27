@@ -209,7 +209,7 @@ function proof (proofData) {
     if (!username || !service) {
       return notify.error('Username @ Service is required')
     }
-    window.IpfsID.createProof(username, service, (err, proof) => {
+    window.IpfsID.proof.createProof(username, service, (err, proof) => {
       proof.proof = JSON.parse(proof.proof)
       document.querySelector('#proof-preview-display').innerText =
         JSON.stringify(proof, null, 2)
@@ -225,11 +225,11 @@ function proof (proofData) {
       return notify.error('Error', 'Cannot save non-existent proof')
     }
     proof.id = uuid() //  TODO: do this inside library/API
-    IpfsID.saveProof(proof).then((res) => {
+    IpfsID.proof.saveProof(proof).then((res) => {
       notify.success('Proof stored successfully')
     }).catch((ex) => {
-      console.error(err)
-      notify.error(err)
+      console.error(ex)
+      notify.error(ex)
     })
   }
 
@@ -509,7 +509,7 @@ function peerProfile (profile) {
 
   if (profile.peerId === profile.clientPeerId) {
     // This is your profile, pull in the pub key, latest proofs etc
-    profile = window.IpfsID.idData
+    profile = window.IpfsID.identity.profile
   }
 
   function evtExaminePubKey (event) {
@@ -635,7 +635,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       start(HANDLE, {
         startComplete: (ipfsId) => {
-          new IdUI(ipfsId, VIEW_IDENT, { handle: ipfsId.idData.handle })
+          new IdUI(ipfsId, VIEW_IDENT, {
+            handle: ipfsId.identity.profile.handle
+          })
 
           var clip = new Clipboard('#proof-copy');
 
@@ -652,10 +654,10 @@ document.addEventListener('DOMContentLoaded', () => {
           view(VIEW_IDENT)
 
           peerProfile({
-            peerId: ipfsId.peerId,
-            clientPeerId: ipfsId.peerId,
-            name: ipfsId.idData.handle,
-            handle: ipfsId.idData.handle,
+            peerId: ipfsId.identity.profile.peerId,
+            clientPeerId: ipfsId.identity.profile.peerId,
+            name: ipfsId.identity.profile.handle, // TODO: givenName, surName
+            handle: ipfsId.identity.profile.handle,
             canFollow: true,
             self: true
           })
@@ -706,10 +708,7 @@ document.addEventListener('DOMContentLoaded', () => {
           message.event = 'Message Rcvd'
           let _msg = JSON.parse(message.data)
           if (_msg.updated) {
-            // store the peer in IpfsID._knownPeers
-            // IpfsID._knownPeers[_msg.peerId] = _msg
             updatePeerProfile(_msg)
-            // IpfsID.verifyPeer(_msg)
           }
 
           logMessage(_msg)
