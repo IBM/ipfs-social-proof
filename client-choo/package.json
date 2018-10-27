@@ -5,7 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "bundle": "browserify -t sheetify -t brfs -t nanohtml index.js > bundle.js",
-    "serve": "http-server ./ -a 127.0.0.1 -p 8889",
+    "serve": "http-server ./ -a 127.0.0.1 -p 8888",
     "start": "npm run bundle && npm run serve"
   },
   "dependencies": {
