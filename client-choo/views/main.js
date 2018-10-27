@@ -2,9 +2,10 @@ const html = require('choo/html')
 
 const styles = require('../styles')
 const IdentityUI = require('../components/identity')
+const Splash = require('../components/splash')
 
-var TITLE = 'client-choo - main'
-
+const TITLE = 'client-choo - main'
+const APP_NAME = 'Autonomica'
 const VIEW_IDENT = 'identity-app'
 const VIEW_SPLASH = 'splash'
 const VIEW_PROOF = 'proof'
@@ -19,6 +20,8 @@ function view (state, emit) {
   let content
   if (state.currentContent === VIEW_IDENT) {
     content = state.cache(IdentityUI, 'identity-ui').render(state)
+  } else if (state.currentContent === VIEW_SPLASH) {
+    content = state.cache(Splash, 'splash').render(state, APP_NAME)
   }
 
   function handleClick () {
@@ -27,7 +30,7 @@ function view (state, emit) {
 
   let baseClass = `_view_`
   function evtAutoLink (event) {
-    view(VIEW_SPLASH, baseClass)
+    emit('changeContent', VIEW_SPLASH)
   }
 
   function evtIDLink (event) {
