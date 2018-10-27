@@ -1,6 +1,25 @@
+const html = require('choo/html')
 const { start, checkForAccount } = require('../../src/')
+const { OBJECT, STRING, UNDEFINED,
+        ARRAY, INTEGER, BOOL, FUNCTION } = require('../../src/utils')
 
 module.exports = store
+
+function stripNode (message) {
+  if (typeof message === OBJECT) {
+    let _msg = {}
+    if (message.ipfsId) {
+      let keys = Object.keys(message)
+      keys.forEach((key, idx) => {
+        if (key !== 'ipfsId') {
+          _msg[key] = message[key]
+        }
+      })
+    }
+    return _msg
+  }
+  return message
+}
 
 function logMessage (message) {
   let msg = stripNode(message)
@@ -15,14 +34,7 @@ function logMessage (message) {
     return
   }
 
-  const msgNode = html`
-    <div
-      class="f7 green code"
-      style="word-break: break-word">
-      ${_msg}
-    </div>`
-
-  document.querySelector('#log-output').prepend(msgNode)
+  return _msg
 }
 
 function store (state, emitter) {
@@ -30,6 +42,7 @@ function store (state, emitter) {
   state.proofsList = {
     rows: []
   }
+  state.logs = []
 
   emitter.on('DOMContentLoaded', function () {
     //Default
@@ -73,7 +86,7 @@ function store (state, emitter) {
 
         'peer joined': (message) => {
           message.event = 'Peer Joined'
-          logMessage(message)
+          logMessage(message, emitter.emit)
           // TODO: remove / gray out peers on `peer left`
           let profile = {
             peerId: message.peerId,
@@ -90,13 +103,13 @@ function store (state, emitter) {
 
         'peer left': (message) => {
           message.event = 'Peer Left'
-          logMessage(message)
+          emitter.emit('logMessage', logMessage(message))
           // TODO: update the UI to reflect disconnection
         },
 
         'subscribed': (message) => {
           message.event = 'Subscribed to Room'
-          logMessage(message)
+          emitter.emit('logMessage', logMessage(message))
         },
 
         'message': (message) => {
@@ -106,7 +119,7 @@ function store (state, emitter) {
             emitter.emit('updatePeerProfile', _msg)
           }
 
-          logMessage(_msg)
+          emitter.emit('logMessage', logMessage(message))
         },
         'updatePeerProfile': (profile) => {
           let _profile = {
@@ -150,6 +163,11 @@ function store (state, emitter) {
 
       peerProfile.updated = Date.now()
       state.peerProfile = peerProfile
+      emitter.emit(state.events.RENDER)
+    })
+
+    emitter.on('logMessage', async function(msg) {
+      state.logs.unshift(msg)
       emitter.emit(state.events.RENDER)
     })
   })

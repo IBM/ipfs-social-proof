@@ -6,6 +6,7 @@ const Splash = require('../components/splash')
 const IdentityUI = require('../components/identity')
 const Proof = require('../components/proof')
 const Peers = require('../components/peers')
+const Log = require('../components/log')
 
 const TITLE = 'client-choo - main'
 const APP_NAME = 'Autonomica'
@@ -29,6 +30,8 @@ function view (state, emit) {
     content = state.cache(Proof, 'content:proof').render(state)
   } else if (state.currentContent === VIEW_LISTEN) {
     content = state.cache(Peers, 'content:peers').render(state)
+  } else if (state.currentContent === VIEW_LOG) {
+    content = state.cache(Log, 'content:log').render(state)
   }
 
   function handleClick () {
@@ -53,7 +56,7 @@ function view (state, emit) {
   }
 
   function evtLogLink (event) {
-    view(VIEW_LOG, baseClass)
+    emit('changeContent', VIEW_LOG)
   }
 
   return html`
@@ -110,7 +113,7 @@ function view (state, emit) {
       <div class="${styles.notifications}" id="notifications" class="w-60"></div>
       <div class="${styles.proofDetail}" class="w-80"></div>
       <div class="${styles.publicKeyCard}" class="w-80"></div>
-      <div class="${styles.main}" class="fl w-100 pt3">
+      <div class="${styles.main} fl w-100 pt3">
       ${content}
     </body>
   `
