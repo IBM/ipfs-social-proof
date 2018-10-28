@@ -71,6 +71,7 @@ function store (state, emitter) {
   state.peerProfiles = []
   state.publicKeyCard = {}
   state.notifications = {}
+  state.proofForm = { username: '', service: '', text: '' }
   state.navAnimation = true
 
   emitter.on('DOMContentLoaded', function () {
@@ -365,6 +366,21 @@ function store (state, emitter) {
 
     emitter.on('endNavAnimation', async function() {
       state.navAnimation = false
+      emitter.emit(state.events.RENDER)
+    })
+
+    emitter.on('updateProofUsername', async function(newValue) {
+      state.proofForm.username = newValue
+      emitter.emit(state.events.RENDER)
+    })
+
+    emitter.on('updateProofService', async function(newValue) {
+      state.proofForm.service = newValue
+      emitter.emit(state.events.RENDER)
+    })
+
+    emitter.on('updateProofText', async function(newValue) {
+      state.proofForm.text = newValue
       emitter.emit(state.events.RENDER)
     })
   })

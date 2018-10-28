@@ -1,6 +1,7 @@
 var html = require('choo/html')
 var Component = require('choo/component')
 const uuid = require('uuid/v1')
+const Clipboard = require('../node_modules/clipboard/dist/clipboard.min')
 
 const CONTENT_PROOFS = 'show-proofs'
 const CONTENT_HELP = 'help-proof'
@@ -14,7 +15,15 @@ module.exports = class Proof extends Component {
   }
 
   load (element) {
-    //
+    const clip = new Clipboard('#proof-copy')
+
+    clip.on("success", () => {
+      // Notifications !
+      this.emit('notify:info', 'Copied to clipboard')
+    })
+    clip.on("error", () => {
+      console.info('error copying to clipboard')
+    })
   }
 
   update (newState) {
@@ -32,8 +41,7 @@ module.exports = class Proof extends Component {
     }
     IpfsID.proof.createProof(username, service, (err, proof) => {
       proof.proof = JSON.parse(proof.proof)
-      document.querySelector('#proof-preview-display').innerText =
-        JSON.stringify(proof, null, 2)
+      this.emit('updateProofText', JSON.stringify(proof, null, 2))
     })
   }
 
@@ -124,6 +132,18 @@ module.exports = class Proof extends Component {
     `
   }
 
+  updateProofUsername (evt) {
+    this.emit('updateProofUsername', evt.target.value)
+  }
+
+  updateProofService (evt) {
+    this.emit('updateProofService', evt.target.value)
+  }
+
+  updateProofText (evt) {
+    this.emit('updateProofText', evt.target.value)
+  }
+
   createElement (state) {
     const currentProofContent = state.currentProofContent || CONTENT_CREATE
     const unselectedTab = '_tab_ ttu dib link dim pa3 black'
@@ -165,20 +185,25 @@ module.exports = class Proof extends Component {
                      type="text"
                      name="username"
                      id="username"
-                     title="Enter a username you use for an online service: Github, Twitter, etc..." />
+                     title="Enter a username you use for an online service: Github, Twitter, etc..."
+                     oninput=${this.updateProofUsername.bind(this)}
+                     value=${state.proofForm.username} />
               <label class="clip" for="service">Service</label>
               <input class="f6 f5-l input-reset ba b--black-10 fl black-80 bg-white pa3 lh-solid w-100 w-75-m w-80-l br2-ns br--left-ns"
                      placeholder="service: github.com, twitter.com, etc"
                      type="text"
                      name="service"
-                     id="service">
+                     id="service"
+                     oninput=${this.updateProofService.bind(this)}
+                     value=${state.proofForm.service} />
               <a class="f6 f5-l fl pv3 tc bn bg-animate bg-black-70 hover-bg-black white pointer w-100 w-25-m w-20-l br2-ns br--right-ns"
                  onclick=${this.evtProofCreateLink.bind(this)}>Create Proof</a>
             </div>
           </fieldset>
           <div id="proof-preview" class="w-100 center pa0">
             <textarea id="proof-preview-display"
-                      class="flex h5 w-80 code lh-copy f7 bg-white br2 w-100"></textarea>
+                      class="flex h5 w-80 code lh-copy f7 bg-white br2 w-100"
+                      oninput=${this.updateProofText.bind(this)}>${state.proofForm.text}</textarea>
             <div class="lh-copy mt3 ph3">
               <a href="#"
                  title="Copy proof to clipboard"

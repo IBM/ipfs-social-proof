@@ -57,45 +57,43 @@ module.exports = class PublicKeyCard extends Component {
     const disabled = followBtn.disabled
 
     return html`
-      <div id="public-key-card" class="w-80">
       <article id="public-key-card-data"
-               class="center w-80 shadow-1 bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
-         <div><img class="h1" onclick=${this.close.bind(this)} src="./img/close.svg" /></div>
-         <div class="tc">
-           <div>${icon}</div>
-           <h1 class="f7 code">
-             ${profile.handle || profile.peerId}
-           </h1>
-           <div class="flex-justify-between">
+             class="center w-80 shadow-1 bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
+        <div><img class="h1" onclick=${this.close.bind(this)} src="./img/close.svg" /></div>
+        <div class="tc">
+         <div>${icon}</div>
+         <h1 class="f7 code">
+           ${profile.handle || profile.peerId}
+         </h1>
+         <div class="flex-justify-between">
 
-             <div id="verify-ui" class="flex-justify-between">
-               <span id="verify-animation"></span>
-               <div id="verify-results" class="flex-justify-around">
-                 ${(validityDocs || []).map((proof) => {
-                   return html`<a target="_blank" href="${proof.proof.url || '#'}" class="mr2 pointer"><img class="h1" title="Peer proof is verified: ${proof.proof.url || '#'}" src="img/check-circle-green.svg" /></a>`
+           <div id="verify-ui" class="flex-justify-between">
+             <span id="verify-animation"></span>
+             <div id="verify-results" class="flex-justify-around">
+               ${(validityDocs || []).map((proof) => {
+                 return html`<a target="_blank" href="${proof.proof.url || '#'}" class="mr2 pointer"><img class="h1" title="Peer proof is verified: ${proof.proof.url || '#'}" src="img/check-circle-green.svg" /></a>`
+             })}
+               ${(invalidDocs || []).map((proof) => {
+                 return html`<a target="_blank" href="${proof.proof.url || '#'}" class="mr2 pointer"><img class="h1" title="Peer proof is un-verified: ${proof.proof.url || '#'}" src="img/times-circle.svg" /></a>`
                })}
-                 ${(invalidDocs || []).map((proof) => {
-                   return html`<a target="_blank" href="${proof.proof.url || '#'}" class="mr2 pointer"><img class="h1" title="Peer proof is un-verified: ${proof.proof.url || '#'}" src="img/times-circle.svg" /></a>`
-                 })}
-               </div>
              </div>
            </div>
-           <div id="follow-btn" class="mv2">
-             <button ${disabled}
-                     class="f6 button-reset bg-white ba b--black-10 dim pointer pv1 black-60"
-                     data-operation="${followBtn.label}"
-                     data-peerId="${profile.peerId}"
-                     onclick=${this.follow.bind(this)}>
-               ${followBtn.label}
-             </button>
-           </div>
          </div>
-         <div class="mv2 code lh-copy measure center f7 pa2 black-70 h3 overflow-auto ba b--black-20">
-           ${profile.bio || 'No bio available'}
+         <div id="follow-btn" class="mv2">
+           <button ${disabled}
+                   class="f6 button-reset bg-white ba b--black-10 dim pointer pv1 black-60"
+                   data-operation="${followBtn.label}"
+                   data-peerId="${profile.peerId}"
+                   onclick=${this.follow.bind(this)}>
+             ${followBtn.label}
+           </button>
          </div>
-         <textarea disabled class="flex w-100 code lh-copy measure center f7 pa2 black-70 h4 overflow-auto ba b--black-20">${profile.pubKeyBase64 || 'No shared public key available'}</textarea>
-        </article>
-      </div>
+        </div>
+        <div class="mv2 code lh-copy measure center f7 pa2 black-70 h3 overflow-auto ba b--black-20">
+         ${profile.bio || 'No bio available'}
+        </div>
+        <textarea disabled class="flex w-100 code lh-copy measure center f7 pa2 black-70 h4 overflow-auto ba b--black-20">${profile.pubKeyBase64 || 'No shared public key available'}</textarea>
+      </article>
     `
   }
 }
