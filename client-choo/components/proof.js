@@ -1,6 +1,5 @@
 var html = require('choo/html')
 var Component = require('choo/component')
-const notify = require('./notify')
 const uuid = require('uuid/v1')
 
 const CONTENT_PROOFS = 'show-proofs'
@@ -28,7 +27,8 @@ module.exports = class Proof extends Component {
     let username = document.querySelector('#username').value
     let service = document.querySelector('#service').value
     if (!username || !service) {
-      return notify.error('Username @ Service is required')
+      this.emit('notify:error', 'Error', 'Username @ Service is required')
+      return
     }
     IpfsID.proof.createProof(username, service, (err, proof) => {
       proof.proof = JSON.parse(proof.proof)
@@ -44,15 +44,15 @@ module.exports = class Proof extends Component {
       document.querySelector('#proof-preview-display').value.trim()
     )
     if (!proof) {
-      return notify.error('Error', 'Cannot save non-existent proof')
+      this.emit('notify:error', 'Error', 'Cannot save non-existent proof')
     }
     proof.id = uuid() //  TODO: do this inside library/API
     IpfsID.proof.saveProof(proof).then((res) => {
-      notify.success('Proof stored successfully')
+      this.emit('notify:success', 'Proof stored successfully')
       this.emit('updateProofsList')
     }).catch((ex) => {
       console.error(ex)
-      notify.error('Error: Cannot save proof')
+      this.emit('notify:error', 'Error: Cannot save proof')
     })
   }
 

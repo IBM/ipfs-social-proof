@@ -1,5 +1,4 @@
 const html = require('choo/html')
-const notify = require('../components/notify')
 const { start, checkForAccount } = require('../../src/')
 const { OBJECT, STRING, UNDEFINED,
         ARRAY, INTEGER, BOOL, FUNCTION } = require('../../src/utils')
@@ -20,6 +19,19 @@ function stripNode (message) {
     return _msg
   }
   return message
+}
+
+let notificationCounter = 0
+
+function notify(mode, headline, message, emitter, state) {
+  const notificationId = notificationCounter
+  state.notifications[notificationId] = { mode, headline, message }
+  notificationCounter++
+  emitter.emit(state.events.RENDER)
+  window.setTimeout(() => {
+    delete state.notifications[notificationId]
+    emitter.emit(state.events.RENDER)
+  }, 2500)
 }
 
 function logMessage (message) {
@@ -52,6 +64,7 @@ function store (state, emitter) {
   state.logs = []
   state.peerProfiles = []
   state.publicKeyCard = {}
+  state.notifications = {}
 
   emitter.on('DOMContentLoaded', function () {
     //Default
@@ -266,11 +279,11 @@ function store (state, emitter) {
         return contact
       }).then((res) => {
         console.log('contact saved')
-        notify.success(`Success`, `You are now following ${profile.handle}`)
+        emitter.emit('notify:success', 'Success', `You are now following ${profile.handle}`)
         emitter.emit(state.events.RENDER)
       }).catch((ex) => {
         console.error(ex)
-        notify.error(`Error`, `Could not follow ${profile.handle}`)
+        emitter.emit('notify:error', 'Error', `Could not follow ${profile.handle}`)
         emitter.emit(state.events.RENDER)
       })
     })
@@ -285,12 +298,12 @@ function store (state, emitter) {
       }).then((res) => {
         console.log('contact saved')
         // TODO: set state in a notify component that will give feedback
-        notify.success(`Success`, `You have unfollowed ${profile.handle}`)
+        emitter.emit('notify:success', 'Success', `You have unfollowed ${profile.handle}`)
         console.log('unfollow', res)
         emitter.emit(state.events.RENDER)
       }).catch((ex) => {
         console.error(ex)
-        notify.error(`Error`, `Could not unfollow ${profile.handle}`)
+        emitter.emit('notify:error', 'Error', `Could not unfollow ${profile.handle}`)
         emitter.emit(state.events.RENDER)
       })
     })
@@ -308,6 +321,22 @@ function store (state, emitter) {
     emitter.on('closePublicKeyCard', async function() {
       state.publicKeyCard = {}
       emitter.emit(state.events.RENDER)
+    })
+
+    emitter.on('notify:success', async function(headline, message) {
+      notify('success', headline, message, emitter, state)
+    })
+
+    emitter.on('notify:info', async function(headline, message) {
+      notify('info', headline, message, emitter, state)
+    })
+
+    emitter.on('notify:warn', async function(headline, message) {
+      notify('warn', headline, message, emitter, state)
+    })
+
+    emitter.on('notify:error', async function(headline, message) {
+      notify('error', headline, message, emitter, state)
     })
   })
 }

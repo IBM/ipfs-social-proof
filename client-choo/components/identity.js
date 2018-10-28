@@ -2,7 +2,6 @@ var html = require('choo/html')
 const raw = require('choo/html/raw')
 var Component = require('choo/component')
 const avatar = require('../../client/utils/avatar')
-const notify = require('./notify')
 const qrcode = require('qrcode-generator')
 
 function hide (node) {
@@ -21,6 +20,7 @@ module.exports = class IdentityUI extends Component {
   constructor (id, state, emit) {
     super(id)
     this.state = state
+    this.emit = emit
   }
 
   load (element) {
@@ -50,7 +50,7 @@ module.exports = class IdentityUI extends Component {
     input.style = 'border-color: green;'
     input.disabled = true;
     // notification !
-    notify.success('Success', 'Handle changed was saved.')
+    this.emit('notify:success', 'Success', 'Handle changed was saved.')
     hide(document.querySelector('#handle-save-btn'))
     show(document.querySelector('#handle-edit-btn'), true)
     // triggger broadcast to peers that idData is updated

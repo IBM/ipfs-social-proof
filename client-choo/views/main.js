@@ -17,6 +17,13 @@ const VIEW_PROOF = 'proof'
 const VIEW_LISTEN = 'listen'
 const VIEW_LOG = 'log-ui'
 
+const notificationModes = {
+  success: 'green',
+  info: 'blue',
+  warn: 'yellow',
+  error: 'red'
+}
+
 module.exports = view
 
 function view (state, emit) {
@@ -115,7 +122,17 @@ function view (state, emit) {
       </div>
       <div class="${styles.modal} w-50"></div>
       <div class="${styles.confirmationModal} w-40"></div>
-      <div class="${styles.notifications} w-60" id="notifications"></div>
+      <div class="${styles.notifications} w-60">
+      ${Object.keys(state.notifications).map(key => {
+        const { mode, headline, message } = state.notifications[key]
+        return html`
+          <p class="_notification_ f7 w-50 ba br2 pa3 ma2 ${notificationModes[mode]} bg-washed-${notificationModes[mode]}"
+             role="alert">
+            <strong>${headline}</strong> ${message}
+          </p>
+        `
+      })}
+      </div>
       <div class="${styles.proofDetail} w-80"></div>
       <div class="${styles.publicKeyCard} w-80">
         ${publicKeyCard}
