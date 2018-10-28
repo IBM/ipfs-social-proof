@@ -52,7 +52,7 @@ module.exports = class Proof extends Component {
       this.emit('updateProofsList')
     }).catch((ex) => {
       console.error(ex)
-      notify.error(ex)
+      notify.error('Error: Cannot save proof')
     })
   }
 
@@ -114,9 +114,9 @@ module.exports = class Proof extends Component {
               <tr class="pv2 striped--light-gray">
                 <td><img src="img/eye.svg"
                          onclick=${this.viewProof.bind(this)}
-                         data-hash="${item.doc.ipfsHash}"
+                         data-hash="${item.doc.ipfsContentHash}"
                          class="h1 ph2" /></td>
-      <td class="f6">${item.doc.proof.message.username}@${item.doc.proof.message.service}</td><td class="ipfs-url fw1 f7 code"><a href="${item.doc.url}" target="_new">${item.doc.url}</a></td><td class="ipfs-url fw1 f7 code"><a target="_new" href="https://ipfs.io/ipfs/${item.doc.ipfsHash}" title="${item.doc.ipfsHash}">/ipfs/${item.doc.ipfsHash}</a></td>
+      <td class="f6">${item.doc.proof.message.username}@${item.doc.proof.message.service}</td><td class="ipfs-url fw1 f7 code"><a href="${item.doc.url}" target="_new">${item.doc.url}</a></td><td class="ipfs-url fw1 f7 code"><a target="_new" href="https://ipfs.io/ipfs/${item.doc.ipfsContentHash}" title="${item.doc.ipfsContentHash}">/ipfs/${item.doc.ipfsContentHash}</a></td>
               </tr>`
             })}
           </table>
