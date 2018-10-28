@@ -185,10 +185,10 @@ class PublicKeyCard {
                <span id="verify-animation"></span>
                <div id="verify-results" class="flex-justify-around">
                  ${profile.validDocs.map((proof) => {
-                   return html`<a target="_blank" href="${proof.proof.url}" class="mr2 pointer"><img class="h1" title="Peer proof is verified: ${proof.proof.url}" src="img/check-circle-green.svg" /></a>`
+                   return html`<a target="_blank" href="${proof.proof.url || '#'}" class="mr2 pointer"><img class="h1" title="Peer proof is verified: ${proof.proof.url || '#'}" src="img/check-circle-green.svg" /></a>`
                })}
                  ${profile.invalidDocs.map((proof) => {
-                   return html`<a target="_blank" href="${proof.proof.url}" class="mr2 pointer"><img class="h1" title="Peer proof is un-verified: ${proof.proof.url}" src="img/times-circle.svg" /></a>`
+                   return html`<a target="_blank" href="${proof.proof.url || '#'}" class="mr2 pointer"><img class="h1" title="Peer proof is un-verified: ${proof.proof.url || '#'}" src="img/times-circle.svg" /></a>`
                  })}
                </div>
              </div>
