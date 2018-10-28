@@ -54,11 +54,11 @@ class ProofDetail {
     let newNode = html`
       <div id="proof-detail" class="w-80">
        <article id="proof-card"
-                class="w-60 shadow-1 center bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
+                class="w-70 shadow-1 center bg-white br3 pa2 pa4-ns mv1 ba b--black-10">
        <div><img data-parent="${this.selector}" title="Close" class="h1" onclick=${this.closeModal} src="./img/close.svg" /></div>
        <div class="tc mv3">
            <div class="flex-justify-between f7 code mv2">
-             <span id="proof-hash">${state.proof.ipfsHash}</span>
+             <span id="proof-hash">${state.proof.ipfsContentHash}</span>
              <span class="mr2">
                <img class="h1 ml4" title="Delete this Proof"
                     onclick=${function (event) { confirmProceed(state.confirmConfig) } }

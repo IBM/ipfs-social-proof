@@ -13,7 +13,7 @@ class ProofsDB extends DB {
     }).then((res) => {
       let docs = []
       res.rows.forEach((row) => {
-        docs.push(row)
+        docs.push(row.doc)
       })
       return docs
     }).catch((ex) => {
@@ -23,13 +23,13 @@ class ProofsDB extends DB {
 
   async filter (filterObj) {} // TODO
 
-  async getByIpfsHash (ipfsHash) {
+  async getByIpfsHash (ipfsContentHash) {
     let fields = Object.keys(this.requiredFields).
         concat(Object.keys(this.optionalFields))
 
     try {
       var result = await this.db.find({
-        selector: { ipfsHash: ipfsHash },
+        selector: { ipfsContentHash: ipfsContentHash },
         fields: fields
       });
     } catch (err) {
