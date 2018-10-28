@@ -1,6 +1,7 @@
 const html = require('choo/html')
 
 const styles = require('../styles')
+const avatar = require('../../client/utils/avatar')
 
 const Splash = require('../components/splash')
 const IdentityUI = require('../components/identity')
@@ -71,9 +72,18 @@ function view (state, emit) {
     emit('changeContent', VIEW_LOG)
   }
 
+  let peerId, icon
+  if (state.IpfsID) {
+    peerId = state.IpfsID.identity.profile.peerId
+    icon = avatar(peerId)
+  }
+
   return html`
     <body onload="document.body.style.opacity='1'"
           class=${styles.body}>
+      <div id="favicon-${peerId}" style="display:none">
+        ${icon}
+      </div>
       <div id="nav-parent" class="fl w-100">
         <div id="nav" data-name="component">
           <header class="bg-black-90 fixed w-100 ph3 pv3 pv4-ns ph4-m ph5-l">

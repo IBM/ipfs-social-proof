@@ -83,7 +83,7 @@ function store (state, emitter) {
           startComplete: (ipfsId) => {
             state.IpfsID = ipfsId
 
-            // updateFavicon(ipfsId.peerId)
+            emitter.emit('updateFavicon', ipfsId.peerId)
             // animate.endAnimation()
             // document.querySelector('#nav-links').style.opacity='1'
             emitter.emit('updatePeerProfile', {
@@ -337,6 +337,20 @@ function store (state, emitter) {
 
     emitter.on('notify:error', async function(headline, message) {
       notify('error', headline, message, emitter, state)
+    })
+
+    emitter.on('updateFavicon', async function(peerId) {
+      await new Promise((resolve) => setTimeout(resolve, 1000)) // wait one sec
+      // get ref to your blocky
+      let blockyCanvas
+      let canvasParentNode = document.querySelector(`#favicon-${peerId}`)
+      // get the png as base64
+      if (canvasParentNode) {
+        blockyCanvas = canvasParentNode.querySelector('canvas')
+        // set href of favicon
+        let base64 = blockyCanvas.toDataURL('image/jpeg')
+        document.querySelector('#favicon').href = base64
+      }
     })
   })
 }
