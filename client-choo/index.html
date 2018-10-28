@@ -7,7 +7,63 @@
         rel="shortcut icon"
         type="image/jpg"
         href="img/ocean-rock.png">
-  <body>
+  <style>
+    body {
+        /* opacity:0; */
+        transition: opacity 4s;
+        -webkit-transition: opacity 4s; /* Safari */
+    }
+    td {
+        padding: 0.5em
+    }
+    .ipfs-url {
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    #main {
+        margin-top: 4rem;
+    }
+    #notifications {
+        position: absolute;
+        top: 4rem;
+        right: 1rem;
+        z-index: 100;
+    }
+    ._notification_ {
+        min-width: inherit;
+    }
+    #modal {
+        position: absolute;
+        top: 4rem;
+        right: 3rem;
+        z-index: 80;
+    }
+    #proof-detail {
+        position: absolute;
+        top: 5rem;
+        right: 3rem;
+        z-index: 70;
+    }
+    #public-key-card {
+        position: absolute;
+        top: 5rem;
+        right: 3rem;
+        z-index: 80;
+    }
+    #confirmation-modal {
+        position: absolute;
+        top: 6rem;
+        right: 7rem;
+        z-index: 90;
+    }
+    #nav-links {
+        /* opacity: 0; */
+        transition: opacity 2s;
+    }
+  </style>
+  <body class="w-100 sans-serif bg-near-white">
     <script type="application/javascript" src="bundle.js"></script>
   </body>
 </html>
