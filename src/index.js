@@ -159,9 +159,11 @@ class IpfsIdentity {
           proof: OBJECT,
           peerId: STRING,
           url: STRING,
-          ipfsHash: STRING,
+          ipfsContentHash: STRING,
           ipnsHash: STRING,
-          pinned: INTEGER // Date.now()
+          pinned: INTEGER, // Date.now()
+          signature: STRING,
+          publicKey: STRING
         })
 
       return this._proofsDB

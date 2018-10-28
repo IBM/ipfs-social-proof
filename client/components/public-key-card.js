@@ -116,15 +116,15 @@ class PublicKeyCard {
       let proofCount = 0
       if (proofs.length) {
         proofs.map((row) => {
-          IpfsID.crypto.verifyProof(row.doc, (err, valid) => {
+          IpfsID.crypto.verifyProof(row, (err, valid) => {
             if (valid) {
               that.config.profile.validDocs.push({
-                proof: row.doc,
+                proof: row,
                 valid: valid
               })
             } else {
               that.config.profile.invalidDocs.push({
-                proof: row.doc,
+                proof: row,
                 valid: valid
               })
             }
