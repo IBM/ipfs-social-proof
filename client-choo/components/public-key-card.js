@@ -48,8 +48,10 @@ module.exports = class PublicKeyCard extends Component {
     let followBtn
     if (profile.peerId === IpfsID.identity.profile.peerId) {
       followBtn = { disabled: 'disabled', label: '(You)' }
+    } else if (profile.following) {
+      followBtn = { disabled: '', label: OP_UNFOLLOW }
     } else {
-      followBtn = { disabled: '', label: 'Follow' }
+      followBtn = { disabled: '', label: OP_FOLLOW }
     }
     // had to do this because of a really weird bug in the bundler, where it was lower-casing the `followBtn` var to `followbtn`
     const disabled = followBtn.disabled

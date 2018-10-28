@@ -204,6 +204,7 @@ function store (state, emitter) {
       } else {
         state.IpfsID.contactsDB.get(peerId).
           then((res) => {
+            state.publicKeyCard.profile.following = res.following
             console.log(res)
             if (res && res.validityDocs && res.validityDocs.length) {
               emitter.emit('validateProofs', res.validityDocs)
@@ -314,7 +315,6 @@ function store (state, emitter) {
 
     emitter.on('showPublicKeyCard', async function() {
       state.publicKeyCard.show = true
-      console.log('card', state.publicKeyCard)
       emitter.emit(state.events.RENDER)
     })
 
