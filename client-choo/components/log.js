@@ -17,10 +17,6 @@ module.exports = class Log extends Component {
     return true
   }
 
-  evtExaminePubKey (event) {
-    // new PublicKeyCard(IpfsID, 'public-key-card', { profile: profile })
-  }
-
   createElement (state) {
     return html`
       <article id="log-ui"

@@ -19,8 +19,8 @@ module.exports = class Peers extends Component {
     return true
   }
 
-  evtExaminePubKey (event) {
-    // new PublicKeyCard(IpfsID, 'public-key-card', { profile: profile })
+  evtExaminePubKey (profile) {
+    this.emit('openPublicKeyCard', profile)
   }
 
   createElement (state) {
@@ -63,7 +63,7 @@ module.exports = class Peers extends Component {
                    <img title="Examine Public Key"
                         class="pt1 dim pointer h1"
                         src="./img/key-alt.svg"
-                        onclick=${this.evtExaminePubKey.bind(this)} />
+                        onclick=${() => { this.evtExaminePubKey(profile) } } />
                  </div>
                </div>
              </article>

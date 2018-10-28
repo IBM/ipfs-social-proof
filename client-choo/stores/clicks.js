@@ -1,4 +1,5 @@
 const html = require('choo/html')
+const notify = require('../components/notify')
 const { start, checkForAccount } = require('../../src/')
 const { OBJECT, STRING, UNDEFINED,
         ARRAY, INTEGER, BOOL, FUNCTION } = require('../../src/utils')
@@ -48,6 +49,7 @@ function store (state, emitter) {
   }
   state.logs = []
   state.peerProfiles = []
+  state.publicKeyCard = {}
 
   emitter.on('DOMContentLoaded', function () {
     //Default
@@ -174,6 +176,133 @@ function store (state, emitter) {
 
     emitter.on('logMessage', async function(msg) {
       state.logs.unshift(msg)
+      emitter.emit(state.events.RENDER)
+    })
+
+    emitter.on('loadPeer', async function(profile) {
+      const { peerId } = profile
+      state.publicKeyCard.profile = profile
+      if (profile.peerId === state.IpfsID.identity.profile.peerId) {
+        emitter.emit('loadValidityDocs', state.IpfsID.identity.profile)
+      } else {
+        state.IpfsID.contactsDB.get(peerId).
+          then((res) => {
+            console.log(res)
+            if (res && res.validityDocs && res.validityDocs.length) {
+              emitter.emit('validateProofs', res.validityDocs)
+            } else {
+              emitter.emit('showPublicKeyCard')
+            }
+          }).catch((ex) => {
+            console.error(ex)
+            emitter.emit('showPublicKeyCard')
+          })  
+      }
+    })
+
+    emitter.on('loadValidityDocs', async function(profile) {
+      state.IpfsID.proofsDB.getValidityDocs().then((res) => {
+        if (res && res.length) {
+          state.publicKeyCard.validityDocs = res
+          emitter.emit('validateProofs', state.publicKeyCard.validityDocs)
+        } else {
+          emitter.emit('showPublicKeyCard')
+        }
+      }).catch((ex) => {
+        console.log(ex)
+        emitter.emit('showPublicKeyCard')
+      })
+    })
+
+    emitter.on('validateProofs', async function(proofs) {
+      state.publicKeyCard.invalidDocs = []
+      state.publicKeyCard.validDocs = []
+
+      if (!proofs) {
+        console.error('Proofs is null')
+        return
+      }
+      if (!proofs.length) {
+        console.error('Proofs array has a length of 0')
+        return
+      }
+
+      let proofCount = 0
+      await Promise.all(proofs.map((row) => {
+        return new Promise((resolve) => {
+          state.IpfsID.crypto.verifyProof(row, (err, valid) => {
+            if (valid) {
+              state.publicKeyCard.validDocs.push({
+                proof: row,
+                valid: valid
+              })
+            } else {
+              state.publicKeyCard.invalidDocs.push({
+                proof: row,
+                valid: valid
+              })
+            }
+            proofCount++
+            resolve()
+          })
+        })
+      }))
+      emitter.emit('showPublicKeyCard')
+    })
+
+    emitter.on('followPeer', async function() {
+      const { IpfsID, publicKeyCard: { profile } } = state
+      IpfsID.contactsDB.db.upsert(profile.peerId, (contact) => {
+        if (!contact._id) {
+          contact = profile
+        }
+        contact.following = true
+        contact.followTs = Date.now()
+        state.publicKeyCard.profile = contact
+        return contact
+      }).then((res) => {
+        console.log('contact saved')
+        notify.success(`Success`, `You are now following ${profile.handle}`)
+        emitter.emit(state.events.RENDER)
+      }).catch((ex) => {
+        console.error(ex)
+        notify.error(`Error`, `Could not follow ${profile.handle}`)
+        emitter.emit(state.events.RENDER)
+      })
+    })
+
+    emitter.on('unfollowPeer', async function() {
+      const { IpfsID, publicKeyCard: { profile } } = state
+      IpfsID.contactsDB.db.upsert(profile.peerId, (contact) => {
+        contact.following = false
+        contact.followTs = Date.now()
+        state.publicKeyCard.profile = contact
+        return contact
+      }).then((res) => {
+        console.log('contact saved')
+        // TODO: set state in a notify component that will give feedback
+        notify.success(`Success`, `You have unfollowed ${profile.handle}`)
+        console.log('unfollow', res)
+        emitter.emit(state.events.RENDER)
+      }).catch((ex) => {
+        console.error(ex)
+        notify.error(`Error`, `Could not unfollow ${profile.handle}`)
+        emitter.emit(state.events.RENDER)
+      })
+    })
+
+    emitter.on('openPublicKeyCard', async function(profile) {
+      emitter.emit('loadPeer', profile)
+    })
+
+    emitter.on('showPublicKeyCard', async function() {
+      state.publicKeyCard.show = true
+      console.log('card', state.publicKeyCard)
+      emitter.emit(state.events.RENDER)
+    })
+
+    emitter.on('closePublicKeyCard', async function() {
+      state.publicKeyCard = {}
       emitter.emit(state.events.RENDER)
     })
   })

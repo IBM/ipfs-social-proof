@@ -7,6 +7,7 @@ const IdentityUI = require('../components/identity')
 const Proof = require('../components/proof')
 const Peers = require('../components/peers')
 const Log = require('../components/log')
+const PublicKeyCard = require('../components/public-key-card')
 
 const TITLE = 'client-choo - main'
 const APP_NAME = 'Autonomica'
@@ -33,6 +34,10 @@ function view (state, emit) {
   } else if (state.currentContent === VIEW_LOG) {
     content = state.cache(Log, 'content:log').render(state)
   }
+
+  const publicKeyCard = state.publicKeyCard.show
+    ? state.cache(PublicKeyCard, 'content:public-key-card').render(state)
+    : null
 
   function handleClick () {
     emit('clicks:add', 1)
@@ -108,11 +113,13 @@ function view (state, emit) {
           </header>
         </div>
       </div>
-      <div class="${styles.modal}" class="w-50"></div>
-      <div class="${styles.confirmationModal}" class="w-40"></div>
-      <div class="${styles.notifications}" id="notifications" class="w-60"></div>
-      <div class="${styles.proofDetail}" class="w-80"></div>
-      <div class="${styles.publicKeyCard}" class="w-80"></div>
+      <div class="${styles.modal} w-50"></div>
+      <div class="${styles.confirmationModal} w-40"></div>
+      <div class="${styles.notifications} w-60" id="notifications"></div>
+      <div class="${styles.proofDetail} w-80"></div>
+      <div class="${styles.publicKeyCard} w-80">
+        ${publicKeyCard}
+      </div>
       <div class="${styles.main} fl w-100 pt3">
       ${content}
     </body>
