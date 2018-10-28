@@ -37,12 +37,17 @@ function logMessage (message) {
   return _msg
 }
 
+function includesProfile(profiles, profile) {
+  return profiles.filter(p => p.peerId === profile.peerId).length > 0
+}
+
 function store (state, emitter) {
   // initial state
   state.proofsList = {
     rows: []
   }
   state.logs = []
+  state.peerProfiles = []
 
   emitter.on('DOMContentLoaded', function () {
     //Default
@@ -62,18 +67,17 @@ function store (state, emitter) {
         startComplete: (ipfsId) => {
           state.IpfsID = ipfsId
 
-          state.peerProfile = {
+          // updateFavicon(ipfsId.peerId)
+          // animate.endAnimation()
+          // document.querySelector('#nav-links').style.opacity='1'
+          emitter.emit('updatePeerProfile', {
             peerId: ipfsId.identity.profile.peerId,
             clientPeerId: ipfsId.identity.profile.peerId,
             name: ipfsId.identity.profile.handle, // TODO: givenName, surName
             handle: ipfsId.identity.profile.handle,
             canFollow: true,
             self: true
-          }
-
-          // updateFavicon(ipfsId.peerId)
-          // animate.endAnimation()
-          // document.querySelector('#nav-links').style.opacity='1'
+          })
           emitter.emit('updateProofsList')
           emitter.emit(state.events.RENDER)
         },
@@ -159,8 +163,12 @@ function store (state, emitter) {
         return
       }
 
+      if (includesProfile(state.peerProfiles, peerProfile)) {
+        return
+      }
+
       peerProfile.updated = Date.now()
-      state.peerProfile = peerProfile
+      state.peerProfiles.unshift(peerProfile)
       emitter.emit(state.events.RENDER)
     })
 
