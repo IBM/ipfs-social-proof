@@ -9,12 +9,14 @@
     "start": "npm run bundle && npm run serve"
   },
   "dependencies": {
+    "blockies-npm": "0.0.1",
     "choo": "^6.13.0",
     "choo-service-worker": "^2.4.0",
     "qrcode-generator": "^1.4.1",
     "sheetify": "^7.3.3",
     "tachyons": "^4.11.1",
-    "uuid": "^3.3.2"
+    "uuid": "^3.3.2",
+    "valid-url": "^1.0.9"
   },
   "devDependencies": {
     "brfs": "^2.0.1",
