@@ -1,6 +1,6 @@
 const html = require('choo/html')
+const raw = require('choo/html/raw')
 
-const styles = require('../styles')
 const avatar = require('../../client/utils/avatar')
 
 const Splash = require('../components/splash')
@@ -78,9 +78,21 @@ function view (state, emit) {
     icon = avatar(peerId)
   }
 
+  const navAnimation = state.navAnimation
+    ? '<span id="nav-animation" class="f2 code link dim blue dib mr3"></span>'
+    : null
+  const navOpacity = state.navAnimation ? 'opacity: 0;' : 'opacity: 1;'
+  const introImage = state.navAnimation
+    ? `
+      <article id="fade-in" style="text-align: center;"
+               class="_view_ center mw7-ns br3 ba b--black-10 mv4 mb20 pa4">
+        <img src="img/ocean-rock.png" />
+      </article>
+    `
+    : null
+
   return html`
-    <body onload="document.body.style.opacity='1'"
-          class=${styles.body}>
+    <div>
       <div id="favicon-${peerId}" style="display:none">
         ${icon}
       </div>
@@ -88,8 +100,8 @@ function view (state, emit) {
         <div id="nav" data-name="component">
           <header class="bg-black-90 fixed w-100 ph3 pv3 pv4-ns ph4-m ph5-l">
             <nav class="f6 fw6 ttu tracked w-80 center">
-              <span id="nav-animation" class="f2 code link dim blue dib mr3"></span>
-              <div class="center ${styles.navLinks}" style="text-align: center;">
+              ${raw(navAnimation)}
+              <div id="nav-links" class="center" style="text-align: center; ${navOpacity}">
                 <a id="autonomica-link"
                    class="link dim white dib mr3"
                    href="#"
@@ -130,25 +142,27 @@ function view (state, emit) {
           </header>
         </div>
       </div>
-      <div class="${styles.modal} w-50"></div>
-      <div class="${styles.confirmationModal} w-40"></div>
-      <div class="${styles.notifications} w-60">
-      ${Object.keys(state.notifications).map(key => {
-        const { mode, headline, message } = state.notifications[key]
-        return html`
-          <p class="_notification_ f7 w-50 ba br2 pa3 ma2 ${notificationModes[mode]} bg-washed-${notificationModes[mode]}"
-             role="alert">
-            <strong>${headline}</strong> ${message}
-          </p>
-        `
-      })}
+      <div id="modal" class="w-50"></div>
+      <div id="confirmation-modal" class="w-40"></div>
+      <div id="notifications" class="w-60">
+        ${Object.keys(state.notifications).map(key => {
+          const { mode, headline, message } = state.notifications[key]
+          return html`
+            <p class="_notification_ f7 w-50 ba br2 pa3 ma2 ${notificationModes[mode]} bg-washed-${notificationModes[mode]}"
+               role="alert">
+              <strong>${headline}</strong> ${message}
+            </p>
+          `
+        })}
       </div>
-      <div class="${styles.proofDetail} w-80"></div>
-      <div class="${styles.publicKeyCard} w-80">
+      <div id="proof-detail" class="w-80"></div>
+      <div id="public-key-card" class="w-80">
         ${publicKeyCard}
       </div>
-      <div class="${styles.main} fl w-100 pt3">
-      ${content}
-    </body>
+      <div id="main" class="fl w-100 pt3">
+        ${raw(introImage)}
+        ${content}
+      </div>
+    </div>
   `
 }

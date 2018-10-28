@@ -1,9 +1,15 @@
 const html = require('choo/html')
+const animate = require('../../client/animate')
 const { start, checkForAccount } = require('../../src/')
 const { OBJECT, STRING, UNDEFINED,
         ARRAY, INTEGER, BOOL, FUNCTION } = require('../../src/utils')
 
 module.exports = store
+
+// resolves in one second
+function oneSec() {
+  return new Promise((resolve) => setTimeout(resolve, 1000))
+}
 
 function stripNode (message) {
   if (typeof message === OBJECT) {
@@ -65,8 +71,11 @@ function store (state, emitter) {
   state.peerProfiles = []
   state.publicKeyCard = {}
   state.notifications = {}
+  state.navAnimation = true
 
   emitter.on('DOMContentLoaded', function () {
+    animate.startAnimation('nav-animation')
+
     //Default
     let HANDLE = `DWeb Enthusiast`
 
@@ -84,8 +93,7 @@ function store (state, emitter) {
             state.IpfsID = ipfsId
 
             emitter.emit('updateFavicon', ipfsId.peerId)
-            // animate.endAnimation()
-            // document.querySelector('#nav-links').style.opacity='1'
+            animate.endAnimation()
             emitter.emit('updatePeerProfile', {
               peerId: ipfsId.identity.profile.peerId,
               clientPeerId: ipfsId.identity.profile.peerId,
@@ -95,6 +103,8 @@ function store (state, emitter) {
               self: true
             })
             emitter.emit('updateProofsList')
+            emitter.emit('changeContent', 'identity-app')
+            emitter.emit('endNavAnimation')
             emitter.emit(state.events.RENDER)
           },
 
@@ -340,7 +350,7 @@ function store (state, emitter) {
     })
 
     emitter.on('updateFavicon', async function(peerId) {
-      await new Promise((resolve) => setTimeout(resolve, 1000)) // wait one sec
+      await oneSec()
       // get ref to your blocky
       let blockyCanvas
       let canvasParentNode = document.querySelector(`#favicon-${peerId}`)
@@ -351,6 +361,11 @@ function store (state, emitter) {
         let base64 = blockyCanvas.toDataURL('image/jpeg')
         document.querySelector('#favicon').href = base64
       }
+    })
+
+    emitter.on('endNavAnimation', async function() {
+      state.navAnimation = false
+      emitter.emit(state.events.RENDER)
     })
   })
 }

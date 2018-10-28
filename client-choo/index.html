@@ -9,7 +9,7 @@
         href="img/ocean-rock.png">
   <style>
     body {
-        /* opacity:0; */
+        opacity:0;
         transition: opacity 4s;
         -webkit-transition: opacity 4s; /* Safari */
     }
@@ -59,11 +59,11 @@
         z-index: 90;
     }
     #nav-links {
-        /* opacity: 0; */
+        opacity: 0;
         transition: opacity 2s;
     }
   </style>
-  <body class="w-100 sans-serif bg-near-white">
+  <body onload="document.body.style.opacity='1'" class="w-100 sans-serif bg-near-white">
     <script type="application/javascript" src="bundle.js"></script>
   </body>
 </html>
