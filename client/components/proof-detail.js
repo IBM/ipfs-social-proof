@@ -115,13 +115,14 @@ class ProofDetail {
       return notify.error('IPFS Hash required')
     }
 
-    IpfsID.proofsDB.saveProofUrl(hash, url).
-        then((res) => {
-          return notify.success('Url saved')
-        }).catch((ex) => {
-          console.error(ex)
-          return notify.error('Url save failed')
-        })
+    IpfsID.proofsDB.saveProofUrl(hash, url)
+      .then((res) => {
+        console.log(res)
+        return notify.success('Url saved')
+      }).catch((ex) => {
+        console.error(ex)
+        return notify.error('Url save failed')
+      })
   }
 
   deleteProof (proofHash, callback) {

@@ -1,3 +1,4 @@
+const async = require('neo-async')
 const Gists = require('gists')
 
 const { OBJECT, STRING, UNDEFINED,
@@ -131,11 +132,33 @@ class RemoteProofs {
       // verify Proof
       that.proofApi.verifyProof(proofDoc, (err, valid) => {
         if (typeof callback === FUNCTION) {
-          callback(err, valid)
+          callback(err, {valid: valid, url: url, doc: proofDoc })
         }
       })
     }).catch((ex) => {
       error(ex)
+    })
+  }
+
+  verifyMultipleGists (gistArray, callback) {
+    const that = this
+
+    if (!Array.isArray(gistArray) || !gistArray.length) {
+      throw new Error('gistArray is a required argument')
+    }
+
+    function process (item, callback) {
+      return that.processGist(item.url,
+                              item.username,
+                              item.service,
+                              callback)
+    }
+
+    async.mapSeries(gistArray, process, (err, results) => {
+      if (err) {
+        return callback(err, null)
+      }
+      return callback(null, results)
     })
   }
 }
