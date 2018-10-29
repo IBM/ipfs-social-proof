@@ -42,14 +42,19 @@ class ProofsDB extends DB {
 
   async saveProofUrl (ipfsHash, url) {
 
-    return this.db.upsert(ipfsHash, (doc) => {
+    // get the original proof record first...
+    var proof
+    try {
+      proof = await this.getByIpfsHash(ipfsHash)
+    } catch (ex) {
+      throw new Error(ex)
+    }
+
+    let saved = await this.db.upsert(proof.id, (doc) => {
       doc.url = url
       return doc
-    }).then((res) => {
-      return res
-    }).catch((err) => {
-      throw new Error(err)
-    });
+    })
+    return saved
   }
 }
 
