@@ -99,7 +99,7 @@ module.exports = class Proof extends Component {
 
   viewProof (event) {
     var hash = event.target.dataset.hash
-    // new ProofDetail('proof-detail', { proofId: hash })
+    this.emit('openProofDetail', hash)
   }
 
   proofList () {

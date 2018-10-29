@@ -1,6 +1,7 @@
 const html = require('choo/html')
 const animate = require('../../client/animate')
 const { start, checkForAccount } = require('../../src/')
+const validUrl = require('valid-url')
 const { OBJECT, STRING, UNDEFINED,
         ARRAY, INTEGER, BOOL, FUNCTION } = require('../../src/utils')
 
@@ -71,6 +72,8 @@ function store (state, emitter) {
   state.peerProfiles = []
   state.publicKeyCard = {}
   state.notifications = {}
+  state.proofDetail = {}
+  state.confirmationModal = {}
   state.proofForm = { username: '', service: '', text: '' }
   state.navAnimation = true
 
@@ -381,6 +384,60 @@ function store (state, emitter) {
 
     emitter.on('updateProofText', async function(newValue) {
       state.proofForm.text = newValue
+      emitter.emit(state.events.RENDER)
+    })
+
+    emitter.on('openProofDetail', async function(proofId) {
+      await state.IpfsID.proofsDB.getByIpfsHash(proofId).then((res) => {
+        state.proofDetail.proof = res
+        state.proofDetail.show = true
+        state.proofDetail.form = { url: res.url }
+        emitter.emit(state.events.RENDER)
+      }).catch((ex) => {
+        console.error(ex)
+        emitter.emit('notify:error', 'Cannot get proof from local database')
+      })
+    })
+
+    emitter.on('closeProofDetail', async function() {
+      state.proofDetail = {}
+      emitter.emit(state.events.RENDER)
+    })
+
+    emitter.on('updateProofDetailUrl', async function(newValue) {
+      state.proofDetail.form.url = newValue
+      emitter.emit(state.events.RENDER)
+    })
+
+    emitter.on('saveProofUrl', async function() {
+      const { proof, form: { url } } = state.proofDetail
+      const hash = proof.ipfsContentHash
+
+      if (!validUrl.isUri(url)) {
+        return notify.error('Please enter a URL')
+      }
+      if (!hash) {
+        return notify.error('IPFS Hash required')
+      }
+
+      IpfsID.proofsDB.saveProofUrl(hash, url).
+        then((res) => {
+          emitter.emit('notify:success', 'Url saved')
+          emitter.emit(state.events.RENDER)
+        }).catch((ex) => {
+          console.error(ex)
+          emitter.emit('notify:error', 'Url save failed')
+          emitter.emit(state.events.RENDER)
+        })
+    })
+
+    emitter.on('openConfirmationModal', async function(config) {
+      state.confirmationModal = { show: true, config }
+      emitter.emit(state.events.RENDER)
+    })
+
+    emitter.on('closeConfirmationModal', async function(config) {
+      state.confirmationModal = {}
       emitter.emit(state.events.RENDER)
     })
   })

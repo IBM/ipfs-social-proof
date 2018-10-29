@@ -9,6 +9,8 @@ const Proof = require('../components/proof')
 const Peers = require('../components/peers')
 const Log = require('../components/log')
 const PublicKeyCard = require('../components/public-key-card')
+const ProofDetail = require('../components/proof-detail')
+const ConfirmationModal = require('../components/confirmation-modal')
 
 const TITLE = 'client-choo - main'
 const APP_NAME = 'Autonomica'
@@ -46,6 +48,15 @@ function view (state, emit) {
   const publicKeyCard = state.publicKeyCard.show
     ? state.cache(PublicKeyCard, 'content:public-key-card').render(state)
     : null
+
+  const proofDetail = state.proofDetail.show
+    ? state.cache(ProofDetail, 'content:proof-detail').render(state)
+    : null
+
+  const confirmationModal = state.confirmationModal.show
+    ? state.cache(ConfirmationModal, 'content:confirmation-modal').render(state)
+    : null
+
 
   function handleClick () {
     emit('clicks:add', 1)
@@ -143,7 +154,7 @@ function view (state, emit) {
         </div>
       </div>
       <div id="modal" class="w-50"></div>
-      <div id="confirmation-modal" class="w-40"></div>
+      ${confirmationModal}
       <div id="notifications" class="w-60">
         ${Object.keys(state.notifications).map(key => {
           const { mode, headline, message } = state.notifications[key]
@@ -155,7 +166,7 @@ function view (state, emit) {
           `
         })}
       </div>
-      <div id="proof-detail" class="w-80"></div>
+      ${proofDetail}
       <div id="public-key-card" class="w-80">
         ${publicKeyCard}
       </div>
