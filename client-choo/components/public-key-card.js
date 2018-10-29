@@ -43,7 +43,7 @@ module.exports = class PublicKeyCard extends Component {
   }
 
   createElement (state) {
-    const { IpfsID, publicKeyCard: { profile, validityDocs, invalidDocs } } = state
+    const { IpfsID, publicKeyCard: { profile, validDocs, invalidDocs } } = state
     const icon = avatar(profile.peerId)
     let followBtn
     if (profile.peerId === IpfsID.identity.profile.peerId) {
@@ -70,7 +70,8 @@ module.exports = class PublicKeyCard extends Component {
            <div id="verify-ui" class="flex-justify-between">
              <span id="verify-animation"></span>
              <div id="verify-results" class="flex-justify-around">
-               ${(validityDocs || []).map((proof) => {
+               ${(validDocs || []).map((proof) => {
+
                  return html`<a target="_blank" href="${proof.proof.url || '#'}" class="mr2 pointer"><img class="h1" title="Peer proof is verified: ${proof.proof.url || '#'}" src="img/check-circle-green.svg" /></a>`
              })}
                ${(invalidDocs || []).map((proof) => {
