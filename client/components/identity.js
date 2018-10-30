@@ -1,5 +1,8 @@
-const html = require('yo-yo')
+var html = require('choo/html')
+const raw = require('choo/html/raw')
+var Component = require('choo/component')
 const avatar = require('../utils/avatar')
+const qrcode = require('qrcode-generator')
 
 function hide (node) {
   node.style = 'display: none;'
@@ -13,24 +16,20 @@ function show (node, inline=false) {
   node.style = `display: ${mode};`
 }
 
-class IdUI {
-
-  constructor (IpfsID, domId, config={}) {
-    const selector = `${ config.prefix || '#' }${ domId }`
-    const icon = avatar(IpfsID.identity.profile.peerId)
-
-    this.setState({
-      icon,
-      IpfsID,
-      config,
-      selector
-    })
+module.exports = class IdentityUI extends Component {
+  constructor (id, state, emit) {
+    super(id)
+    this.state = state
+    this.emit = emit
   }
 
-  setState (state=null) {
-    this.state = state
+  load (element) {
+    //
+  }
 
-    this.render()
+  update (state) {
+    this.state = state
+    return false
   }
 
   evtEditHandle (event) {
@@ -51,7 +50,7 @@ class IdUI {
     input.style = 'border-color: green;'
     input.disabled = true;
     // notification !
-    notify.success('Success', 'Handle changed was saved.')
+    this.emit('notify:success', 'Success', 'Handle changed was saved.')
     hide(document.querySelector('#handle-save-btn'))
     show(document.querySelector('#handle-edit-btn'), true)
     // triggger broadcast to peers that idData is updated
@@ -63,9 +62,21 @@ class IdUI {
     IpfsID.broadcastProfile()
   }
 
-  render () {
-    const { icon, config: { handle }, IpfsID , selector } = this.state
-    const newElement = html`
+  makeQrCode(data) {
+    const typeNumber = 0
+    const errorCorrectionLevel = 'L'
+    const qr = qrcode(typeNumber, errorCorrectionLevel)
+    qr.addData(data)
+    qr.make()
+    return qr.createSvgTag()
+  }
+
+  createElement (state) {
+    const { IpfsID } = state
+    const { peerId, handle, pubKeyBase64 } = IpfsID.identity.profile
+    const icon = avatar(peerId)
+
+    return html`
       <article id="identity-app" class="_view_ w-80 center mw7 br3 ba b--black-10 mv4">
         <div class="mh4 mt4 w-100 flex">
           <span id="identity-blocky"
@@ -75,10 +86,12 @@ class IdUI {
                class="flex code f5 mt3"
                onclick=${this.broadcastId.bind(this)}
                title="IPFS Peer ID">
-            <div class="mh4">${IpfsID.identity.profile.peerId}</div>
+            <div class="mh4">${peerId}</div>
           </span>
           <span id="qr-code" class="flex"
-                title="IPFS Peer ID as QR Code"></span>
+                title="IPFS Peer ID as QR Code">
+            ${raw(this.makeQrCode(peerId))}
+          </span>
         </div>
         <div title="Account Handle"
              class="w-100 f3 bg-near-white br3 br--top black-80 mv0 pa4">
@@ -91,7 +104,7 @@ class IdUI {
             <a href="#"
                id="handle-edit-btn"
                class="no-underline f6 f5-l fl pv3 tc bn bg-animate bg-black-70 hover-bg-black white pointer w-100 w-25-m w-20-l br2-ns br--right-ns"
-               onclick=${this.evtEditHandle.bind(this)}>
+               onclick=${this.evtEditHandle}>
               Edit Handle
             </a>
             <a href="#"
@@ -108,13 +121,10 @@ class IdUI {
             <div class="w-100 mr3 ml3 f6 code">IPFS RSA Public Key [signing only]</div>
             <textarea disabled
                       class="h5 flex w-80 lh-copy code f7 ma3 bg-white br3 ph3 pv2 mb2 overflow-auto"
-                      title="IPFS Public Key [Signing Only]">${IpfsID.identity.profile.pubKeyBase64}</textarea>
+                      title="IPFS Public Key [Signing Only]">${pubKeyBase64}</textarea>
           </p>
         </div>
-      </article>`
-      const existingElement = document.querySelector(selector)
-      html.update(existingElement, newElement)
+      </article>
+    `
   }
 }
-
-module.exports = IdUI
