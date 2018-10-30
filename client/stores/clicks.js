@@ -1,5 +1,5 @@
 const html = require('choo/html')
-const animate = require('../../client/animate')
+const animate = require('../utils/animate')
 const { start, checkForAccount } = require('../../src/')
 const validUrl = require('valid-url')
 const uuid = require('uuid/v1')

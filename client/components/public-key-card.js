@@ -3,7 +3,7 @@ var Component = require('choo/component')
 const validUrl = require('valid-url')
 const createIcon = require('blockies-npm')
 
-const avatar = require('../../client/utils/avatar')
+const avatar = require('../utils/avatar')
 
 const { OBJECT, STRING, UNDEFINED,
         ARRAY, INTEGER, BOOL } = require('../../src/utils')
