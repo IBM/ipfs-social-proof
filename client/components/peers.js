@@ -1,7 +1,7 @@
 var html = require('choo/html')
 var Component = require('choo/component')
 
-const avatar = require('../../client/utils/avatar')
+const avatar = require('../utils/avatar')
 
 module.exports = class Peers extends Component {
   constructor (id, state, emit) {

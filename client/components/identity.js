@@ -1,7 +1,7 @@
 var html = require('choo/html')
 const raw = require('choo/html/raw')
 var Component = require('choo/component')
-const avatar = require('../../client/utils/avatar')
+const avatar = require('../utils/avatar')
 const qrcode = require('qrcode-generator')
 
 function hide (node) {

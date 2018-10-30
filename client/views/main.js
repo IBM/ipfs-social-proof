@@ -1,7 +1,7 @@
 const html = require('choo/html')
 const raw = require('choo/html/raw')
 
-const avatar = require('../../client/utils/avatar')
+const avatar = require('../utils/avatar')
 
 const Splash = require('../components/splash')
 const IdentityUI = require('../components/identity')
