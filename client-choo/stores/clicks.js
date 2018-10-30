@@ -2,6 +2,7 @@ const html = require('choo/html')
 const animate = require('../../client/animate')
 const { start, checkForAccount } = require('../../src/')
 const validUrl = require('valid-url')
+const uuid = require('uuid/v1')
 const { OBJECT, STRING, UNDEFINED,
         ARRAY, INTEGER, BOOL, FUNCTION } = require('../../src/utils')
 
@@ -176,6 +177,18 @@ function store (state, emitter) {
     emitter.on('updateProofContent', function (content) {
       state.currentProofContent = content
       emitter.emit(state.events.RENDER)
+    })
+
+    emitter.on('createProof', async function(proof) {
+      const { IpfsID } = state
+      proof.id = uuid() //  TODO: do this inside library/API
+      IpfsID.proof.saveProof(proof).then((res) => {
+        emitter.emit('notify:success', 'Proof stored successfully')
+        emitter.emit('updateProofsList')
+      }).catch((ex) => {
+        console.error(ex)
+        emitter.emit('notify:error', 'Error: Cannot save proof')
+      })
     })
 
     emitter.on('updateProofsList', async function() {
@@ -436,7 +449,7 @@ function store (state, emitter) {
       emitter.emit(state.events.RENDER)
     })
 
-    emitter.on('closeConfirmationModal', async function(config) {
+    emitter.on('closeConfirmationModal', async function() {
       state.confirmationModal = {}
       emitter.emit(state.events.RENDER)
     })

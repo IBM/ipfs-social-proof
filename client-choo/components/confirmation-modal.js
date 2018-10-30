@@ -13,8 +13,8 @@ module.exports = class ConfirmationModal extends Component {
     return true
   }
 
-  closeConfModal (err) {
-    this.emit('closeConfirmationModal', err)
+  closeConfModal () {
+    this.emit('closeConfirmationModal')
   }
 
   createElement (state) {
@@ -27,7 +27,7 @@ module.exports = class ConfirmationModal extends Component {
     const { config } = state.confirmationModal
 
     const proceedAndClose = () => {
-      config.proceedFunc(config.id, this.closeConfModal)
+      config.proceedFunc(config.id, () => { this.closeConfModal() })
     }
 
     return html`

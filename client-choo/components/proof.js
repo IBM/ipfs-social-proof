@@ -1,6 +1,5 @@
 var html = require('choo/html')
 var Component = require('choo/component')
-const uuid = require('uuid/v1')
 const Clipboard = require('../node_modules/clipboard/dist/clipboard.min')
 
 const CONTENT_PROOFS = 'show-proofs'
@@ -46,22 +45,15 @@ module.exports = class Proof extends Component {
   }
 
   evtProofSave () {
-    const { IpfsID } = this.state
     // Save to local indexDB: save { 'proof:username:service': { ipfsUrl: <url>, ipnsUrl: <url>, timestamp: <ts> }
     let proof = JSON.parse(
       document.querySelector('#proof-preview-display').value.trim()
     )
     if (!proof) {
       this.emit('notify:error', 'Error', 'Cannot save non-existent proof')
+      return
     }
-    proof.id = uuid() //  TODO: do this inside library/API
-    IpfsID.proof.saveProof(proof).then((res) => {
-      this.emit('notify:success', 'Proof stored successfully')
-      this.emit('updateProofsList')
-    }).catch((ex) => {
-      console.error(ex)
-      this.emit('notify:error', 'Error: Cannot save proof')
-    })
+    this.emit('createProof', proof)
   }
 
   evtShowProofs () {
