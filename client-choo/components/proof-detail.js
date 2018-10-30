@@ -31,8 +31,10 @@ module.exports = class ProofDetail extends Component {
   deleteProof (proofHash, callback, IpfsID) {
     IpfsID.proofsDB.delete(proofHash).
       then((res) => {
-        this.emit('notify:success', 'Proof deleted')
         callback(null, res)
+        this.emit('notify:success', 'Proof deleted')
+        this.emit('updateProofsList')
+        this.closeModal()
       }).catch((ex) => {
         console.error(ex)
         this.emit('notify:error', 'Proof delete failed')
