@@ -15,8 +15,22 @@ class RemoteProofs {
     if (!id) { throw new Error(ERR.ARG_REQ_ID) }
 
     const gists = new Gists()
-
-    return await gists.get(id)
+    try {
+      return await gists.get(id)
+    } catch (ex) {
+      return {
+        error: ex,
+        body: {
+          files: {
+            error: {
+              content: {
+                error: ex
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   extractProofFromGist (response) {
@@ -121,6 +135,10 @@ class RemoteProofs {
     let gistId = this.getGistIdFromUrl(url)
     // get gist
     return await this.getGist(gistId).then((res) => {
+      if (res.error) {
+        console.error(res.error)
+        callback(ex, { valid: false, url: url, doc: {} })
+      }
       // extract proof
       let proofDoc = that.extractProofFromGist(res)
       // validate proof
@@ -132,11 +150,12 @@ class RemoteProofs {
       // verify Proof
       that.proofApi.verifyProof(proofDoc, (err, valid) => {
         if (typeof callback === FUNCTION) {
-          callback(err, {valid: valid, url: url, doc: proofDoc })
+          callback(err, { valid: valid, url: url, doc: proofDoc })
         }
       })
     }).catch((ex) => {
       error(ex)
+      callback(ex, { valid: false, url: url, doc: proofDoc })
     })
   }
 
@@ -148,10 +167,13 @@ class RemoteProofs {
     }
 
     function process (item, callback) {
-      return that.processGist(item.url,
-                              item.username,
-                              item.service,
-                              callback)
+      setTimeout(() => {
+        // Github API Rate Limit may flag IP
+        return that.processGist(item.url,
+                                item.username,
+                                item.service,
+                                callback)
+      }, 1500)
     }
 
     async.mapSeries(gistArray, process, (err, results) => {

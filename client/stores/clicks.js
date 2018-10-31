@@ -295,6 +295,94 @@ function store (state, emitter) {
       emitter.emit('showPublicKeyCard')
     })
 
+    emitter.on('verifyRemoteProofs', async function () {
+      let profile = state.publicKeyCard.profile
+      if (!profile.validityDocs) {
+        // we get the urls from each validityDoc, which is a proof, but we'd
+        // rather get the doc from a github gist that was authenticated
+        animate.endAnimation(
+          'verify-results',
+          state.publicKeyCard.intervalId
+        )
+        return emitter.emit('notify:error',
+                            'Error',
+                            'Peer has no proofs')
+      }
+      if (!Array.isArray(profile.validityDocs)) {
+        return emitter.emit('notify:error',
+                            'Error',
+                            'remoteUrls array required')
+      }
+
+      let remoteUrls = []
+
+      profile.validityDocs.forEach((doc) => {
+        if (doc.url) {
+          try {
+            var username = doc.proof.message.username
+            var service =  doc.proof.message.service
+            remoteUrls.push({
+              url: doc.url,
+              username: username,
+              service: service
+            })
+          } catch (ex) {
+            console.error(ex)
+          }
+        }
+      })
+
+      if (!remoteUrls.length) {
+        return emitter.emit('notify:error',
+                            'Error',
+                            `No remote proof urls to verify`)
+      }
+
+      state.IpfsID.proof.remoteProofs.verifyMultipleGists(remoteUrls, (err, results) => {
+        if (err) {
+          animate.endAnimation(
+            'verify-results',
+            state.publicKeyCard.intervalId
+          )
+
+          return emitter.emit('notify:error', 'Error', `Cannot get or verify remote proofs, see console for more information`)
+          // TODO: log to internal logging UI
+        }
+        // results is an array in the same order as urls array
+        // { valid: true, doc: proof }
+
+        // TODO: split these into validDocs and invalidDocs?
+        // TODO: run an animation while these are `verified`, `on-the-fly`??
+        state.publicKeyCard.verifyRemoteResults = results
+        animate.endAnimation(
+          'verify-results',
+          state.publicKeyCard.intervalId
+        )
+        let valid = []
+        let invalid = []
+
+        results.forEach((res) => {
+          if (res.valid) {
+            valid.push(res)
+          } else {
+            invalid.push(res)
+          }
+        })
+
+        state.publicKeyCard.validDocs = valid
+        state.publicKeyCard.invalidDocs = invalid
+
+        console.log(state.publicKeyCard)
+
+        emitter.emit('showPublicKeyCard')
+      })
+    })
+
+    emitter.on('verifyAnimation', async function () {
+      state.publicKeyCard.intervalId = animate.startAnimation('verify-results')
+      emitter.emit('verifyRemoteProofs')
+    })
+
     emitter.on('followPeer', async function() {
       const { IpfsID, publicKeyCard: { profile } } = state
       IpfsID.contactsDB.db.upsert(profile.peerId, (contact) => {

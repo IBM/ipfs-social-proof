@@ -42,8 +42,27 @@ module.exports = class PublicKeyCard extends Component {
     this.emit('unfollowPeer')
   }
 
+  verify () {
+    this.emit('verifyRemoteProofs')
+  }
+
+  afterupdate (el) {
+
+  }
+
+  load (el) {
+    this.emit('verifyAnimation')
+  }
+
   createElement (state) {
-    const { IpfsID, publicKeyCard: { profile, validDocs, invalidDocs } } = state
+    const {
+      IpfsID, publicKeyCard: {
+        verifyRemoteResults,
+        profile,
+        validDocs,
+        invalidDocs
+      }
+    } = state
     const icon = avatar(profile.peerId)
     let followBtn
     if (profile.peerId === IpfsID.identity.profile.peerId) {
@@ -68,14 +87,17 @@ module.exports = class PublicKeyCard extends Component {
          <div class="flex-justify-between">
 
            <div id="verify-ui" class="flex-justify-between">
-             <span id="verify-animation"></span>
+             <span id="verify-animation">
+
+             </span>
              <div id="verify-results" class="flex-justify-around">
                ${(validDocs || []).map((proof) => {
-
-                 return html`<a target="_blank" href="${proof.proof.url || '#'}" class="mr2 pointer"><img class="h1" title="Peer proof is verified: ${proof.proof.url || '#'}" src="img/check-circle-green.svg" /></a>`
+                 console.log('validDocs', proof)
+                 return html`<a target="_blank" href="${proof.url || '#'}" class="mr2 pointer"><img class="h1" title="Peer proof is verified: ${proof.url || '#'}" src="img/check-circle-green.svg" /></a>`
              })}
                ${(invalidDocs || []).map((proof) => {
-                 return html`<a target="_blank" href="${proof.proof.url || '#'}" class="mr2 pointer"><img class="h1" title="Peer proof is un-verified: ${proof.proof.url || '#'}" src="img/times-circle.svg" /></a>`
+                 console.log('invalidDocs', proof)
+                 return html`<a target="_blank" href="${proof.url || '#'}" class="mr2 pointer"><img class="h1" title="Peer proof is un-verified: ${proof.url || '#'}" src="img/times-circle.svg" /></a>`
                })}
              </div>
            </div>

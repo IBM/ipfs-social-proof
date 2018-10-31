@@ -77,7 +77,13 @@ function startAnimation (domId, interval=80, pattern='large') {
   }, interval)
 }
 
-function endAnimation () {
+function endAnimation (domId=null, intervalId=null) {
+  if (domId && intervalId) {
+    clearInterval(intervalId)
+    let node = document.querySelector(`#${domId}`)
+    node.textContent = '';
+    return
+  }
   node.style = 'display:none;' // assume span
   clearInterval(iid)
 }
