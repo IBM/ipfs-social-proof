@@ -78,7 +78,6 @@ class Crypto {
     this.node._peerInfo.id._pubKey.verify(
       array,
       signature, (err, verified) => {
-        log(err, verified)
         if (err) { throw new Error(err) }
         callback(err, verified)
       })
@@ -89,7 +88,6 @@ class Crypto {
     let array = t2a(stringToSign)
 
     this.node._peerInfo.id._privKey.sign(array, (err, signature) => {
-      log(err, signature)
       callback(err, signature)
     })
   }
@@ -261,7 +259,7 @@ function a2c (arrayBuffer) {
   arrayBuffer.forEach((el) => {
     text.push(String.fromCharCode(el))
   })
-  log('text array inside a2c', text)
+
   return text.join('')
 }
 

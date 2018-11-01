@@ -43,13 +43,20 @@ function notify(mode, headline, message, emitter, state) {
 }
 
 function logMessage (message) {
+
+  function truncate (msg) {
+    let length = 384;
+    return msg.substring(0, length);
+  }
+
   let msg = stripNode(message)
   let _msg
   let ts = new Date().toISOString()
   if (typeof msg === STRING) {
-    _msg = `${ts}: ${msg}`
+    _msg = `${ts}: ${truncate(msg)}`
   } else if (typeof message === OBJECT) {
     msg.ts = ts
+    msg = truncate(JSON.stringify(msg))
     _msg = JSON.stringify(msg, null, 2)
   } else {
     return
@@ -119,7 +126,7 @@ function store (state, emitter) {
 
           'peer joined': (message) => {
             message.event = 'Peer Joined'
-            logMessage(message, emitter.emit)
+            emitter.emit('logMessage', message)
             // TODO: remove / gray out peers on `peer left`
             let profile = {
               peerId: message.peerId,
@@ -136,13 +143,13 @@ function store (state, emitter) {
 
           'peer left': (message) => {
             message.event = 'Peer Left'
-            emitter.emit('logMessage', logMessage(message))
+            emitter.emit('logMessage', message)
             // TODO: update the UI to reflect disconnection
           },
 
           'subscribed': (message) => {
             message.event = 'Subscribed to Room'
-            emitter.emit('logMessage', logMessage(message))
+            emitter.emit('logMessage', message)
           },
 
           'message': (message) => {
@@ -152,7 +159,7 @@ function store (state, emitter) {
               emitter.emit('updatePeerProfile', _msg)
             }
 
-            emitter.emit('logMessage', logMessage(message))
+            emitter.emit('logMessage', message)
           },
           'updatePeerProfile': (profile) => {
             let _profile = {
@@ -219,7 +226,9 @@ function store (state, emitter) {
     })
 
     emitter.on('logMessage', async function(msg) {
-      state.logs.unshift(msg)
+      let _msg = logMessage(msg)
+      state.logs.unshift(_msg)
+
       emitter.emit(state.events.RENDER)
     })
 
@@ -293,6 +302,106 @@ function store (state, emitter) {
         })
       }))
       emitter.emit('showPublicKeyCard')
+    })
+
+    emitter.on('verifyRemoteProofs', async function () {
+      let profile = state.publicKeyCard.profile
+      if (!profile.validityDocs) {
+        // we get the urls from each validityDoc, which is a proof, but we'd
+        // rather get the doc from a github gist that was authenticated
+        animate.endAnimation(
+          'verify-results',
+          state.publicKeyCard.intervalId
+        )
+        return emitter.emit('notify:error',
+                            'Error',
+                            'Peer has no proofs')
+      }
+      if (!Array.isArray(profile.validityDocs)) {
+        return emitter.emit('notify:error',
+                            'Error',
+                            'remoteUrls array required')
+      }
+
+      let remoteUrls = []
+
+      profile.validityDocs.forEach((doc) => {
+        if (doc.url) {
+          try {
+            var username = doc.proof.message.username
+            var service =  doc.proof.message.service
+            remoteUrls.push({
+              url: doc.url,
+              username: username,
+              service: service
+            })
+          } catch (ex) {
+            console.error(ex)
+          }
+        } else {
+          if (Array.isArray(state.publicKeyCard.invalidDocs)) {
+            state.publicKeyCard.invalidDocs.push(doc) // proof w/o url
+          }
+        }
+      })
+
+      if (!remoteUrls.length) {
+        return emitter.emit('notify:error',
+                            'Error',
+                            `No remote proof urls to verify`)
+      }
+
+      state.IpfsID.proof.remoteProofs.verifyMultipleGists(remoteUrls, (err, results) => {
+        if (err) {
+          animate.endAnimation(
+            'verify-results',
+            state.publicKeyCard.intervalId
+          )
+
+          // return emitter.emit('notify:error', 'Error', `Cannot get or verify remote proofs, see console for more information`)
+          // TODO: log to internal logging UI
+        }
+        // results is an array in the same order as urls array
+        // { valid: true, doc: proof }
+
+        state.publicKeyCard.verifyRemoteResults = results
+        animate.endAnimation(
+          'verify-results',
+          state.publicKeyCard.intervalId
+        )
+        let valid = []
+        let invalid = []
+
+        if (!results.length) {
+          // There may be 0 results - github rate limit may be an issue here
+          state.publicKeyCard.invalidDocs = state.publicKeyCard.validityDocs
+          // ^^ we mark all proofs as invalid and show the UI
+          return emitter.emit('showPublicKeyCard')
+        }
+
+        results.forEach((res) => {
+          if (res.valid) {
+            valid.push(res)
+          } else {
+            invalid.push(res)
+          }
+        })
+
+        state.publicKeyCard.validDocs = valid
+        if (Array.isArray(state.publicKeyCard.invalidDocs)) {
+          state.publicKeyCard.invalidDocs.concat(invalid)
+        } else {
+          state.publicKeyCard.invalidDocs = invalid
+        }
+        console.log(state.publicKeyCard)
+
+        emitter.emit('showPublicKeyCard')
+      })
+    })
+
+    emitter.on('verifyAnimation', async function () {
+      state.publicKeyCard.intervalId = animate.startAnimation('verify-results')
+      emitter.emit('verifyRemoteProofs')
     })
 
     emitter.on('followPeer', async function() {
