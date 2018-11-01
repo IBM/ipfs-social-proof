@@ -329,6 +329,10 @@ function store (state, emitter) {
           } catch (ex) {
             console.error(ex)
           }
+        } else {
+          if (Array.isArray(state.publicKeyCard.invalidDocs)) {
+            state.publicKeyCard.invalidDocs.push(doc) // proof w/o url
+          }
         }
       })
 
@@ -345,14 +349,12 @@ function store (state, emitter) {
             state.publicKeyCard.intervalId
           )
 
-          return emitter.emit('notify:error', 'Error', `Cannot get or verify remote proofs, see console for more information`)
+          // return emitter.emit('notify:error', 'Error', `Cannot get or verify remote proofs, see console for more information`)
           // TODO: log to internal logging UI
         }
         // results is an array in the same order as urls array
         // { valid: true, doc: proof }
 
-        // TODO: split these into validDocs and invalidDocs?
-        // TODO: run an animation while these are `verified`, `on-the-fly`??
         state.publicKeyCard.verifyRemoteResults = results
         animate.endAnimation(
           'verify-results',
@@ -360,6 +362,13 @@ function store (state, emitter) {
         )
         let valid = []
         let invalid = []
+
+        if (!results.length) {
+          // There may be 0 results - github rate limit may be an issue here
+          state.publicKeyCard.invalidDocs = state.publicKeyCard.validityDocs
+          // ^^ we mark all proofs as invalid and show the UI
+          return emitter.emit('showPublicKeyCard')
+        }
 
         results.forEach((res) => {
           if (res.valid) {
@@ -370,8 +379,11 @@ function store (state, emitter) {
         })
 
         state.publicKeyCard.validDocs = valid
-        state.publicKeyCard.invalidDocs = invalid
-
+        if (Array.isArray(state.publicKeyCard.invalidDocs)) {
+          state.publicKeyCard.invalidDocs.concat(invalid)
+        } else {
+          state.publicKeyCard.invalidDocs = invalid
+        }
         console.log(state.publicKeyCard)
 
         emitter.emit('showPublicKeyCard')

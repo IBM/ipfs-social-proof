@@ -54,8 +54,10 @@ class RemoteProofs {
   // validate the proof format
   // TODO: formalize this format & use jsonschema & format versioning
   validateProof (proofWrapper, username, service) {
-    if (typeof proofWrapper !== OBJECT) {
-      throw new Error('proofWrapper arg must be object')
+    if (proofWrapper === null || typeof proofWrapper !== OBJECT) {
+      // proofWrapper might be null as github has a rate limiter
+      // TODO: do not call gists function too often
+      return false
     }
 
     let validKeysProof = {
@@ -129,7 +131,7 @@ class RemoteProofs {
     return gistId
   }
 
-  async processGist (url, username, service, callback) { //  callback??
+  async processGist (url, username, service, item, callback) {
     const that = this;
     // extract gist ID from url
     let gistId = this.getGistIdFromUrl(url)
@@ -137,15 +139,20 @@ class RemoteProofs {
     return await this.getGist(gistId).then((res) => {
       if (res.error) {
         console.error(res.error)
-        callback(ex, { valid: false, url: url, doc: {} })
+        callback(res.error, { valid: false, url: url, doc: {} })
       }
       // extract proof
-      let proofDoc = that.extractProofFromGist(res)
+      var proofDoc = that.extractProofFromGist(res)
       // validate proof
       let valid = that.validateProof(proofDoc, username, service)
 
       if (!valid) {
-        throw new Error('Proof document is not valid')
+        return callback(ex, { valid: false,
+                              url: url,
+                              doc: item,
+                              username: username,
+                              service: service
+                            })
       }
       // verify Proof
       that.proofApi.verifyProof(proofDoc, (err, valid) => {
@@ -172,13 +179,14 @@ class RemoteProofs {
         return that.processGist(item.url,
                                 item.username,
                                 item.service,
+                                item,
                                 callback)
-      }, 1500)
+      }, 2000)
     }
 
     async.mapSeries(gistArray, process, (err, results) => {
       if (err) {
-        return callback(err, null)
+        return callback(err, results)
       }
       return callback(null, results)
     })
