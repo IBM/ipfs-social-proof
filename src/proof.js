@@ -44,7 +44,6 @@ class Proof {
       proofData = JSON.stringify(content)
     }
     return this.ipfs.saveProofToIpfs(proofData).then((res) => {
-      log('res', res)
       let hash = res[0].hash
       proofData = JSON.parse(proofData)
       proofData.ipfsContentHash = hash

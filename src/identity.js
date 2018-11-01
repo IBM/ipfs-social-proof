@@ -171,7 +171,6 @@ class Identity {
         if (err) {
           error(err)
         }
-        log('Account Saved!')
       })
     // TODO: update state to tell UI consumers
   }

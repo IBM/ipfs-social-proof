@@ -46,10 +46,6 @@ module.exports = class PublicKeyCard extends Component {
     this.emit('verifyRemoteProofs')
   }
 
-  afterupdate (el) {
-
-  }
-
   load (el) {
     this.emit('verifyAnimation')
   }
@@ -92,11 +88,9 @@ module.exports = class PublicKeyCard extends Component {
              </span>
              <div id="verify-results" class="flex-justify-around">
                ${(validDocs || []).map((proof) => {
-                 console.log('validDocs', proof)
                  return html`<a target="_blank" href="${proof.url || '#'}" class="mr2 pointer"><img class="h1" title="Peer proof is verified: ${proof.url || '#'}" src="img/check-circle-green.svg" /></a>`
              })}
                ${(invalidDocs || []).map((proof) => {
-                 console.log('invalidDocs', proof)
                  return html`<a target="_blank" href="${proof.url || '#'}" class="mr2 pointer"><img class="h1" title="Peer proof is un-verified: ${proof.url || '#'}" src="img/times-circle.svg" /></a>`
                })}
              </div>

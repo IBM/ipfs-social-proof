@@ -174,7 +174,6 @@ class IpfsIdentity {
     let profile = this.identity.profile
     profile.updated = Date.now()
     this.roomApi.broadcast(profile)
-    log('Broadcast: ', profile)
   }
 
   constructor (handle=null, repoName, eventHandlers=null) {
@@ -210,7 +209,6 @@ class IpfsIdentity {
     const that = this
     this._roomApi = {
       broadcast: (message) => {
-        log('broadcast', message)
         if (typeof message === OBJECT) {
 
           return room.broadcast(JSON.stringify(message))
@@ -222,9 +220,7 @@ class IpfsIdentity {
       processMessage: (from, data) => {
         // from is peerId string
         // data is uInt8Array
-        log("processMessage: ", from, data)
         let textData = a2c(data)
-        log("a2c: ", textData)
         if (that._uiEventHandlers['msgRcvd']) {
           that._uiEventHandlers['msgRcvd'](from, data)
         }
@@ -283,7 +279,7 @@ class IpfsIdentity {
         }
       }
 
-      log('Account found', value)
+      log('Account found')
 
       if (callback) {
         // Account will be written now on first run
@@ -397,8 +393,7 @@ class IpfsIdentity {
         })
 
         this._room.on('message', (message) => {
-          log('_room.on...')
-          log(message.from, message.data)
+          // log(message.from, message.data)
           let data = a2c(message.data)
           that.triggerRoomEvent('message', { from: message.from,
                                              data: data,
@@ -431,7 +426,7 @@ function checkForAccount (callback, eventHandlers=null) {
         return callback(err, null)
       }
     } else {
-      log('Account found', value)
+      log('Account found')
     }
     if (callback) {
       let account = JSON.parse(value)

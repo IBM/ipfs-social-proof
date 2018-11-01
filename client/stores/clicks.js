@@ -43,13 +43,20 @@ function notify(mode, headline, message, emitter, state) {
 }
 
 function logMessage (message) {
+
+  function truncate (msg) {
+    let length = 384;
+    return msg.substring(0, length);
+  }
+
   let msg = stripNode(message)
   let _msg
   let ts = new Date().toISOString()
   if (typeof msg === STRING) {
-    _msg = `${ts}: ${msg}`
+    _msg = `${ts}: ${truncate(msg)}`
   } else if (typeof message === OBJECT) {
     msg.ts = ts
+    msg = truncate(JSON.stringify(msg))
     _msg = JSON.stringify(msg, null, 2)
   } else {
     return
@@ -119,7 +126,7 @@ function store (state, emitter) {
 
           'peer joined': (message) => {
             message.event = 'Peer Joined'
-            logMessage(message, emitter.emit)
+            emitter.emit('logMessage', message)
             // TODO: remove / gray out peers on `peer left`
             let profile = {
               peerId: message.peerId,
@@ -136,13 +143,13 @@ function store (state, emitter) {
 
           'peer left': (message) => {
             message.event = 'Peer Left'
-            emitter.emit('logMessage', logMessage(message))
+            emitter.emit('logMessage', message)
             // TODO: update the UI to reflect disconnection
           },
 
           'subscribed': (message) => {
             message.event = 'Subscribed to Room'
-            emitter.emit('logMessage', logMessage(message))
+            emitter.emit('logMessage', message)
           },
 
           'message': (message) => {
@@ -152,7 +159,7 @@ function store (state, emitter) {
               emitter.emit('updatePeerProfile', _msg)
             }
 
-            emitter.emit('logMessage', logMessage(message))
+            emitter.emit('logMessage', message)
           },
           'updatePeerProfile': (profile) => {
             let _profile = {
@@ -219,7 +226,9 @@ function store (state, emitter) {
     })
 
     emitter.on('logMessage', async function(msg) {
-      state.logs.unshift(msg)
+      let _msg = logMessage(msg)
+      state.logs.unshift(_msg)
+
       emitter.emit(state.events.RENDER)
     })
 
