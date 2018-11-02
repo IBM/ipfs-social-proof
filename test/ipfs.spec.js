@@ -77,6 +77,20 @@ describe("ipfs methods", () => {
     }
   });
 
+  it("should throw if ipfs.store data argument is not string", async () => {
+    try {
+      let dummy = await ipfs.store(1337);
+      expect(dummy).to.not.exist();
+    } catch (err) {
+      expect(err)
+        .to.be.an.instanceOf(TypeError)
+        .that.has.property(
+          "message",
+          "ipfs.store expects data to be instance of String"
+        );
+    }
+  });
+
   it("should save proof with saveProofToIpfs", async () => {
     try {
       const res = await ipfs.saveProofToIpfs("peaches");
