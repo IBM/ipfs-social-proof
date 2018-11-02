@@ -20,15 +20,15 @@ class Ipfs {
     this._identity = identity
   }
 
-  get roomApi() {
+  get roomApi () {
     return this._roomApi
   }
 
-  get identity() {
+  get identity () {
     return this._identity
   }
 
-  async saveProofToIpfs(content) {
+  async saveProofToIpfs (content) {
     try {
       let result = await this.store(JSON.stringify(content))
       return result
@@ -37,7 +37,7 @@ class Ipfs {
     }
   }
 
-  async store(data) {
+  async store (data) {
     // store data in IPFS
     if (typeof data !== 'string') {
       throw new TypeError('ipfs.store expects data to be instance of String')
@@ -59,7 +59,7 @@ class Ipfs {
     }
   }
 
-  getFile(hash, callback) {
+  getFile (hash, callback) {
     // buffer: true results in the returned result being a buffer rather than a stream
     this._node.files.cat(hash, (err, data) => {
       if (err) {
@@ -77,7 +77,7 @@ class Ipfs {
     })
   }
 
-  storeFiles(files) {
+  storeFiles (files) {
     // store a collection of files [that appear as a directory of files]
     // files argumanr is an array of file "objects"
     // [ { path: '/proof-github.com.json',
@@ -88,11 +88,11 @@ class Ipfs {
     //   } ]
   }
 
-  broadcastProfile() {
+  broadcastProfile () {
     let id = this.identity.profile
     id.updated = Date.now()
     this.roomApi.broadcast(id)
-    log("Broadcast: ", id)
+    log('Broadcast: ', id)
   }
 }
 
