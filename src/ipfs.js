@@ -34,17 +34,24 @@ class Ipfs {
 
   async store (data) {
     // store data in IPFS
-    let res = await this._node.files.add(Buffer.from(data))
-    let results = []
+    if (typeof data !== 'string') {
+      throw new TypeError('ipfs.store expects data to be instance of String')
+    }
 
-    res.forEach((file) => {
+    try {
+      let res = await this._node.files.add(Buffer.from(data))
+      let results = []
+      res.forEach(file => {
       if (file && file.hash) {
-        log('successfully stored', file)
-        results.push(file)
-        return file
+          log('successfully stored', file)
+          results.push(file)
+          return file
+        }
+      })
+      return results
+    } catch (err) {
+      throw new Error(err.message)
       }
-    })
-    return results
   }
 
   getFile (hash, callback) {
