@@ -48,7 +48,6 @@ class Ipfs {
       let results = []
       res.forEach(file => {
         if (file && file.hash) {
-          log('successfully stored', file)
           results.push(file)
           return file
         }
@@ -92,7 +91,6 @@ class Ipfs {
     let id = this.identity.profile
     id.updated = Date.now()
     this.roomApi.broadcast(id)
-    log('Broadcast: ', id)
   }
 }
 

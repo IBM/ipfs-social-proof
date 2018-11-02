@@ -33,7 +33,7 @@ class ProofsDB extends DB {
         fields: fields
       });
     } catch (err) {
-      console.log(err)
+      console.error(err)
 
       var result = null
     }
