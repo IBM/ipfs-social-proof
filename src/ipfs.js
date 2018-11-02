@@ -1,39 +1,39 @@
 // TODO: Use Buffer in ipfs.whatever.types ???
-const { Buffer } = require( 'buffer' );
-const { log, error } = require( './log' );
+const { Buffer } = require( 'buffer' )
+const { log, error } = require( './log' )
 
 class Ipfs {
   constructor ( node, roomApi, identity ) {
     if ( !node ) {
-      throw new Error( 'node is required' );
+      throw new Error( 'node is required' )
     }
-    this._node = node;
+    this._node = node
 
     if ( !roomApi ) {
-      throw new Error( 'roomAPI is required' );
+      throw new Error( 'roomAPI is required' )
     }
-    this._roomApi = roomApi;
+    this._roomApi = roomApi
 
     if ( !identity ) {
-      throw new Error( 'identity is required' );
+      throw new Error( 'identity is required' )
     }
-    this._identity = identity;
+    this._identity = identity
   }
 
   get roomApi () {
-    return this._roomApi;
+    return this._roomApi
   }
 
   get identity () {
-    return this._identity;
+    return this._identity
   }
 
   async saveProofToIpfs ( content ) {
     try {
-      let result = await this.store( JSON.stringify( content ) );
-      return result;
+      let result = await this.store( JSON.stringify( content ) )
+      return result
     } catch ( ex ) {
-      throw new Error( ex );
+      throw new Error( ex )
     }
   }
 
@@ -63,18 +63,18 @@ class Ipfs {
     // buffer: true results in the returned result being a buffer rather than a stream
     this._node.files.cat( hash, ( err, data ) => {
       if ( err ) {
-        callback( err, null );
+        callback( err, null )
       }
 
       let response = {
         hash: hash,
         content: data
-      };
+      }
 
       if ( callback ) {
-        callback( null, response );
+        callback( null, response )
       }
-    } );
+    } )
   }
 
   storeFiles ( files ) {
@@ -89,11 +89,11 @@ class Ipfs {
   }
 
   broadcastProfile () {
-    let id = this.identity.profile;
-    id.updated = Date.now();
-    this.roomApi.broadcast( id );
-    log( "Broadcast: ", id );
+    let id = this.identity.profile
+    id.updated = Date.now()
+    this.roomApi.broadcast( id )
+    log( "Broadcast: ", id )
   }
 }
 
-module.exports = Ipfs;
+module.exports = Ipfs
