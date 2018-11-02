@@ -67,17 +67,25 @@ describe("ipfs methods", () => {
   const ipfs = new Ipfs(nodeMock, roomApiMock, identityMock);
 
   it("should store data", async () => {
-    const res = await ipfs.store("peaches");
-    expect(res)
-      .to.be.an.instanceOf(Array)
-      .that.has.same.deep.members([{ hash: "sneaky peaches" }]);
+    try {
+      const res = await ipfs.store("peaches");
+      expect(res)
+        .to.be.an.instanceOf(Array)
+        .that.has.same.deep.members([{ hash: "sneaky peaches" }]);
+    } catch (err) {
+      expect(err).to.not.exist();
+    }
   });
 
   it("should save proof with saveProofToIpfs", async () => {
-    const res = await ipfs.saveProofToIpfs("peaches");
-    expect(res)
-      .to.be.an.instanceOf(Array)
-      .that.has.same.deep.members([{ hash: "sneaky peaches" }]);
+    try {
+      const res = await ipfs.saveProofToIpfs("peaches");
+      expect(res)
+        .to.be.an.instanceOf(Array)
+        .that.has.same.deep.members([{ hash: "sneaky peaches" }]);
+    } catch (err) {
+      expect(err).to.not.exist();
+    }
   });
 
   it("should throw error if add fails", async () => {
