@@ -1,17 +1,22 @@
- // TODO: Use Buffer in ipfs.whatever.types ???
+// TODO: Use Buffer in ipfs.whatever.types ???
 const { Buffer } = require('buffer')
 const { log, error } = require('./log')
 
 class Ipfs {
-
   constructor (node, roomApi, identity) {
-    if (!node) { throw new Error('node is required') }
+    if (!node) {
+      throw new Error('node is required')
+    }
     this._node = node
 
-    if (!roomApi) { throw new Error('roomAPI is required') }
+    if (!roomApi) {
+      throw new Error('roomAPI is required')
+    }
     this._roomApi = roomApi
 
-    if (!identity) { throw new Error('identity is required') }
+    if (!identity) {
+      throw new Error('identity is required')
+    }
     this._identity = identity
   }
 
@@ -34,16 +39,23 @@ class Ipfs {
 
   async store (data) {
     // store data in IPFS
-    let res = await this._node.files.add(Buffer.from(data))
-    let results = []
+    if (typeof data !== 'string') {
+      throw new TypeError('ipfs.store expects data to be instance of String')
+    }
 
-    res.forEach((file) => {
-      if (file && file.hash) {
-        results.push(file)
-        return file
-      }
-    })
-    return results
+    try {
+      let res = await this._node.files.add(Buffer.from(data))
+      let results = []
+      res.forEach(file => {
+        if (file && file.hash) {
+          results.push(file)
+          return file
+        }
+      })
+      return results
+    } catch (err) {
+      throw new Error(err.message)
+    }
   }
 
   getFile (hash, callback) {
@@ -73,7 +85,6 @@ class Ipfs {
     //   { path: '/proof-twitter.json',
     //     content: 'JSON.stringify(contentObject2)'
     //   } ]
-
   }
 
   broadcastProfile () {
@@ -81,7 +92,6 @@ class Ipfs {
     id.updated = Date.now()
     this.roomApi.broadcast(id)
   }
-
 }
 
 module.exports = Ipfs
