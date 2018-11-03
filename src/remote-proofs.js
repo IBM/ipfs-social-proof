@@ -16,6 +16,7 @@ class RemoteProofs {
 
   constructor (proof) {
     this.proofApi = proof
+    this.gistClient = gistClient
   }
 
   async getGist (id) {
@@ -190,7 +191,7 @@ class RemoteProofs {
                                 item.service,
                                 item,
                                 callback)
-      }, 500)
+      }, 1500)
     }
 
     async.mapSeries(gistArray, process, (err, results) => {

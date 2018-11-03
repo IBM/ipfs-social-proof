@@ -19,7 +19,7 @@ const mockProofAPI = {
 }
 
 describe("remote-proofs test suite", function () {
-  this.timeout(10000)
+  this.timeout(4000)
   const gistUrl =
         'https://gist.github.com/daviddahl/a818f62766893754a1d1f3c8b01c5cb6'
   const rp = new RemoteProofs(mockProofAPI)
@@ -120,19 +120,20 @@ describe("remote-proofs test suite", function () {
           service: 'github.com'
         }
       ]
-      try {
-        rp.verifyMultipleGists(items, (err, valid) => {
-          console.log(err)
-          expect(err).to.equal(null)
-          expect(valid[0].valid).to.equal(true)
-          expect(valid[1].valid).to.equal(true)
-          expect(valid[2].valid).to.equal(true)
-          expect(valid[0].doc.handle).to.equal('daviddahl')
-          done()
-        })
-      } catch (ex) {
-        expect(ex).to.not.exist()
-      }
+
+      rp.verifyMultipleGists(items, (err, valid) => {
+        console.log('err: ', err)
+        console.log(valid)
+
+        expect(err).to.equal(null)
+        expect(valid[0].valid).to.equal(true)
+        expect(valid[1].valid).to.equal(true)
+        expect(valid[2].valid).to.equal(true)
+        expect(valid[0].doc.handle).to.equal('daviddahl')
+        done()
+        // TODO: THIS TEST IS ACTUALLY WORKING BUT TIMES OUT. NOT SURE WHY
+      })
+
     })
 
     // TODO: test mix of invalid and valid gitst urls
