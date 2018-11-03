@@ -176,7 +176,7 @@ class RemoteProofs {
     })
   }
 
-  async verifyMultipleGists (gistArray, callback) {
+  verifyMultipleGists (gistArray, callback) {
     const that = this
 
     if (!Array.isArray(gistArray) || !gistArray.length) {
@@ -185,13 +185,13 @@ class RemoteProofs {
 
     function process (item, callback) {
       setTimeout(() => {
-        // Github API Rate Limit may flag IP
+        // FIXED?? Github API Rate Limit may flag IP
         return that.processGist(item.url,
                                 item.username,
                                 item.service,
                                 item,
                                 callback)
-      }, 1500)
+      }, 250)
     }
 
     async.mapSeries(gistArray, process, (err, results) => {
