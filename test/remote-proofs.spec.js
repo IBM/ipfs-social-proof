@@ -19,7 +19,7 @@ const mockProofAPI = {
 }
 
 describe("remote-proofs test suite", function () {
-  this.timeout(5000)
+  this.timeout(10000)
   const gistUrl =
         'https://gist.github.com/daviddahl/a818f62766893754a1d1f3c8b01c5cb6'
   const rp = new RemoteProofs(mockProofAPI)
@@ -53,10 +53,10 @@ describe("remote-proofs test suite", function () {
       rp.getGist(gistId).then((res) => {
 
         expect(typeof res).to.equal(OBJECT)
-        let keys = Object.keys(res.body.files)
+        let keys = Object.keys(res.files)
         expect(keys.length == 1)
         expect(keys[0]).to.equal('github-proof.json') // <-- arbitrary key name
-        let proof = res.body.files[keys[0]].content
+        let proof = res.files[keys[0]].content
 
         expect(typeof proof).to.equal(STRING)
 
@@ -120,14 +120,19 @@ describe("remote-proofs test suite", function () {
           service: 'github.com'
         }
       ]
-      rp.verifyMultipleGists(items, (err, valid) => {
-        expect(err).to.equal(null)
-        expect(valid[0].valid).to.equal(true)
-        expect(valid[1].valid).to.equal(true)
-        expect(valid[2].valid).to.equal(true)
-        expect(valid[0].doc.handle).to.equal('daviddahl')
-        done()
-      })
+      try {
+        rp.verifyMultipleGists(items, (err, valid) => {
+          console.log(err)
+          expect(err).to.equal(null)
+          expect(valid[0].valid).to.equal(true)
+          expect(valid[1].valid).to.equal(true)
+          expect(valid[2].valid).to.equal(true)
+          expect(valid[0].doc.handle).to.equal('daviddahl')
+          done()
+        })
+      } catch (ex) {
+        expect(ex).to.not.exist()
+      }
     })
 
     // TODO: test mix of invalid and valid gitst urls

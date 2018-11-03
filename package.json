@@ -54,7 +54,7 @@
   "dependencies": {
     "@protobufjs/base64": "^1.1.2",
     "buffer": "^5.2.1",
-    "gists": "^2.0.0",
+    "gist-client": "^1.0.7",
     "ipfs": "^0.32.2",
     "ipfs-pubsub-room": "^1.4.0",
     "level-browserify": "^2.0.0",
