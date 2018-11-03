@@ -1,5 +1,12 @@
 const async = require('neo-async')
-const Gists = require('gists')
+try {
+  var ghToken = require('./auth').githubToken
+} catch (ex) {
+  throw new Error('Github read-only API token is required to get remote proofs')
+}
+const GistClient = require("gist-client")
+const gistClient = new GistClient()
+gistClient.setToken(ghToken)
 
 const { OBJECT, STRING, UNDEFINED,
         ARRAY, INTEGER, NUMBER, BOOL, FUNCTION } = require('./utils')
@@ -9,14 +16,17 @@ class RemoteProofs {
 
   constructor (proof) {
     this.proofApi = proof
+    this.gistClient = gistClient
   }
 
   async getGist (id) {
-    if (!id) { throw new Error(ERR.ARG_REQ_ID) }
-
-    const gists = new Gists()
+    if (!id) {
+      throw new Error('Gist ID required')
+    }
     try {
-      return await gists.get(id)
+      let gist = await gistClient.getOneById(id)
+
+      return gist
     } catch (ex) {
       return {
         error: ex,
@@ -38,9 +48,9 @@ class RemoteProofs {
       throw new Error('gist is required')
     }
 
-    // JSON = gist -> body -> files -> first key -> content
-    let files = response.body.files
-    let keys = Object.keys(response.body.files)
+    // JSON = gist -> files -> first key -> content
+    let files = response.files
+    let keys = Object.keys(response.files)
 
     try {
       // TODO: for now assume there is only one document to deal with
@@ -175,17 +185,18 @@ class RemoteProofs {
 
     function process (item, callback) {
       setTimeout(() => {
-        // Github API Rate Limit may flag IP
+        // FIXED?? Github API Rate Limit may flag IP
         return that.processGist(item.url,
                                 item.username,
                                 item.service,
                                 item,
                                 callback)
-      }, 2000)
+      }, 250)
     }
 
     async.mapSeries(gistArray, process, (err, results) => {
       if (err) {
+        console.error(err)
         return callback(err, results)
       }
       return callback(null, results)
