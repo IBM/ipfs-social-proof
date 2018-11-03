@@ -19,7 +19,7 @@ const mockProofAPI = {
 }
 
 describe("remote-proofs test suite", function () {
-  this.timeout(4000)
+  this.timeout(7000)
   const gistUrl =
         'https://gist.github.com/daviddahl/a818f62766893754a1d1f3c8b01c5cb6'
   const rp = new RemoteProofs(mockProofAPI)
