@@ -86,8 +86,9 @@ function store (state, emitter) {
   state.proofForm = { username: '', service: '', text: '' }
   state.navAnimation = true
 
-  //set up sound things
+  // set up sound things
   const audio = new AudioMachine();
+  // http://soundbible.com/419-Tiny-Button-Push.html
   audio.addSound('peerOnEnter', 'assets/beep.wav')
 
   emitter.on('DOMContentLoaded', function () {
