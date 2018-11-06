@@ -110,7 +110,7 @@ class RemoteProofs {
     // The Raw content text is in this path:
     // json[0].data.children[0].data.selftext
     try {
-      return JSON.parse(json[0].data.children[0].data.selftext)
+      return JSON.parse(`${json[0].data.children[0].data.selftext}`)
     } catch (ex) {
       return null
     }
@@ -139,7 +139,12 @@ class RemoteProofs {
       signature: STRING,
       timestamp: NUMBER,
       publicKey: STRING,
-      _hash: STRING // TODO: change to ipfsContentHash
+      _hash: STRING, // TODO: change to ipfsContentHash
+      ipfsContentHash: STRING,
+      id: STRING,
+      createdTs: NUMBER,
+      updatedTs: NUMBER,
+      url: STRING
     }
 
     let validKeysMessage = {
@@ -270,7 +275,7 @@ class RemoteProofs {
     const VALID_HOSTNAMES = ['www.reddit.com', 'gist.github.com']
     const REDDIT = VALID_HOSTNAMES[0]
     const GIST = VALID_HOSTNAMES[1]
-    let valid = validUrl(url)
+    let valid = validUrl.isUri(url)
 
     if (!valid) {
       throw new Error('url is not valid')
@@ -290,12 +295,13 @@ class RemoteProofs {
           let valid = that.validateProof(proofDoc, username, service)
 
           if (!valid) {
-            return callback(ex, { valid: false,
-                                  url: url,
-                                  doc: item,
-                                  username: username,
-                                  service: service
-                                })
+            return callback('Invalid proof',
+                            { valid: false,
+                              url: url,
+                              doc: item,
+                              username: username,
+                              service: service
+                            })
           }
           // verify Proof
           that.proofApi.verifyProof(proofDoc, (err, valid) => {
@@ -312,7 +318,7 @@ class RemoteProofs {
     case GIST:
       let gistId = this.getGistIdFromUrl(url)
       // get gist
-      return await this.getGist(gistId).then((res) => {
+      return this.getGist(gistId).then((res) => {
         if (res.error) {
           console.error(res.error)
           callback(res.error, { valid: false, url: url, doc: {} })
@@ -323,12 +329,13 @@ class RemoteProofs {
         let valid = that.validateProof(proofDoc, username, service)
 
         if (!valid) {
-          return callback(ex, { valid: false,
-                                url: url,
-                                doc: item,
-                                username: username,
-                                service: service
-                              })
+          return callback('Invalid proof',
+                          { valid: false,
+                            url: url,
+                            doc: item,
+                            username: username,
+                            service: service
+                          })
         }
         // verify Proof
         that.proofApi.verifyProof(proofDoc, (err, valid) => {
@@ -346,8 +353,8 @@ class RemoteProofs {
   verifyMultipleRemoteProofs (proofArray, callback) {
     const that = this
 
-    if (!Array.isArray(gistArray) || !gistArray.length) {
-      throw new Error('gistArray is a required argument')
+    if (!Array.isArray(proofArray) || !proofArray.length) {
+      throw new Error('proofArray is a required argument')
     }
 
     function process (item, callback) {
@@ -361,7 +368,7 @@ class RemoteProofs {
       }, 250)
     }
 
-    async.mapSeries(gistArray, process, (err, results) => {
+    async.mapSeries(proofArray, process, (err, results) => {
       if (err) {
         console.error(err)
         return callback(err, results)

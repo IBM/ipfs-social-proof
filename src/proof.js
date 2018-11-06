@@ -120,7 +120,7 @@ class Proof {
     // const bufferSig = this.rehydrate(_proof.signature) //  string -> encode to arraybuffer
     const obj = JSON.parse(_proof.signature)
     // Get the Uint8Array version of the stringified data (key or signature)
-    const bufferSig = Buffer.from(obj.data)
+    const bufferSig = Buffer.from(obj)
     // const publicKey = this.unmarshalPubKey(_proof.publicKey) // Instanciate RsaPubKey
     const objKey = JSON.parse(_proof.publicKey)
     // Get the Uint8Array version of the stringified key
