@@ -1,4 +1,7 @@
 const async = require('neo-async')
+const validUrl = require('valid-url')
+const parse = require('url-parse')
+
 try {
   var ghToken = require('./auth').githubToken
 } catch (ex) {
@@ -17,6 +20,10 @@ class RemoteProofs {
   constructor (proof) {
     this.proofApi = proof
     this.gistClient = gistClient
+  }
+
+  handleRemoteProofs (proofsArr) {
+
   }
 
   async getGist (id) {
@@ -61,6 +68,54 @@ class RemoteProofs {
     }
   }
 
+  formatRedditUrl (url) {
+    if (!validUrl.isUri(url)) {
+      throw new Error('Valid url is required')
+    }
+
+    let parsed = parse(url)
+    if (!parsed.hostname === 'www.reddit.com') {
+      throw new Error('Url has to use www.reddit.com as host')
+    }
+
+    if (url.endsWith('.json')) {
+      return url
+    } else if (url.endsWith('/')) {
+      let urlArr = url.split('/')
+      urlArr.pop() // removes the enpty
+      return `${urlArr.join('/')}.json`
+    } else {
+      throw new Error('Url is not correct format for a Reddit proof')
+    }
+  }
+
+  async getRedditData (url) {
+    let rUrl = this.formatRedditUrl(url)
+
+    if (!validUrl.isUri(rUrl)) {
+      throw new Error('Valid url is required')
+    }
+    try {
+      return await fetch(rUrl)
+        .then((response) => {
+          return response.json();
+        })
+    } catch (ex) {
+      console.error(ex)
+      return null
+    }
+  }
+
+  extractRedditProof (json) {
+    // The Raw content text is in this path:
+    // json[0].data.children[0].data.selftext
+    try {
+      return JSON.parse(`${json[0].data.children[0].data.selftext}`)
+    } catch (ex) {
+      return null
+    }
+  }
+
   // validate the proof format
   // TODO: formalize this format & use jsonschema & format versioning
   validateProof (proofWrapper, username, service) {
@@ -84,7 +139,12 @@ class RemoteProofs {
       signature: STRING,
       timestamp: NUMBER,
       publicKey: STRING,
-      _hash: STRING // TODO: change to ipfsContentHash
+      _hash: STRING, // TODO: change to ipfsContentHash
+      ipfsContentHash: STRING,
+      id: STRING,
+      createdTs: NUMBER,
+      updatedTs: NUMBER,
+      url: STRING
     }
 
     let validKeysMessage = {
@@ -130,6 +190,11 @@ class RemoteProofs {
   }
 
   getGistIdFromUrl (url) {
+    let parsed = parse(url)
+    if (!parsed.hostname === 'gist.github.com') {
+      throw new Error('Url has to use gist.github.com as host')
+    }
+
     let arr = url.split('/')
     let gistId
     arr.some((item) => {
@@ -195,6 +260,117 @@ class RemoteProofs {
     }
 
     async.mapSeries(gistArray, process, (err, results) => {
+      if (err) {
+        console.error(err)
+        return callback(err, results)
+      }
+      return callback(null, results)
+    })
+  }
+
+  // TODO: make processProofUrl() & verifyMultipleProofs() handle each type pf remote proof: gist, reddit, etc, etc
+
+  async processProofUrl (url, username, service, item, callback) {
+    const that = this
+    const VALID_HOSTNAMES = ['www.reddit.com', 'gist.github.com']
+    const REDDIT = VALID_HOSTNAMES[0]
+    const GIST = VALID_HOSTNAMES[1]
+    let valid = validUrl.isUri(url)
+
+    if (!valid) {
+      throw new Error('url is not valid')
+    }
+
+    let hostname = parse(url).hostname
+
+    if (!VALID_HOSTNAMES.includes(hostname)) {
+      throw new Error('url does not include valid hostname')
+    }
+    switch (hostname) {
+    case REDDIT:
+      this.getRedditData(url)
+        .then((json) => {
+          // extract Proof
+          let proofDoc = that.extractRedditProof(json)
+          let valid = that.validateProof(proofDoc, username, service)
+
+          if (!valid) {
+            return callback('Invalid proof',
+                            { valid: false,
+                              url: url,
+                              doc: item,
+                              username: username,
+                              service: service
+                            })
+          }
+          // verify Proof
+          that.proofApi.verifyProof(proofDoc, (err, valid) => {
+            if (typeof callback === FUNCTION) {
+              console.log('REDDIT Verified Proof:', valid, url, proofDoc)
+              callback(err, { valid: valid, url: url, doc: proofDoc })
+            }
+          })
+        })
+        .catch((ex) => {
+          error(ex)
+          callback(ex, { valid: false, url: url, doc: proofDoc })
+        })
+      break
+    case GIST:
+      let gistId = this.getGistIdFromUrl(url)
+      // get gist
+      return this.getGist(gistId).then((res) => {
+        if (res.error) {
+          console.error(res.error)
+          callback(res.error, { valid: false, url: url, doc: {} })
+        }
+        // extract proof
+        var proofDoc = that.extractProofFromGist(res)
+        // validate proof
+        let valid = that.validateProof(proofDoc, username, service)
+
+        if (!valid) {
+          return callback('Invalid proof',
+                          { valid: false,
+                            url: url,
+                            doc: item,
+                            username: username,
+                            service: service
+                          })
+        }
+        // verify Proof
+        that.proofApi.verifyProof(proofDoc, (err, valid) => {
+          if (typeof callback === FUNCTION) {
+            console.log('GIST Verified Proof:', valid, url, proofDoc)
+            callback(err, { valid: valid, url: url, doc: proofDoc })
+          }
+        })
+      }).catch((ex) => {
+        error(ex)
+        callback(ex, { valid: false, url: url, doc: proofDoc })
+      })
+    }
+  }
+
+  verifyMultipleRemoteProofs (proofArray, callback) {
+    const that = this
+
+    if (!Array.isArray(proofArray) || !proofArray.length) {
+      throw new Error('proofArray is a required argument')
+    }
+
+    function process (item, callback) {
+      setTimeout(() => {
+        // slow this down due to aret limits?
+        return that.processProofUrl(item.url,
+                                    item.username,
+                                    item.service,
+                                    item,
+                                    callback)
+      }, 250)
+    }
+
+    async.mapSeries(proofArray, process, (err, results) => {
       if (err) {
         console.error(err)
         return callback(err, results)

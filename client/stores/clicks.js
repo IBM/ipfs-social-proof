@@ -351,7 +351,7 @@ function store (state, emitter) {
                             `No remote proof urls to verify`)
       }
 
-      state.IpfsID.proof.remoteProofs.verifyMultipleGists(remoteUrls, (err, results) => {
+      state.IpfsID.proof.remoteProofs.verifyMultipleRemoteProofs(remoteUrls, (err, results) => {
         if (err) {
           animate.endAnimation(
             'verify-results',

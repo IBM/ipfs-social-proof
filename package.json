@@ -1,6 +1,6 @@
 {
   "name": "ipfs-social-proof",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "IPFS-based Identity & Social Proof",
   "leadMaintainer": "David Dahl <ddahl@nulltxt.se>",
   "main": "src/index.js",
@@ -66,9 +66,13 @@
     "pouchdb": "^7.0.0",
     "pouchdb-find": "^7.0.0",
     "pouchdb-upsert": "^2.2.0",
-    "text-encoding": "^0.6.4"
+    "text-encoding": "^0.6.4",
+    "url-parse": "^1.4.3",
+    "valid-url": "^1.0.9"
   },
   "contributors": [
-    "David Dahl <ddahl@nulltxt.se>"
+    "David Dahl <ddahl@nulltxt.se>",
+    "Tyler Yasaka <contact@tyleryasaka.me>",
+    "Calvin Deng @cdeng001"
   ]
 }

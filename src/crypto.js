@@ -58,7 +58,7 @@ class Crypto {
     // const bufferSig = this.rehydrate(_proof.signature) //  string -> encode to arraybuffer
     const obj = JSON.parse(_proof.signature)
     // Get the Uint8Array version of the stringified data (key or signature)
-    const bufferSig = Buffer.from(obj.data)
+    const bufferSig = Buffer.from(obj)
     // const publicKey = this.unmarshalPubKey(_proof.publicKey) // Instanciate RsaPubKey
     const objKey = JSON.parse(_proof.publicKey)
     // Get the Uint8Array version of the stringified key
@@ -109,7 +109,9 @@ class Crypto {
   }
 
   dehydrate (buff) {
-    return JSON.stringify(buff)
+    let s = JSON.stringify(buff)
+    let arr = JSON.parse(s).data
+    return JSON.stringify(arr)
   }
 
   rehydrate (jsonStr) {
@@ -117,7 +119,7 @@ class Crypto {
     // expecting a string like so: '{"data": [0,2,5,7,12,34,122...]}'
     const obj = JSON.parse(jsonStr)
     // Get the Uint8Array version of the stringified data (key or signature)
-    const buff = Buffer.from(obj.data)
+    const buff = Buffer.from(obj)
     return buff
   }
 
