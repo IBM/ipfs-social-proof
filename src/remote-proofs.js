@@ -306,6 +306,7 @@ class RemoteProofs {
           // verify Proof
           that.proofApi.verifyProof(proofDoc, (err, valid) => {
             if (typeof callback === FUNCTION) {
+              console.log('REDDIT Verified Proof:', valid, url, proofDoc)
               callback(err, { valid: valid, url: url, doc: proofDoc })
             }
           })
@@ -340,6 +341,7 @@ class RemoteProofs {
         // verify Proof
         that.proofApi.verifyProof(proofDoc, (err, valid) => {
           if (typeof callback === FUNCTION) {
+            console.log('GIST Verified Proof:', valid, url, proofDoc)
             callback(err, { valid: valid, url: url, doc: proofDoc })
           }
         })
