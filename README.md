@@ -17,6 +17,8 @@ THIS IS VERY MUCH A Work In Progress
 ## First time install & launch client
 
 * git clone / fork this repo
+* copy  `src/example-auth.js` to `src/auth.js`
+* edit the `githubToken` property to be a `READ-ONLY` personal GH token, see: [github tokens](https://github.com/settings/tokens)
 * `npm run make`
 * Subsequent runs:
 * `npm run client`
