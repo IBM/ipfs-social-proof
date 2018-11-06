@@ -1,5 +1,12 @@
+const { isNode } = require('../../src/utils')
 module.exports = class AudioMachine {
   constructor () {
+    // enviornment check, currently node isn't supported
+    // TODO: make this work with node
+    if (isNode()){
+      throw new Error('Can not instantiate AudioMachine in node env. Currently unsupported.')
+    }
+
     this.playlist = {}
   }
 
