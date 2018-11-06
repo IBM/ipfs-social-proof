@@ -3,7 +3,7 @@ const animate = require('../utils/animate')
 const { start, checkForAccount } = require('../../src/')
 const validUrl = require('valid-url')
 const uuid = require('uuid/v1')
-const AudioMachine = require('../utils/audioMachine')
+const AudioMachine = require('../utils/audio-machine')
 const { OBJECT, STRING, UNDEFINED,
         ARRAY, INTEGER, BOOL, FUNCTION } = require('../../src/utils')
 
