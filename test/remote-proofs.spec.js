@@ -117,7 +117,7 @@ describe("remote-proofs test suite", function () {
           expect(valid[0].doc.handle).to.equal('daviddahl')
           done()
 
-        }, 2000)
+        }, 50)
       })
     })
 
