@@ -94,46 +94,31 @@ describe("remote-proofs test suite", function () {
       done()
     })
 
-    it('process gist end to end', (done) => {
-      rp.processGist(gistUrl,  'daviddahl', 'github.com', (err, result) => {
-        expect(err).to.equal(null)
-        expect(result.valid).to.equal(true)
-        done()
-      })
-    })
-
-    it('process multiple valid gists end to end', (done) => {
+    it('process multiple valid proofs end to end', (done) => {
       var items = [
         {
-          url: 'https://gist.github.com/daviddahl/a818f62766893754a1d1f3c8b01c5cb6',
-          username:'daviddahl',
-          service: 'github.com'
+          url: 'https://gist.github.com/daviddahl/751f454e1083eb07e802da474c03072d',
+          username:'autonomica',
+          service: 'reddit.com'
         },
         {
-          url: 'https://gist.github.com/daviddahl/a818f62766893754a1d1f3c8b01c5cb6',
-          username:'daviddahl',
-          service: 'github.com'
-        },
-        {
-          url: 'https://gist.github.com/daviddahl/a818f62766893754a1d1f3c8b01c5cb6',
-          username:'daviddahl',
-          service: 'github.com'
+          url: 'https://www.reddit.com/user/autonomica/comments/9ukr52/proof/',
+          username:'autonomica',
+          service: 'reddit.com'
         }
       ]
 
-      rp.verifyMultipleGists(items, (err, valid) => {
-        console.log('err: ', err)
-        console.log(valid)
+      rp.verifyMultipleRemoteProofs(items, (err, valid) => {
+        setTimeout(() => {
+          // TODO: setTimout should be removed with mock network access
+          expect(err).to.equal(null)
+          expect(valid[0].valid).to.equal(true)
+          expect(valid[1].valid).to.equal(true)
+          expect(valid[0].doc.handle).to.equal('daviddahl')
+          done()
 
-        expect(err).to.equal(null)
-        expect(valid[0].valid).to.equal(true)
-        expect(valid[1].valid).to.equal(true)
-        expect(valid[2].valid).to.equal(true)
-        expect(valid[0].doc.handle).to.equal('daviddahl')
-        done()
-        // TODO: THIS TEST IS ACTUALLY WORKING BUT TIMES OUT. NOT SURE WHY
+        }, 50)
       })
-
     })
 
     // TODO: test mix of invalid and valid gitst urls

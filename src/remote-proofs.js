@@ -1,6 +1,7 @@
 const async = require('neo-async')
 const validUrl = require('valid-url')
 const parse = require('url-parse')
+const fetch = require('node-fetch')
 
 try {
   var ghToken = require('./auth').githubToken
@@ -206,71 +207,7 @@ class RemoteProofs {
     return gistId
   }
 
-  async processGist (url, username, service, item, callback) {
-    const that = this;
-    // extract gist ID from url
-    let gistId = this.getGistIdFromUrl(url)
-    // get gist
-    return await this.getGist(gistId).then((res) => {
-      if (res.error) {
-        console.error(res.error)
-        callback(res.error, { valid: false, url: url, doc: {} })
-      }
-      // extract proof
-      var proofDoc = that.extractProofFromGist(res)
-      // validate proof
-      let valid = that.validateProof(proofDoc, username, service)
-
-      if (!valid) {
-        return callback(ex, { valid: false,
-                              url: url,
-                              doc: item,
-                              username: username,
-                              service: service
-                            })
-      }
-      // verify Proof
-      that.proofApi.verifyProof(proofDoc, (err, valid) => {
-        if (typeof callback === FUNCTION) {
-          callback(err, { valid: valid, url: url, doc: proofDoc })
-        }
-      })
-    }).catch((ex) => {
-      error(ex)
-      callback(ex, { valid: false, url: url, doc: proofDoc })
-    })
-  }
-
-  verifyMultipleGists (gistArray, callback) {
-    const that = this
-
-    if (!Array.isArray(gistArray) || !gistArray.length) {
-      throw new Error('gistArray is a required argument')
-    }
-
-    function process (item, callback) {
-      setTimeout(() => {
-        // FIXED?? Github API Rate Limit may flag IP
-        return that.processGist(item.url,
-                                item.username,
-                                item.service,
-                                item,
-                                callback)
-      }, 250)
-    }
-
-    async.mapSeries(gistArray, process, (err, results) => {
-      if (err) {
-        console.error(err)
-        return callback(err, results)
-      }
-      return callback(null, results)
-    })
-  }
-
-  // TODO: make processProofUrl() & verifyMultipleProofs() handle each type pf remote proof: gist, reddit, etc, etc
-
-  async processProofUrl (url, username, service, item, callback) {
+  processProofUrl (url, username, service, item, callback) {
     const that = this
     const VALID_HOSTNAMES = ['www.reddit.com', 'gist.github.com']
     const REDDIT = VALID_HOSTNAMES[0]
@@ -306,14 +243,13 @@ class RemoteProofs {
           // verify Proof
           that.proofApi.verifyProof(proofDoc, (err, valid) => {
             if (typeof callback === FUNCTION) {
-              console.log('REDDIT Verified Proof:', valid, url, proofDoc)
               callback(err, { valid: valid, url: url, doc: proofDoc })
             }
           })
         })
         .catch((ex) => {
           error(ex)
-          callback(ex, { valid: false, url: url, doc: proofDoc })
+          callback(ex, { valid: false, url: url, doc: {} })
         })
       break
     case GIST:
@@ -341,13 +277,12 @@ class RemoteProofs {
         // verify Proof
         that.proofApi.verifyProof(proofDoc, (err, valid) => {
           if (typeof callback === FUNCTION) {
-            console.log('GIST Verified Proof:', valid, url, proofDoc)
             callback(err, { valid: valid, url: url, doc: proofDoc })
           }
         })
       }).catch((ex) => {
         error(ex)
-        callback(ex, { valid: false, url: url, doc: proofDoc })
+        callback(ex, { valid: false, url: url, doc: {} })
       })
     }
   }
@@ -359,15 +294,15 @@ class RemoteProofs {
       throw new Error('proofArray is a required argument')
     }
 
-    function process (item, callback) {
-      setTimeout(() => {
-        // slow this down due to aret limits?
-        return that.processProofUrl(item.url,
-                                    item.username,
-                                    item.service,
-                                    item,
-                                    callback)
-      }, 250)
+    async function process (item, callback) {
+      // setTimeout(() => {
+        // slow this down due to rate limits?
+        return await that.processProofUrl(item.url,
+                                          item.username,
+                                          item.service,
+                                          item,
+                                          callback)
+      // }, 250)
     }
 
     async.mapSeries(proofArray, process, (err, results) => {
