@@ -4,7 +4,7 @@ const { Buffer } = require('buffer')
 const multihashing = require('multihashing-async')
 const forge = require('node-forge')
 const peerId = require('peer-id')
-
+const { pkixToJwk, jwkToPkix } = require('../node_modules/libp2p-crypto/src/keys/rsa-utils')
 const { log, error } = require('./log')
 
 const { OBJECT, STRING, UNDEFINED,
@@ -102,30 +102,33 @@ class Crypto {
   }
 
   get pubKeyPem () {
-    let jwkPk = this.node._peerInfo.id._privKey.public._key
-    return this.convertJwkPubKeyToPem(jwkPk)
+    return this.pubKeyPemFromJwk
   }
 
-  // TODO: will not need this anymore
-  convertRsaPubKeyToPem (rsaPubKey) {
-    let rpk
-    if (rsaPubKey._key) {
-      rpk = rsaPubKey._key
-    } else {
-      rpk = rsaPubKey
-    }
-    return forge.pki.publicKeyToPem(rpk)
+  get pubKeyPemFromJwk () {
+    return this.convertJwkPubKeyToPem(
+      this.node._peerInfo.id._privKey.public._key
+    )
   }
 
   convertJwkPubKeyToPem (jwkPubKey) {
+    if (!jwkPubKey) { throw new Erorr('jwkPubKey required') }
+
+    let pk = this.convertJwkPubKeyToRsaPubKey(jwkPubKey)
+
+    return forge.pki.publicKeyToPem(pk)
+  }
+
+  convertJwkPubKeyToRsaPubKey (jwkPubKey) {
     // see: https://github.com/digitalbazaar/forge/issues/444#issuecomment-264224314
     function base64urlToBigInteger(str) {
       var bytes = forge.util.decode64(
         (str + '==='.slice((str.length + 3) % 4))
           .replace(/\-/g, '+')
           .replace(/_/g, '/'));
-      return new forge.jsbn.BigInteger(forge.util.bytesToHex(bytes), 16);
-    };
+
+      return new forge.jsbn.BigInteger(forge.util.bytesToHex(bytes), 16)
+    }
 
     let rpk
     if (jwkPubKey._key) {
@@ -137,56 +140,23 @@ class Crypto {
     let pk = forge.pki.setRsaPublicKey(
       base64urlToBigInteger(rpk.n),
       base64urlToBigInteger(rpk.e)
-    );
+    )
 
-    return forge.pki.publicKeyToPem(pk)
+    return pk
+  }
+
+  convertRsaPubKeyToPem (rsaPubKey) {
+    let rpk
+    if (rsaPubKey._key) {
+      rpk = rsaPubKey._key
+    } else {
+      rpk = rsaPubKey
+    }
+    return forge.pki.publicKeyToPem(rpk)
   }
 
   convertPemPubKeyToRsa (pemPubKey) {
-    return forge.pki.publicKeyFromPem(pemPubKey);
-  }
-
-  armor (base64Str, format='pk') {
-    // pk = public key
-    // sig = signature
-    if (!base64Str || !format) {
-      throw new Error(ERR.ARG_REQ_BASE64_STR)
-    }
-
-    const formats = {
-      pk: {
-        head: '-----BEGIN PUBLIC KEY-----\r\n',
-        tail: '\r\n-----END PUBLIC KEY-----'
-      },
-      sig: {
-        head: '-----BEGIN PGP MESSAGE-----\r\n',
-        tail: '\r\n-----END PGP MESSAGE-----'
-      }
-    }
-
-    let key = ''
-
-    for (var i = 0; i < base64Str.length; i++) {
-      if ((i % 64) === 0) {
-        key += '\n';
-      }
-      key += base64Str.charAt(i);
-    }
-
-    if (!/\\n$/.test(key)) {
-      key += '\r\n';
-    }
-
-    return `${formats[format].head}${key}${formats[format].tail}`.trim();
-  }
-
-  armorSignature (signature, native=true) {
-    if (native) {
-      return this.armor(a2t(signature), 'sig')
-    } else {
-      // already base64'd
-      return this.armor(signature, 'sig')
-    }
+    return forge.pki.publicKeyFromPem(pemPubKey)
   }
 }
 
