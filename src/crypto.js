@@ -1,10 +1,8 @@
 const TextDecoder = require('text-encoding').TextDecoder
 const TextEncoder = require('text-encoding').TextEncoder
 const { Buffer } = require('buffer')
-const multihashing = require('multihashing-async')
 const forge = require('node-forge')
-const peerId = require('peer-id')
-const { pkixToJwk, jwkToPkix } = require('../node_modules/libp2p-crypto/src/keys/rsa-utils')
+
 const { log, error } = require('./log')
 
 const { OBJECT, STRING, UNDEFINED,

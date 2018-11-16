@@ -15,9 +15,7 @@ const TextEncoder = require('text-encoding').TextEncoder
 const level = require('level-browserify')
 const { encode, decode } = require('base64-arraybuffer')
 const { Buffer } = require('buffer')
-const multihashing = require('multihashing-async')
 const { pem, pki } = require('node-forge')
-const peerId = require('peer-id')
 
 const DB = require('./db')
 const ProofsDB = require('./proofs-db')
