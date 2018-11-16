@@ -1,9 +1,7 @@
 const TextDecoder = require('text-encoding').TextDecoder
 const TextEncoder = require('text-encoding').TextEncoder
 const { Buffer } = require('buffer')
-const multihashing = require('multihashing-async')
-const { pem, pki } = require('node-forge')
-const peerId = require('peer-id')
+const forge = require('node-forge')
 
 const { log, error } = require('./log')
 
@@ -18,21 +16,6 @@ class Crypto {
     if (!node) { throw new Error('IPFS node is required') }
     this._node = node
     this._crypto = this._node.util.crypto // libp2pCrypto
-  }
-
-  get identity () {
-    if (this._identity) {
-      return this._identity
-    }
-    error('Set identity object required')
-    return null
-  }
-
-  set identity (identity) {
-    if (!identity) {
-      throw new Error('Identity object required')
-    }
-    this._identity = identity
   }
 
   get node () {
@@ -51,15 +34,13 @@ class Crypto {
     if (proof.doc) {
       _proof = proof.doc
     }
-    // TODO: revert to using helper functions and test
-    //       `this` was undefined here being called from PublicKeyCard
-    //        which, BTW, was called from a DOM eventHandler, so not bound
+
     const signedProofText = JSON.stringify(_proof.proof) // JSON -> string
-    // const bufferSig = this.rehydrate(_proof.signature) //  string -> encode to arraybuffer
+
     const obj = JSON.parse(_proof.signature)
     // Get the Uint8Array version of the stringified data (key or signature)
     const bufferSig = Buffer.from(obj)
-    // const publicKey = this.unmarshalPubKey(_proof.publicKey) // Instanciate RsaPubKey
+
     const objKey = JSON.parse(_proof.publicKey)
     // Get the Uint8Array version of the stringified key
     const bufferKey = Buffer.from(objKey)
@@ -99,15 +80,6 @@ class Crypto {
     return this.dehydrate(mk)
   }
 
-  unmarshalPubKey (stringifiedKey) {
-    const obj = JSON.parse(stringifiedKey)
-    // Get the Uint8Array version of the stringified key
-    const bufferKey = Buffer.from(obj.data)
-    // unmarshal pub key (any pub key)
-    const umpk = this._crypto.keys.unmarshalPublicKey(bufferKey)
-    return umpk // now, one can use this pub key to verify signatures
-  }
-
   dehydrate (buff) {
     let s = JSON.stringify(buff)
     let arr = JSON.parse(s).data
@@ -128,8 +100,47 @@ class Crypto {
   }
 
   get pubKeyPem () {
-    let pk = this.node._peerInfo.id._privKey.public._key
-    return pki.publicKeyToPem(pk)
+    return this.pubKeyPemFromJwk
+  }
+
+  get pubKeyPemFromJwk () {
+    return this.convertJwkPubKeyToPem(
+      this.node._peerInfo.id._privKey.public._key
+    )
+  }
+
+  convertJwkPubKeyToPem (jwkPubKey) {
+    if (!jwkPubKey) { throw new Erorr('jwkPubKey required') }
+
+    let pk = this.convertJwkPubKeyToRsaPubKey(jwkPubKey)
+
+    return forge.pki.publicKeyToPem(pk)
+  }
+
+  convertJwkPubKeyToRsaPubKey (jwkPubKey) {
+    // see: https://github.com/digitalbazaar/forge/issues/444#issuecomment-264224314
+    function base64urlToBigInteger(str) {
+      var bytes = forge.util.decode64(
+        (str + '==='.slice((str.length + 3) % 4))
+          .replace(/\-/g, '+')
+          .replace(/_/g, '/'));
+
+      return new forge.jsbn.BigInteger(forge.util.bytesToHex(bytes), 16)
+    }
+
+    let rpk
+    if (jwkPubKey._key) {
+      rpk = jwkPubKey._key
+    } else {
+      rpk = jwkPubKey
+    }
+
+    let pk = forge.pki.setRsaPublicKey(
+      base64urlToBigInteger(rpk.n),
+      base64urlToBigInteger(rpk.e)
+    )
+
+    return pk
   }
 
   convertRsaPubKeyToPem (rsaPubKey) {
@@ -139,112 +150,11 @@ class Crypto {
     } else {
       rpk = rsaPubKey
     }
-    return pki.publicKeyToPem(rpk)
+    return forge.pki.publicKeyToPem(rpk)
   }
 
   convertPemPubKeyToRsa (pemPubKey) {
-    return pki.publicKeyFromPem(pemPubKey);
-  }
-
-  armor (base64Str, format='pk') {
-    // pk = public key
-    // sig = signature
-    if (!base64Str || !format) {
-      throw new Error(ERR.ARG_REQ_BASE64_STR)
-    }
-
-    const formats = {
-      pk: {
-        head: '-----BEGIN PUBLIC KEY-----\r\n',
-        tail: '\r\n-----END PUBLIC KEY-----'
-      },
-      sig: {
-        head: '-----BEGIN PGP MESSAGE-----\r\n',
-        tail: '\r\n-----END PGP MESSAGE-----'
-      }
-    }
-
-    let key = ''
-
-    for (var i = 0; i < base64Str.length; i++) {
-      if ((i % 64) === 0) {
-        key += '\n';
-      }
-      key += base64Str.charAt(i);
-    }
-
-    if (!/\\n$/.test(key)) {
-      key += '\r\n';
-    }
-
-    return `${formats[format].head}${key}${formats[format].tail}`.trim();
-  }
-
-  armorSignature (signature, native=true) {
-    if (native) {
-      return this.armor(a2t(signature), 'sig')
-    } else {
-      // already base64'd
-      return this.armor(signature, 'sig')
-    }
-  }
-
-  // async verifyPeer (peerProfile, saveContact=false) {
-  //   const that = this
-  //   let proofs = []
-  //   if (peerProfile.peerId === this.identity.peerId) {
-  //     // verifying self
-  //     // let _proofs = await this.idData.getProofs()
-  //     proofs = _proofs.rows || []
-  //   } else {
-  //     if (!peerProfile.proofs) {
-  //       return
-  //     }
-  //     if (!peerProfile.proofs.length) {
-  //       return
-  //     }
-  //     proofs = peerProfile.proofs
-  //   }
-
-  //   let proofDocs = []
-  //   proofs.forEach((proof, idx) => {
-  //     that.verifyProof(proof.proof, (err, valid) => {
-  //       var valid = false
-  //       if (err) {
-  //         valid = false
-  //       } else {
-  //         valid = true
-  //       }
-  //       proofDocs.push({proof: proof.proof, valid: valid, ts: Date.now()})
-  //     })
-  //   })
-  //   if (saveContact) {
-  //     let contact = peerProfile
-  //     contact.validityDocs = proofDocs
-  //     that.contactsDB.upsert(peerProfile.peerId, contact).
-  //       then((res) => {
-  //         console.log('contact saved')
-  //         // TODO: set state in a notify component that will give feedback
-  //       }).catch((ex) => {
-  //         console.error(ex)
-  //       })
-  //   }
-  // }
-
-  getMultihashForStringContent (stringContent, callback) {
-    // pass in content you need a multihash for in order to
-    // see if the file exists on IPFS
-    //  NOTE: this will not work - it will just timeout
-    const that = this;
-    let buf = Buffer.from(stringContent)
-
-    multihashing(buf, SHA_256, (err, mh) => {
-      if (err) {
-        return callback(err, null)
-      }
-      let b58Str = that.node.types.multihash.toB58String(mh)
-      callback(null, b58Str)
-    })
+    return forge.pki.publicKeyFromPem(pemPubKey)
   }
 }
 
