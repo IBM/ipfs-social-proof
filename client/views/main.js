@@ -12,7 +12,7 @@ const PublicKeyCard = require('../components/public-key-card')
 const ProofDetail = require('../components/proof-detail')
 const ConfirmationModal = require('../components/confirmation-modal')
 
-const TITLE = 'client-choo - main'
+const TITLE = 'Autonomica IPFS Identity Dapp'
 const APP_NAME = 'Autonomica'
 const VIEW_IDENT = 'identity-app'
 const VIEW_SPLASH = 'splash'

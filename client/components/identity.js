@@ -78,7 +78,7 @@ module.exports = class IdentityUI extends Component {
 
     return html`
       <article id="identity-app" class="_view_ w-80 center mw7 br3 ba b--black-10 mv4">
-        <div class="mh4 mt4 w-100 flex">
+        <div class="ph4 mt4 w-100 flex">
           <span id="identity-blocky"
                 class="flex"
                 title="IPFS Peer ID as Blocky Avatar">${icon}</span>
@@ -86,7 +86,7 @@ module.exports = class IdentityUI extends Component {
                class="flex code f5 mt3"
                onclick=${this.broadcastId.bind(this)}
                title="IPFS Peer ID">
-            <div class="mh4">${peerId}</div>
+            <div class="mh4 wrap">${peerId}</div>
           </span>
           <span id="qr-code" class="flex"
                 title="IPFS Peer ID as QR Code">
@@ -100,7 +100,7 @@ module.exports = class IdentityUI extends Component {
                  name="handle-edit-input"
                  id="handle-edit"
                  value="${handle}" />
-          <span id="edit-save-btns">
+          <div id="edit-save-btns" style="top: .05em; position: relative;">
             <a href="#"
                id="handle-edit-btn"
                class="no-underline f6 f5-l fl pv3 tc bn bg-animate bg-black-70 hover-bg-black white pointer w-100 w-25-m w-20-l br2-ns br--right-ns"
@@ -114,7 +114,7 @@ module.exports = class IdentityUI extends Component {
                onclick=${this.evtSaveHandle.bind(this)}>
               Save Handle
             </a>
-          </span>
+          </div>
         </div>
         <div class="w-100 pa3 center">
           <p class="f6 f5-ns lh-copy">
