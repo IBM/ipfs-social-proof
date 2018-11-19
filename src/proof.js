@@ -80,6 +80,9 @@ class Proof {
       statement: `I am ${username} on ${service}`, // add URL here
       username: username,
       service: service
+      // TODO: needs an ID like: "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+      // Aparently tied to the url like: "https://example.com/examples/v1"
+      // Question: can this just be stored in IPFS and references via /ipfs/multihash?
     })
 
     this.crypto.sign(claim, (err, signature) => {
