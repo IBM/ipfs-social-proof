@@ -1,3 +1,5 @@
+const uuid = require('uuid/v1')
+
 const RemoteProofs = require('./remote-proofs')
 const {t2a, a2t } = require('./crypto')
 const { log, error } = require('./log')
@@ -65,39 +67,52 @@ class Proof {
   createProof (username, service, callback, expires=null) {
     // Sign message, returning an Object with
     // service, username, message, handle and signature
+    const SIGNATURE_TYPE = 'RsaSignature2018'
+    const ISSUER = 'https://github.com/IBM/ipfs-social-proof'
     const that = this
+
     if (!username || !service) {
       throw new Error(ERR.ARG_REQ_USERNAME_SERVICE)
     }
     const ts = Date.now()
 
-    let message = {
+    let claim = JSON.stringify({
       statement: `I am ${username} on ${service}`, // add URL here
       username: username,
       service: service
-    }
-
-    let proof = JSON.stringify({
-      message: message,
-      timestamp: ts,
-      expires: expires,
-      ipfsId: this.identity.peerId,
-      handle: this.identity.handle
     })
 
-    this.crypto.sign(proof, (err, signature) => {
+    this.crypto.sign(claim, (err, signature) => {
       if (err) { throw new Error(err) }
 
-      let assertion = {
+      let proof = {
+        issuanceDate: new Date().toISOString(),
+        creator: that.identity.peerId,
         handle: that.identity.handle,
-        ipfsId: that.identity.peerId,
+        // signature: that.crypto.dehydrate(signature),
+        signatureValue: that.crypto.pemEncodeSignature(signature),
+        type: SIGNATURE_TYPE,
+        nonce: uuid(),
+      }
+
+      if (expires) {
+        proof.expirationDate = expires
+      }
+
+      let verifiableCredential = {
+        '@context': [
+          "https://w3.org/2018/credentials/v1"
+        ],
+        id: uuid(), // TODO: Should be an url, perhaps an IPFS hash?
         proof: proof,
-        signature: that.crypto.dehydrate(signature),
-        timestamp: ts,
-        publicKey: that.crypto.pubKeyDehydrated
+        type: ['VerifiableCredential'],
+        issuer: ISSUER,
+        issuanceDate: new Date().toISOString(),
+        publicKey: that.crypto.pubKeyPem,
+        claim: JSON.parse(claim),
       }
       if (callback) {
-        callback(err, assertion)
+        callback(err, verifiableCredential)
       }
     })
   }

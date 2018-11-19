@@ -73,6 +73,15 @@ class Crypto {
     })
   }
 
+  pemEncodeSignature (signatureBytes) {
+    return forge.util.binary.base64.encode(signatureBytes)
+  }
+
+  pemDecodeSignature (pemSignature) {
+    return forge.util.binary.base64.decode(pemSignature)
+  }
+
+
   get pubKeyDehydrated () {
     // get a base64 encoded marshaled pub key
     const pub = this.node._peerInfo.id._privKey.public

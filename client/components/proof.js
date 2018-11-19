@@ -39,7 +39,7 @@ module.exports = class Proof extends Component {
       return
     }
     IpfsID.proof.createProof(username, service, (err, proof) => {
-      proof.proof = JSON.parse(proof.proof)
+      // proof.proof = JSON.parse(proof.proof)
       this.emit('updateProofText', JSON.stringify(proof, null, 2))
     })
   }
@@ -110,13 +110,14 @@ module.exports = class Proof extends Component {
            class="_proof_tab_ w-90 center pv4 bg-near-white">
         <table class="w-100 collapse pl4 mt0 ba b--black-10">
           ${proofsList.rows.map((item) => {
+          console.log(item)
             return html`
               <tr class="pv2 striped--light-gray">
                 <td><img src="img/eye.svg"
                          onclick=${this.viewProof.bind(this)}
                          data-hash="${item.doc.ipfsContentHash}"
                          class="h1 ph2" /></td>
-      <td class="f6">${item.doc.proof.message.username}@${item.doc.proof.message.service}</td><td class="ipfs-url fw1 f7 code"><a href="${item.doc.url}" target="_new">${item.doc.url}</a></td><td class="ipfs-url fw1 f7 code"><a target="_new" href="https://ipfs.io/ipfs/${item.doc.ipfsContentHash}" title="${item.doc.ipfsContentHash}">/ipfs/${item.doc.ipfsContentHash}</a></td>
+      <td class="f6">${item.doc.claim.username}@${item.doc.claim.service}</td><td class="ipfs-url fw1 f7 code"><a href="${item.doc.url}" target="_new">${item.doc.url}</a></td><td class="ipfs-url fw1 f7 code"><a target="_new" href="https://ipfs.io/ipfs/${item.doc.ipfsContentHash}" title="${item.doc.ipfsContentHash}">/ipfs/${item.doc.ipfsContentHash}</a></td>
               </tr>`
             })}
           </table>
