@@ -7,7 +7,7 @@
 * This will have to be an electron app as it will really require an ipfs node runing alongside electron.
 * Today it is just being developed in browser to make it simple to run and test
 * The included UI in `public/index.html` is merely temporary, just a way to tinker with the `IpfsIdentity` class.
-* The UI can construct the `IpfsIdentity` class after checking if there is already an account in the local database (leveldb / IndexedDB) via the `checkForAccount` function.
+* The UI can construct the `IpfsIdentity` class after checking if there is already an account in the local database (LevelDB / IndexedDB) via the `checkForAccount` function.
 * The `start` function will return the `IpfsIdentity` instance with:
 
 `const ipid = await start('MyHandleName');`
@@ -44,13 +44,13 @@
 * posts are merely JSON docs stored in IPFS, pinned and ipns name issued
 * use CRDT to sync post hashes
 
-### Embed Gists via <script> tage and Tweets via embed HTML for the Proofs to display inline on a user's profile
+### Embed Gists via <script> tag and Tweets via embed HTML for the Proofs to display inline on a user's profile
 
 ## Manual validation UI to paste proof data that cannot dynamically be fetched via a url / embed / script tag
 
 ## Channels
 
-Each per can establish channels and invite followers / followees to the channel. The Channel TOPIC is also an IPFS pinned / named path
+Each peer can establish channels and invite followers / followees to the channel. The Channel TOPIC is also an IPFS pinned / named path
 
 * The peer creates a channel Identifier object that names the channel in human terms and is signed by the creator.
 * This JSON doc is saved to IPFS and pinned, named, etc.
