@@ -1,6 +1,6 @@
 {
   "name": "ipfs-social-proof",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "IPFS-based Identity & Social Proof",
   "leadMaintainer": "David Dahl <ddahl@nulltxt.se>",
   "main": "src/index.js",
@@ -68,6 +68,7 @@
     "pouchdb-upsert": "^2.2.0",
     "text-encoding": "^0.6.4",
     "url-parse": "^1.4.3",
+    "uuid": "^3.3.2",
     "valid-url": "^1.0.9"
   },
   "contributors": [
