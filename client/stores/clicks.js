@@ -3,6 +3,7 @@ const animate = require('../utils/animate')
 const { start, checkForAccount } = require('../../src/')
 const validUrl = require('valid-url')
 const uuid = require('uuid/v1')
+const AudioMachine = require('../utils/audio-machine')
 const { OBJECT, STRING, UNDEFINED,
         ARRAY, INTEGER, BOOL, FUNCTION } = require('../../src/utils')
 
@@ -85,6 +86,11 @@ function store (state, emitter) {
   state.proofForm = { username: '', service: '', text: '' }
   state.navAnimation = true
 
+  // set up sound things
+  const audio = new AudioMachine();
+  // http://soundbible.com/419-Tiny-Button-Push.html
+  audio.addSound('peerOnEnter', 'assets/beep.wav')
+
   emitter.on('DOMContentLoaded', function () {
     animate.startAnimation('nav-animation')
 
@@ -139,6 +145,7 @@ function store (state, emitter) {
             }
 
             emitter.emit('updatePeerProfile', profile)
+            audio.playSound('peerOnEnter')
           },
 
           'peer left': (message) => {

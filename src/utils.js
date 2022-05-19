@@ -9,7 +9,15 @@ function a2t (arrayBuffer) {
   return new TextDecoder("utf-8").decode(arrayBuffer)
 }
 
+function isNode () {
+  if (typeof process === 'undefined') {
+    return false
+  }
+  return true
+}
+
 module.exports = {
+  isNode: isNode,
   a2t: a2t,
   t2a: t2a,
   STRING: 'string',
